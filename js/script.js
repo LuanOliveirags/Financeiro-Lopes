@@ -69,17 +69,25 @@ document.addEventListener('DOMContentLoaded', function() {
     firebase.auth().onAuthStateChanged(async user => {
         if (user) {
             currentUserId = user.uid;
-            console.log('Autenticado como', currentUserId);
-            await carregarFirebase();
-            aplicarFiltros();
-            exibirDividas();
-            exibirSalarios();
+            console.log('✅ Autenticado como:', currentUserId);
+            try {
+                await carregarFirebase();
+                aplicarFiltros();
+                exibirDividas();
+                exibirSalarios();
+            } catch (err) {
+                console.error('❌ Erro ao carregar após autenticação:', err);
+            }
         } else {
-            console.log('Nenhum usuário, solicitando login anônimo...');
-            firebase.auth().signInAnonymously().catch(err => {
-                console.error('Erro ao autenticar anonimamente', err);
-                showToast('Falha na autenticação Firebase.', 'error');
-            });
+            console.log('⚠️ Nenhum usuário detectado, tentando login anônimo...');
+            firebase.auth().signInAnonymously()
+                .then(userCred => {
+                    console.log('✅ Login anônimo bem-sucedido:', userCred.user.uid);
+                })
+                .catch(err => {
+                    console.error('❌ Erro em signInAnonymously:', err.code, err.message);
+                    showToast(`❌ Falha Firebase: ${err.code}`, 'error');
+                });
         }
     });
 
