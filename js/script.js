@@ -44,25 +44,49 @@ document.addEventListener('DOMContentLoaded', function() {
     let salarios = JSON.parse(localStorage.getItem('salarios')) || { luan: { bruto: 0, descontos: 0 }, bianca: { bruto: 0, descontos: 0 } };
     let temaEscuro = localStorage.getItem('tema') === 'dark';
 
-    // Firebase
+    // Firebase (seus dados do projeto financeiro-lopes)
     const firebaseConfig = {
-        apiKey: "AIzaSyDbswVvI_ujULr4Sp0N7s5-XWbW3K2QDGw",
-        authDomain: "psicorrection.firebaseapp.com",
-        projectId: "psicorrection",
-        storageBucket: "psicorrection.firebasestorage.app",
-        messagingSenderId: "382467886691",
-        appId: "1:382467886691:web:198212726a72bd41a3b256"
+        apiKey: "AIzaSyAMx-ZoL4ccoZnNPzF1e5yYC1LWHp0c0vK",
+        authDomain: "financeiro-lopes.firebaseapp.com",
+        projectId: "financeiro-lopes",
+        storageBucket: "financeiro-lopes.appspot.com",
+        messagingSenderId: "621443570583",
+        appId: "1:621443570583:web:1a5ad0106d260651482d2",
+        measurementId: "G-7FHEPH5G5"
     };
 
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
+        // analytics opcional
+        if (firebase.analytics) {
+            firebase.analytics();
+        }
     }
 
     const db = firebase.firestore();
+    let currentUserId = null;
+
+    firebase.auth().onAuthStateChanged(async user => {
+        if (user) {
+            currentUserId = user.uid;
+            console.log('Autenticado como', currentUserId);
+            await carregarFirebase();
+            aplicarFiltros();
+            exibirDividas();
+            exibirSalarios();
+        } else {
+            console.log('Nenhum usuário, solicitando login anônimo...');
+            firebase.auth().signInAnonymously().catch(err => {
+                console.error('Erro ao autenticar anonimamente', err);
+                showToast('Falha na autenticação Firebase.', 'error');
+            });
+        }
+    });
 
     async function salvarFirebase() {
+        if (!currentUserId) return;
         try {
-            await db.collection('financas').doc('dados').set({
+            await db.collection('financas').doc(currentUserId).set({
                 transacoes,
                 dividas,
                 salarios,
@@ -76,8 +100,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function carregarFirebase() {
+        if (!currentUserId) return;
         try {
-            const doc = await db.collection('financas').doc('dados').get();
+            const doc = await db.collection('financas').doc(currentUserId).get();
             if (doc.exists) {
                 const data = doc.data();
                 if (Array.isArray(data.transacoes) && data.transacoes.length > 0) transacoes = data.transacoes;
