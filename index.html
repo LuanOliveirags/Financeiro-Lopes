@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4CAF50">
+    <link rel="manifest" href="manifest.json">
+    <title>Controle de Finanças Pessoais</title>
+    <link rel="stylesheet" href="css/calendar-style.css">
+    <link rel="stylesheet" href="css/sections.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/base/responsive.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1><i class="fas fa-chart-line"></i> Minhas Finanças</h1>
+        <button id="toggle-tema" class="btn-tema" title="Alternar tema claro/escuro">
+            <i class="fas fa-moon"></i>
+        </button>
+    </header>
+    <main>
+        <section id="dashboard" class="active">
+            <div class="dashboard-header">
+                <div class="month-selector">
+                    <button id="prev-month"><i class="fas fa-chevron-left"></i></button>
+                    <div class="month-name" id="current-month">Março 2026</div>
+                    <button id="next-month"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <div id="calendar" class="calendar">
+                <div class="calendar-weekdays">
+                    <div class="weekday">Dom</div>
+                    <div class="weekday">Seg</div>
+                    <div class="weekday">Ter</div>
+                    <div class="weekday">Qua</div>
+                    <div class="weekday">Qui</div>
+                    <div class="weekday">Sex</div>
+                    <div class="weekday">Sab</div>
+                </div>
+                <div class="calendar-days" id="calendar-days"></div>
+            </div>
+
+            <div class="month-summary">
+                <div class="summary-card income">
+                    <div class="summary-label"><i class="fas fa-arrow-up"></i> Receitas</div>
+                    <div class="summary-value" id="total-receitas">R$ 0.00</div>
+                </div>
+                <div class="summary-card expense">
+                    <div class="summary-label"><i class="fas fa-arrow-down"></i> Despesas</div>
+                    <div class="summary-value" id="total-despesas">R$ 0.00</div>
+                </div>
+                <div class="summary-card balance">
+                    <div class="summary-label"><i class="fas fa-wallet"></i> Saldo</div>
+                    <div class="summary-value" id="saldo-atual">R$ 0.00</div>
+                </div>
+            </div>
+
+            <div class="expenses-timeline">
+                <div class="timeline-header">
+                    <i class="fas fa-history"></i> Transações do Mês
+                </div>
+                <div id="timeline-transacoes" class="timeline-items"></div>
+            </div>
+
+            <div class="charts">
+                <div class="chart-container">
+                    <h3><i class="fas fa-chart-pie"></i> Receitas vs Despesas</h3>
+                    <canvas id="grafico"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3><i class="fas fa-chart-bar"></i> Dívidas por Responsável</h3>
+                    <canvas id="grafico-dividas"></canvas>
+                </div>
+            </div>
+
+            <div class="advanced-stats">
+                <div class="stat-card extra-small">
+                    <i class="fas fa-credit-card icon-orange"></i>
+                    <h4>Dívidas Luan</h4>
+                    <p id="total-dividas-luan">R$ 0.00</p>
+                </div>
+                <div class="stat-card extra-small">
+                    <i class="fas fa-credit-card icon-pink"></i>
+                    <h4>Dívidas Bianca</h4>
+                    <p id="total-dividas-bianca">R$ 0.00</p>
+                </div>
+                <div class="stat-card extra-small">
+                    <i class="fas fa-users icon-teal"></i>
+                    <h4>Dívidas Conjunto</h4>
+                    <p id="total-dividas-conjunto">R$ 0.00</p>
+                </div>
+                <div class="stat-card extra-small">
+                    <i class="fas fa-money-bill-wave icon-green"></i>
+                    <h4>Salário Líquido</h4>
+                    <p id="salario-liquido">R$ 0.00</p>
+                </div>
+            </div>
+        </section>
+        <section id="formulario">
+            <h2><i class="fas fa-plus-circle"></i> Adicionar Transação</h2>
+            <form id="form-transacao">
+                <label for="tipo">Tipo:</label>
+                <select id="tipo" required>
+                    <option value="receita">Receita</option>
+                    <option value="despesa">Despesa</option>
+                </select>
+                <label for="categoria">Categoria:</label>
+                <select id="categoria" required>
+                    <option value="salario">Salário</option>
+                    <option value="freelance">Freelance</option>
+                    <option value="investimentos">Investimentos</option>
+                    <option value="alimentacao">Alimentação</option>
+                    <option value="transporte">Transporte</option>
+                    <option value="lazer">Lazer</option>
+                    <option value="saude">Saúde</option>
+                    <option value="outros">Outros</option>
+                </select>
+                <label for="descricao">Descrição:</label>
+                <input type="text" id="descricao" required>
+                <label for="valor">Valor:</label>
+                <input type="number" id="valor" step="0.01" required>
+                <label for="data">Data:</label>
+                <input type="date" id="data" required>
+                <button type="submit" class="btn btn-primary">Adicionar</button>
+            </form>
+            <h3>Transações</h3>
+            <ul id="lista-transacoes" class="lista-transacoes"></ul>
+        </section>
+        <section id="dividas">
+            <h2><i class="fas fa-file-invoice-dollar"></i> Controle de Dívidas</h2>
+            <form id="form-divida">
+                <label for="responsavel">Responsável:</label>
+                <select id="responsavel" required>
+                    <option value="luan">Luan</option>
+                    <option value="bianca">Bianca</option>
+                    <option value="conjunto">Conjunto</option>
+                </select>
+                <label for="nome-divida">Nome da Dívida:</label>
+                <input type="text" id="nome-divida" required>
+                <label for="parcela">Parcela (ex: 4/36):</label>
+                <input type="text" id="parcela">
+                <label for="dia-vencimento">Dia Vencimento:</label>
+                <input type="number" id="dia-vencimento" min="1" max="31" required>
+                <label for="valor-divida">Valor Mensal:</label>
+                <input type="number" id="valor-divida" step="0.01" required>
+                <button type="submit" class="btn btn-primary">Adicionar Dívida</button>
+            </form>
+            <h3>Dívidas Luan</h3>
+            <ul id="lista-dividas-luan"></ul>
+            <h3>Dívidas Bianca</h3>
+            <ul id="lista-dividas-bianca"></ul>
+            <h3>Dívidas Conjunto</h3>
+            <ul id="lista-dividas-conjunto"></ul>
+        </section>
+        <section id="salarios">
+            <h2><i class="fas fa-wallet"></i> Salários e Descontos</h2>
+            <form id="form-salario">
+                <label for="pessoa-salario">Pessoa:</label>
+                <select id="pessoa-salario" required>
+                    <option value="luan">Luan</option>
+                    <option value="bianca">Bianca</option>
+                </select>
+                <label for="salario-bruto">Salário Bruto Mensal:</label>
+                <input type="number" id="salario-bruto" step="0.01" required>
+                <label for="descontos">Descontos Totais:</label>
+                <input type="number" id="descontos" step="0.01" value="0">
+                <button type="submit" class="btn btn-primary">Salvar Salário</button>
+            </form>
+            <div class="salarios-display">
+                <div>
+                    <h3>Salário Luan</h3>
+                    <p>Bruto: R$ <span id="salario-luan-bruto">0.00</span></p>
+                    <p>Descontos: R$ <span id="salario-luan-descontos">0.00</span></p>
+                    <p>Líquido: R$ <span id="salario-luan-liquido">0.00</span></p>
+                </div>
+                <div>
+                    <h3>Salário Bianca</h3>
+                    <p>Bruto: R$ <span id="salario-bianca-bruto">0.00</span></p>
+                    <p>Descontos: R$ <span id="salario-bianca-descontos">0.00</span></p>
+                    <p>Líquido: R$ <span id="salario-bianca-liquido">0.00</span></p>
+                </div>
+                <div>
+                    <h3>Conjunto</h3>
+                    <p>Bruto Total: R$ <span id="salario-conjunto-bruto">0.00</span></p>
+                    <p>Descontos Totais: R$ <span id="salario-conjunto-descontos">0.00</span></p>
+                    <p>Líquido Total: R$ <span id="salario-conjunto-liquido">0.00</span></p>
+                </div>
+            </div>
+        </section>
+        <section id="filtros">
+            <h2><i class="fas fa-filter"></i> Filtros e Importação</h2>
+            <label for="filtro-mes">Mês:</label>
+            <input type="month" id="filtro-mes">
+            <label for="filtro-categoria">Categoria:</label>
+            <select id="filtro-categoria">
+                <option value="">Todas</option>
+                <option value="salario">Salário</option>
+                <option value="freelance">Freelance</option>
+                <option value="investimentos">Investimentos</option>
+                <option value="alimentacao">Alimentação</option>
+                <option value="transporte">Transporte</option>
+                <option value="lazer">Lazer</option>
+                <option value="saude">Saúde</option>
+                <option value="outros">Outros</option>
+            </select>
+            <button id="btn-filtrar" class="btn btn-secondary">Filtrar</button>
+            <button id="btn-limpar-filtros" class="btn btn-secondary">Limpar Filtros</button>
+            <button id="btn-exportar" class="btn btn-success">Exportar CSV</button>
+            <label for="importar-excel">Importar Excel:</label>
+            <input type="file" id="importar-excel" accept=".xlsx,.xls">
+            <button id="btn-importar" class="btn btn-info">Importar</button>
+        </section>
+        <section id="lembretes">
+            <h2><i class="fas fa-bell"></i> Lembretes</h2>
+            <p>Receba notificações para dívidas vencendo amanhã.</p>
+            <button id="btn-testar-notificacao" class="btn btn-warning">Testar Notificação</button>
+        </section>
+    </main>
+    
+    <!-- Floating Action Button -->
+    <button class="fab" id="fab-adicionar" title="Adicionar Transação">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-section="dashboard" title="Dashboard">
+            <i class="fas fa-chart-pie"></i>
+            <span>Resumo</span>
+        </button>
+        <button class="nav-item" data-section="formulario" title="Adicionar Transação">
+            <i class="fas fa-plus-circle"></i>
+            <span>Adicionar</span>
+        </button>
+        <button class="nav-item" data-section="dividas" title="Dívidas">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <span>Dívidas</span>
+        </button>
+        <button class="nav-item" data-section="salarios" title="Salários">
+            <i class="fas fa-wallet"></i>
+            <span>Salários</span>
+        </button>
+    </nav>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>

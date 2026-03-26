@@ -1,0 +1,576 @@
+/* ============================================
+   RESPONSIVIDADE - MOBILE FIRST
+   ============================================ */
+
+/* ============================================
+   MOBILE - Até 480px
+   ============================================ */
+
+@media (max-width: 480px) {
+    body {
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    header {
+        padding: 0.75rem 0.5rem;
+        min-height: 60px;
+    }
+
+    header h1 {
+        font-size: 1.2rem;
+        margin: 0;
+        letter-spacing: 0px;
+    }
+
+    header i {
+        animation: none;
+    }
+
+    .btn-tema {
+        top: 50%;
+        right: 0.5rem;
+        transform: translateY(-50%);
+        padding: 0.5rem;
+        font-size: 1rem;
+    }
+
+    main {
+        max-width: 100%;
+        padding: 0.75rem;
+        margin: 0;
+    }
+
+    section {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        animation: slideUp 0.4s ease;
+    }
+
+    h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0 0 1rem 0;
+        letter-spacing: 0.5px;
+        font-size: 1rem !important;
+    }
+
+    h3 {
+        font-size: 0.85rem;
+        border-left: 3px solid var(--primary);
+        padding-left: 0.5rem;
+    }
+
+    form {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    label {
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    input, select, textarea {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 16px;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 0;
+        transition: border-color 0.3s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    }
+
+    select {
+        background-size: 1.1em 1.1em;
+        padding-right: 2.2rem;
+    }
+
+    button {
+        width: auto;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        margin-bottom: 0;
+        min-height: 44px;
+    }
+
+    .btn {
+        width: 100%;
+        display: flex;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        min-width: 100%;
+    }
+
+    .stat-card {
+        padding: 1.25rem 1rem;
+        margin-bottom: 0.5rem;
+        animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+    .stat-card i {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-card p {
+        font-size: 1.3rem;
+    }
+
+    .month-summary,
+    .stats {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .summary-card {
+        padding: 1rem;
+    }
+
+    .charts {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .chart-container {
+        padding: 0.75rem;
+        border-radius: 12px;
+    }
+
+    #grafico, #grafico-dividas {
+        height: 250px !important;
+    }
+
+    .salarios-display {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .salarios-display > div {
+        padding: 1rem;
+        border-radius: 10px;
+    }
+
+    ul {
+        margin: 0.5rem 0 0 0;
+        gap: 0.5rem;
+    }
+
+    li {
+        padding: 0.75rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        border-left-width: 3px;
+        border-radius: 6px;
+    }
+
+    li button {
+        width: 100%;
+        font-size: 0.8rem;
+        padding: 0.5rem;
+    }
+
+    .month-selector {
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .month-selector button {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .month-name {
+        font-size: 1rem;
+        min-width: 110px;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .timeline-header {
+        font-size: 0.95rem;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 1.25rem;
+    }
+
+    .tabs {
+        gap: 0.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .tab-button {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .badge {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.65rem;
+    }
+}
+
+/* ============================================
+   TABLET - 481px até 768px
+   ============================================ */
+
+@media (min-width: 481px) and (max-width: 768px) {
+    body {
+        font-size: 15px;
+    }
+
+    header {
+        padding: 1rem;
+        min-height: 65px;
+    }
+
+    header h1 {
+        font-size: 1.4rem;
+    }
+
+    main {
+        padding: 1rem;
+    }
+
+    section {
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+    }
+
+    form {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1rem;
+    }
+
+    form button {
+        grid-column: 1 / -1;
+    }
+
+    .stat-card {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .month-summary {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .charts {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    #grafico, #grafico-dividas {
+        height: 300px !important;
+    }
+
+    .salarios-display {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    li {
+        flex-direction: row;
+    }
+
+    li button {
+        width: auto;
+        font-size: 0.85rem;
+    }
+}
+
+/* ============================================
+   DESKTOP PEQUENO - 769px até 1024px
+   ============================================ */
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    body {
+        font-size: 15px;
+    }
+
+    header {
+        padding: 1.25rem;
+    }
+
+    header h1 {
+        font-size: 1.6rem;
+    }
+
+    main {
+        max-width: 100%;
+        padding: 1.5rem;
+    }
+
+    section {
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    form {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    form button {
+        grid-column: 1 / -1;
+    }
+
+    .month-summary {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .charts {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    #grafico, #grafico-dividas {
+        height: 320px !important;
+    }
+
+    .salarios-display {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ============================================
+   DESKTOP GRANDE - 1025px em diante
+   ============================================ */
+
+@media (min-width: 1025px) {
+    body {
+        font-size: 16px;
+    }
+
+    header {
+        padding: 1.5rem 2rem;
+        min-height: 70px;
+    }
+
+    main {
+        max-width: 1200px;
+        padding: 2rem;
+    }
+
+    section {
+        padding: 2rem;
+        margin-bottom: 2.5rem;
+    }
+
+    form {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 1.5rem;
+    }
+
+    form button {
+        grid-column: 1 / -1;
+    }
+
+    .month-summary {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+
+    .stats {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+    }
+
+    .charts {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+    }
+
+    #grafico, #grafico-dividas {
+        height: 350px !important;
+    }
+
+    .salarios-display {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+/* ============================================
+   LANDSCAPE MOBILE
+   ============================================ */
+
+@media (max-height: 600px) and (orientation: landscape) {
+    header {
+        min-height: 50px;
+        padding: 0.4rem 1rem;
+    }
+
+    header h1 {
+        font-size: 1rem;
+    }
+
+    main {
+        padding: 0.5rem;
+    }
+
+    section {
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.05rem;
+    }
+
+    #grafico, #grafico-dividas {
+        height: 200px !important;
+    }
+
+    .stat-card {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+/* ============================================
+   IMPRESSÃO
+   ============================================ */
+
+@media print {
+    body {
+        background: white;
+        color: black;
+        font-size: 12px;
+    }
+
+    header, .btn-tema, .bottom-nav, .fab, button {
+        display: none !important;
+    }
+
+    section {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #999;
+        margin-bottom: 1rem;
+    }
+
+    h2, h3 {
+        page-break-after: avoid;
+    }
+
+    li {
+        page-break-inside: avoid;
+        border: 1px solid #ddd;
+    }
+
+    .charts {
+        display: none;
+    }
+}
+
+/* ============================================
+   MODO ESCURO DO SISTEMA
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+    body:not(.dark) {
+        background: linear-gradient(135deg, #0f172a 0%, #1a1f3a 100%);
+        color: #f3f4f6;
+    }
+
+    body:not(.dark) section {
+        background-color: #1f2937;
+    }
+
+    body:not(.dark) input, body:not(.dark) select {
+        background-color: #374151;
+        color: #f3f4f6;
+        border-color: #4b5563;
+    }
+}
+
+/* ============================================
+   ALTO CONTRASTE
+   ============================================ */
+
+@media (prefers-contrast: more) {
+    button:focus, input:focus, select:focus {
+        outline: 3px solid var(--primary);
+        outline-offset: 2px;
+    }
+
+    .stat-card, section {
+        border: 2px solid currentColor;
+    }
+}
+
+/* ============================================
+   ANIMAÇÕES REDUZIDAS
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ============================================
+   ORIENTAÇÃO - PORTRAIT
+   ============================================ */
+
+@media (orientation: portrait) {
+    .charts {
+        grid-template-columns: 1fr !important;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+    }
+}
+
+/* ============================================
+   ORIENTAÇÃO - LANDSCAPE
+   ============================================ */
+
+@media (orientation: landscape) {
+    main {
+        padding: 1rem;
+    }
+
+    section {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    #grafico, #grafico-dividas {
+        height: 250px !important;
+    }
+}
