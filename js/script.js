@@ -129,12 +129,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Carregar dados só do Firebase. Se não houver dados no Firestore, mantém estrutura vazia.
     transacoesFiltradas = [...transacoes];
 
+    // Tema - Aplicar imediatamente ao carregar (evita flash)
+    if (localStorage.getItem('tema') === 'dark') {
+        document.documentElement.classList.add('dark-mode-loading');
+    }
+
     // Tema
     function aplicarTema() {
         document.body.classList.toggle('dark', temaEscuro);
+        document.documentElement.classList.remove('dark-mode-loading');
         if (toggleTema) {
-            toggleTema.innerHTML = temaEscuro ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-            showToast('Tema alterado! 🎨', 'info');
+            const icon = temaEscuro ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            toggleTema.innerHTML = icon;
+            toggleTema.setAttribute('aria-label', temaEscuro ? 'Ativar tema claro' : 'Ativar tema escuro');
+            showToast(temaEscuro ? '🌙 Tema escuro ativado' : '☀️ Tema claro ativado', 'info');
         }
     }
 
@@ -145,7 +153,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (toggleTema) {
-        toggleTema.addEventListener('click', function() {
+        toggleTema.addEventListener('click', function(e) {
+            e.preventDefault();
             temaEscuro = !temaEscuro;
             localStorage.setItem('tema', temaEscuro ? 'dark' : 'light');
             aplicarTema();

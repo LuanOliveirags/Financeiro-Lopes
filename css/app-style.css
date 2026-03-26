@@ -18,6 +18,15 @@
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Previne flash ao carregar com tema escuro */
+html.dark-mode-loading {
+    --light-bg: #0f0f0f;
+    --card-bg: #1e1e1e;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --border-color: #333333;
+}
+
 body.dark {
     --light-bg: #0f0f0f;
     --card-bg: #1e1e1e;
@@ -25,6 +34,7 @@ body.dark {
     --text-secondary: #b0b0b0;
     --border-color: #333333;
 }
+
 
 * {
     box-sizing: border-box;
@@ -57,7 +67,8 @@ header {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 1rem;
 }
 
 header h1 {
@@ -67,11 +78,13 @@ header h1 {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex: 1;
 }
 
 header h1 i {
     font-size: 1.75rem;
 }
+
 
 .btn-tema {
     background: rgba(255, 255, 255, 0.2);
@@ -86,15 +99,34 @@ header h1 i {
     align-items: center;
     justify-content: center;
     transition: var(--transition);
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.btn-tema i {
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .btn-tema:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.35);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: scale(1.1);
+}
+
+.btn-tema:hover i {
     transform: rotate(20deg);
 }
 
 .btn-tema:active {
-    transform: rotate(20deg) scale(0.95);
+    transform: scale(0.95);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.btn-tema:active i {
+    transform: rotate(20deg) scale(0.9);
 }
 
 /* ============================================
