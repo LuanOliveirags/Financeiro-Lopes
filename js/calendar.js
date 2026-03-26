@@ -5,9 +5,18 @@
 class CalendarGenerator {
     constructor() {
         this.currentDate = new Date();
-        this.transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
-        this.dividas = JSON.parse(localStorage.getItem('dividas')) || [];
-        this.salarios = JSON.parse(localStorage.getItem('salarios')) || { luan: { bruto: 0, descontos: 0 }, bianca: { bruto: 0, descontos: 0 } };
+        this.transacoes = [];
+        this.dividas = [];
+        this.salarios = { luan: { bruto: 0, descontos: 0 }, bianca: { bruto: 0, descontos: 0 } };
+    }
+
+    setData(transacoes, dividas, salarios) {
+        this.transacoes = Array.isArray(transacoes) ? transacoes : [];
+        this.dividas = Array.isArray(dividas) ? dividas : [];
+        this.salarios = salarios || { luan: { bruto: 0, descontos: 0 }, bianca: { bruto: 0, descontos: 0 } };
+        this.generateCalendar();
+        this.updateTimeline();
+        this.updateSummary();
     }
 
     generateCalendar() {
@@ -221,5 +230,6 @@ class CalendarGenerator {
 // Inicializar ao carregar a página
 document.addEventListener('DOMContentLoaded', function() {
     const calendar = new CalendarGenerator();
+    window.calendar = calendar;
     calendar.init();
 });

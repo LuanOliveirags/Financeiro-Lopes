@@ -38,10 +38,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const navItems = document.querySelectorAll('.nav-item');
     const lista = document.getElementById('lista-transacoes');
 
-    let transacoes = JSON.parse(localStorage.getItem('transacoes')) || [];
-    let transacoesFiltradas = [...transacoes];
-    let dividas = JSON.parse(localStorage.getItem('dividas')) || [];
-    let salarios = JSON.parse(localStorage.getItem('salarios')) || { luan: { bruto: 0, descontos: 0 }, bianca: { bruto: 0, descontos: 0 } };
+    let transacoes = [];
+    let transacoesFiltradas = [];
+    let dividas = [];
+    let salarios = { luan: { bruto: 0, descontos: 0 }, bianca: { bruto: 0, descontos: 0 } };
     let temaEscuro = localStorage.getItem('tema') === 'dark';
 
     // Firebase (seus dados do projeto financeiro-lopes)
@@ -108,53 +108,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (Array.isArray(data.transacoes) && data.transacoes.length > 0) transacoes = data.transacoes;
                 if (Array.isArray(data.dividas) && data.dividas.length > 0) dividas = data.dividas;
                 if (data.salarios && data.salarios.luan && data.salarios.bianca) salarios = data.salarios;
-                transacoesFiltradas = [...transacoes];
-                exibirTransacoes();
-                exibirDividas();
-                exibirSalarios();
-                calcularTotais();
-                atualizarGrafico();
                 console.log('Dados carregados do Firebase');
+            } else {
+                console.log('Nenhum documento Firebase para este usuário. Mantendo vazio.');
             }
+
+            transacoesFiltradas = [...transacoes];
+            exibirTransacoes();
+            exibirDividas();
+            exibirSalarios();
+            calcularTotais();
+            atualizarGrafico();
         } catch (err) {
             console.error('Erro ao carregar dados do Firebase', err);
-            showToast('Falha ao carregar do Firebase. Usando dados locais.', 'warning');
+            showToast('Falha ao carregar do Firebase. Verifique a conexão.', 'warning');
         }
     }
 
 
-    // Dados de teste se estiver vazio
-    if (transacoes.length === 0) {
-        const today = new Date();
-        const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        
-        transacoes = [
-            { id: 1, data: `${currentMonth}-01`, tipo: 'receita', categoria: 'Salário', descricao: 'Salário Luan', valor: 3500 },
-            { id: 2, data: `${currentMonth}-01`, tipo: 'receita', categoria: 'Salário', descricao: 'Salário Bianca', valor: 3000 },
-            { id: 3, data: `${currentMonth}-05`, tipo: 'despesa', categoria: 'Alimentação', descricao: 'Compras no mercado', valor: 250 },
-            { id: 4, data: `${currentMonth}-10`, tipo: 'despesa', categoria: 'Transporte', descricao: 'Uber', valor: 85.50 },
-            { id: 5, data: `${currentMonth}-15`, tipo: 'despesa', categoria: 'Utilidades', descricao: 'Conta de luz', valor: 320 },
-            { id: 6, data: `${currentMonth}-20`, tipo: 'receita', categoria: 'Extra', descricao: 'Freelance', valor: 500 },
-        ];
-        localStorage.setItem('transacoes', JSON.stringify(transacoes));
-        transacoesFiltradas = [...transacoes];
-    }
-
-    if (Object.keys(dividas).length === 0 || dividas.length === 0) {
-        dividas = [
-            { id: 1, nome: 'Empréstimo Banco', valor: 5000, responsavel: 'luan', diaVencimento: 10 },
-            { id: 2, nome: 'Cartão Crédito', valor: 1200, responsavel: 'bianca', diaVencimento: 5 },
-        ];
-        localStorage.setItem('dividas', JSON.stringify(dividas));
-    }
-
-    if (salarios.luan.bruto === 0 || salarios.bianca.bruto === 0) {
-        salarios = {
-            luan: { bruto: 3500, descontos: 420 },
-            bianca: { bruto: 3000, descontos: 350 }
-        };
-        localStorage.setItem('salarios', JSON.stringify(salarios));
-    }
+    // Carregar dados só do Firebase. Se não houver dados no Firestore, mantém estrutura vazia.
+    transacoesFiltradas = [...transacoes];
 
     // Tema
     function aplicarTema() {
@@ -162,6 +135,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (toggleTema) {
             toggleTema.innerHTML = temaEscuro ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
             showToast('Tema alterado! 🎨', 'info');
+        }
+    }
+
+    function refreshCalendarData() {
+        if (window.calendar && typeof window.calendar.setData === 'function') {
+            window.calendar.setData(transacoes, dividas, salarios);
         }
     }
 
@@ -357,6 +336,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+
+        refreshCalendarData();
     }
 
     // Exibir transações
@@ -428,17 +409,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Salvar
     function salvarTransacoes() {
-        localStorage.setItem('transacoes', JSON.stringify(transacoes));
         salvarFirebase();
     }
 
     function salvarDividas() {
-        localStorage.setItem('dividas', JSON.stringify(dividas));
         salvarFirebase();
     }
 
     function salvarSalarios() {
-        localStorage.setItem('salarios', JSON.stringify(salarios));
         salvarFirebase();
     }
 
@@ -640,30 +618,6 @@ document.addEventListener('DOMContentLoaded', function() {
         reader.readAsArrayBuffer(file);
     });
 
-    // Inicializar com dados de exemplo se vazio
-    if (dividas.length === 0) {
-        dividas = [
-            { id: 1, responsavel: 'luan', nome: 'Financiamento Corsa', parcela: '4/36', diaVencimento: 3, valor: 1350 },
-            { id: 2, responsavel: 'luan', nome: 'Habitação Caixa', parcela: 'FIXO', diaVencimento: 20, valor: 980 },
-            { id: 3, responsavel: 'conjunto', nome: 'Condo/Agua/Gás', parcela: 'FIXO', diaVencimento: 10, valor: 620 },
-            { id: 4, responsavel: 'luan', nome: 'Cartão Porto Seguro', parcela: 'FIXO', diaVencimento: 20, valor: 100 },
-            { id: 5, responsavel: 'luan', nome: 'Recrearte', parcela: 'FIXO', diaVencimento: 20, valor: 660 },
-            { id: 6, responsavel: 'luan', nome: 'Luz', parcela: 'FIXO', diaVencimento: 15, valor: 290 },
-            { id: 7, responsavel: 'luan', nome: 'Perua', parcela: 'FIXO', diaVencimento: 20, valor: 380 },
-            { id: 8, responsavel: 'luan', nome: 'Claro', parcela: 'FIXO', diaVencimento: 20, valor: 60 },
-            { id: 9, responsavel: 'luan', nome: 'Claro Residencial', parcela: 'FIXO', diaVencimento: 15, valor: 130 },
-            { id: 10, responsavel: 'luan', nome: 'Total pass', parcela: 'FIXO', diaVencimento: 0, valor: 239.80 },
-            { id: 11, responsavel: 'bianca', nome: 'Claro', parcela: 'FIXO', diaVencimento: 20, valor: 87 }
-        ];
-        salvarDividas();
-    }
-
-    if (salarios.luan.bruto === 0) {
-        salarios.luan = { bruto: 2600, descontos: 0 };
-        salarios.bianca = { bruto: 2500, descontos: 0 };
-        salvarSalarios();
-    }
-
     // Notificações de vencimento
     function verificarVencimentos() {
         const hoje = new Date();
@@ -699,10 +653,10 @@ document.addEventListener('DOMContentLoaded', function() {
         atualizarGrafico();
     });
 
-    // Carregar dados inicialmente do Firebase. Se falhar, mantém local.
-    carregarFirebase().finally(() => {
-        aplicarFiltros();
-        exibirDividas();
-        exibirSalarios();
-    });
+    // Exibir localmente antes de Firebase (autenticação anon espera completar)
+    aplicarFiltros();
+    exibirDividas();
+    exibirSalarios();
+
+    // carregarFirebase será chamado automaticamente dentro do onAuthStateChanged
 });
