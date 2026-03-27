@@ -49,16 +49,32 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   loadDataFromStorage();
   checkLoginStatus();
-  setupOnlineOfflineListeners();
-  initMonthScroller();
-  initWeekScroller();
-  
+  if (typeof setupOnlineOfflineListeners === 'function') setupOnlineOfflineListeners();
+  if (typeof initMonthScroller === 'function') initMonthScroller();
+  if (typeof initWeekScroller === 'function') initWeekScroller();
+
   // Set today's date as default in forms
   document.getElementById('tranDate').valueAsDate = new Date();
   document.getElementById('debtDueDate').valueAsDate = new Date();
   document.getElementById('salaryDate').valueAsDate = new Date();
   document.getElementById('monthFilter').valueAsDate = new Date();
+
+  // ===== PWA: REGISTRO DO SERVICE WORKER =====
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => {
+          console.log('Service Worker registrado com sucesso:', reg.scope);
+        })
+        .catch(err => {
+          console.warn('Falha ao registrar o Service Worker:', err);
+        });
+    });
+  }
   document.getElementById('historyMonth').valueAsDate = new Date();
+
+  // Garante que a aba Status esteja ativa ao iniciar
+  switchTab('dashboard');
 });
 
 // ===== MONTH SCROLLER =====
@@ -342,29 +358,27 @@ function setupEventListeners() {
 
 // ===== TROCA DE ABAS =====
 function switchTab(tabName) {
-  // Hide all tabs
-  document.querySelectorAll('.tab-content').forEach(tab => {
-    tab.classList.remove('active');
-  });
-  document.querySelectorAll('.bottom-nav-item').forEach(tab => {
-    tab.classList.remove('active');
-  });
-  
-  // Show selected tab
-  document.getElementById(tabName).classList.add('active');
-  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-  
-  // Update content if needed
+  // Remove active de todas as abas e botões
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav-item').forEach(btn => btn.classList.remove('active'));
+
+  // Adiciona active na aba e botão corretos, se existirem
+  const tabSection = document.getElementById(tabName);
+  const tabBtn = document.querySelector(`.bottom-nav-item[data-tab="${tabName}"]`);
+  if (tabSection) tabSection.classList.add('active');
+  if (tabBtn) tabBtn.classList.add('active');
+
+  // Atualiza conteúdo se necessário
   if (tabName === 'dashboard') {
-    updateDashboard();
-    initMonthScroller();
+    if (typeof updateDashboard === 'function') updateDashboard();
+    if (typeof initMonthScroller === 'function') initMonthScroller();
   } else if (tabName === 'transactions') {
-    initWeekScroller();
-    updateTransactionHistory();
+    if (typeof initWeekScroller === 'function') initWeekScroller();
+    if (typeof updateTransactionHistory === 'function') updateTransactionHistory();
   } else if (tabName === 'debts') {
-    updateDebtsList();
+    if (typeof updateDebtsList === 'function') updateDebtsList();
   } else if (tabName === 'salaries') {
-    updateSalaryDisplay();
+    if (typeof updateSalaryDisplay === 'function') updateSalaryDisplay();
   }
 }
 
