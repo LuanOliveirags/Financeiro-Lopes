@@ -1,256 +1,602 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#4CAF50">
+    <meta name="theme-color" content="#F72585">
+    <meta name="description" content="App de Gestão financeira pessoal - Lopes Finanças">
+    <meta name="keywords" content="Finanças, despesas, Gestão, PWA">
+    
+    <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
-    <title>Controle de Finanças Pessoais</title>
-    <link rel="stylesheet" href="css/calendar-style.css">
+    <link rel="icon" type="image/png" href="img/icon-192.png">
+    <link rel="apple-touch-icon" href="img/icon-192.png">
+    
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/app-style.css">
     <link rel="stylesheet" href="css/sections.css">
     <link rel="stylesheet" href="css/animations.css">
-    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/base/responsive.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <title>Financeiro Lopes</title>
 </head>
 <body>
-    <header>
-        <h1><i class="fas fa-chart-line"></i> Minhas Finanças</h1>
-        <button id="toggle-tema" class="btn-tema" title="Alternar tema claro/escuro">
-            <i class="fas fa-moon"></i>
-        </button>
-    </header>
-    <main>
-        <section id="dashboard" class="active">
-            <div class="dashboard-header">
-                <div class="month-selector">
-                    <button id="prev-month"><i class="fas fa-chevron-left"></i></button>
-                    <div class="month-name" id="current-month">Março 2026</div>
-                    <button id="next-month"><i class="fas fa-chevron-right"></i></button>
+    <!-- LOGIN PAGE -->
+    <div id="loginContainer" class="login-container active">
+        <div class="login-bg-blobs">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="blob blob-3"></div>
+        </div>
+        <div class="login-wrapper">
+            <div class="login-logo">
+                <div class="login-avatar-wrap">
+                    <div class="login-avatar-ring">
+                        <img src="img/perfil.png" alt="Lopes Finanças" class="profile-logo" onerror="this.style.display='none'">
+                        <div class="avatar-icon-fallback"><i class="fa-solid fa-wallet"></i></div>
+                    </div>
                 </div>
+                <h1>Lopes Finanças</h1>
+                <p class="login-tagline">Gestão financeira inteligente</p>
             </div>
-
-            <div id="calendar" class="calendar">
-                <div class="calendar-weekdays">
-                    <div class="weekday">Dom</div>
-                    <div class="weekday">Seg</div>
-                    <div class="weekday">Ter</div>
-                    <div class="weekday">Qua</div>
-                    <div class="weekday">Qui</div>
-                    <div class="weekday">Sex</div>
-                    <div class="weekday">Sab</div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group input-float">
+                    <i class="fa-solid fa-user field-icon"></i>
+                    <input type="text" id="username" placeholder="Usuário" required autocomplete="username">
                 </div>
-                <div class="calendar-days" id="calendar-days"></div>
-            </div>
-
-            <div class="month-summary">
-                <div class="summary-card income">
-                    <div class="summary-label"><i class="fas fa-arrow-up"></i> Receitas</div>
-                    <div class="summary-value" id="total-receitas">R$ 0.00</div>
+                
+                <div class="form-group input-float">
+                    <i class="fa-solid fa-lock field-icon"></i>
+                    <input type="password" id="password" placeholder="Senha" required autocomplete="current-password">
                 </div>
-                <div class="summary-card expense">
-                    <div class="summary-label"><i class="fas fa-arrow-down"></i> Despesas</div>
-                    <div class="summary-value" id="total-despesas">R$ 0.00</div>
-                </div>
-                <div class="summary-card balance">
-                    <div class="summary-label"><i class="fas fa-wallet"></i> Saldo</div>
-                    <div class="summary-value" id="saldo-atual">R$ 0.00</div>
-                </div>
-            </div>
-
-            <div class="expenses-timeline">
-                <div class="timeline-header">
-                    <i class="fas fa-history"></i> Transações do Mês
-                </div>
-                <div id="timeline-transacoes" class="timeline-items"></div>
-            </div>
-
-            <div class="charts">
-                <div class="chart-container">
-                    <h3><i class="fas fa-chart-pie"></i> Receitas vs Despesas</h3>
-                    <canvas id="grafico"></canvas>
-                </div>
-                <div class="chart-container">
-                    <h3><i class="fas fa-chart-bar"></i> Dívidas por Responsável</h3>
-                    <canvas id="grafico-dividas"></canvas>
-                </div>
-            </div>
-
-            <div class="advanced-stats">
-                <div class="stat-card extra-small">
-                    <i class="fas fa-credit-card icon-orange"></i>
-                    <h4>Dívidas Luan</h4>
-                    <p id="total-dividas-luan">R$ 0.00</p>
-                </div>
-                <div class="stat-card extra-small">
-                    <i class="fas fa-credit-card icon-pink"></i>
-                    <h4>Dívidas Bianca</h4>
-                    <p id="total-dividas-bianca">R$ 0.00</p>
-                </div>
-                <div class="stat-card extra-small">
-                    <i class="fas fa-users icon-teal"></i>
-                    <h4>Dívidas Conjunto</h4>
-                    <p id="total-dividas-conjunto">R$ 0.00</p>
-                </div>
-                <div class="stat-card extra-small">
-                    <i class="fas fa-money-bill-wave icon-green"></i>
-                    <h4>Salário Líquido</h4>
-                    <p id="salario-liquido">R$ 0.00</p>
-                </div>
-            </div>
-        </section>
-        <section id="formulario">
-            <h2><i class="fas fa-plus-circle"></i> Adicionar Transação</h2>
-            <form id="form-transacao">
-                <label for="tipo">Tipo:</label>
-                <select id="tipo" required>
-                    <option value="receita">Receita</option>
-                    <option value="despesa">Despesa</option>
-                </select>
-                <label for="categoria">Categoria:</label>
-                <select id="categoria" required>
-                    <option value="salario">Salário</option>
-                    <option value="freelance">Freelance</option>
-                    <option value="investimentos">Investimentos</option>
-                    <option value="alimentacao">Alimentação</option>
-                    <option value="transporte">Transporte</option>
-                    <option value="lazer">Lazer</option>
-                    <option value="saude">Saúde</option>
-                    <option value="outros">Outros</option>
-                </select>
-                <label for="descricao">Descrição:</label>
-                <input type="text" id="descricao" required>
-                <label for="valor">Valor:</label>
-                <input type="number" id="valor" step="0.01" required>
-                <label for="data">Data:</label>
-                <input type="date" id="data" required>
-                <button type="submit" class="btn btn-primary">Adicionar</button>
+                
+                <button type="submit" class="login-btn">
+                    <span>Entrar</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                
+                <div id="loginError" class="login-error"></div>
             </form>
-            <h3>Transações</h3>
-            <ul id="lista-transacoes" class="lista-transacoes"></ul>
-        </section>
-        <section id="dividas">
-            <h2><i class="fas fa-file-invoice-dollar"></i> Controle de Dívidas</h2>
-            <form id="form-divida">
-                <label for="responsavel">Responsável:</label>
-                <select id="responsavel" required>
-                    <option value="luan">Luan</option>
-                    <option value="bianca">Bianca</option>
-                    <option value="conjunto">Conjunto</option>
-                </select>
-                <label for="nome-divida">Nome da Dívida:</label>
-                <input type="text" id="nome-divida" required>
-                <label for="parcela">Parcela (ex: 4/36):</label>
-                <input type="text" id="parcela">
-                <label for="dia-vencimento">Dia Vencimento:</label>
-                <input type="number" id="dia-vencimento" min="1" max="31" required>
-                <label for="valor-divida">Valor Mensal:</label>
-                <input type="number" id="valor-divida" step="0.01" required>
-                <button type="submit" class="btn btn-primary">Adicionar Dívida</button>
-            </form>
-            <h3>Dívidas Luan</h3>
-            <ul id="lista-dividas-luan"></ul>
-            <h3>Dívidas Bianca</h3>
-            <ul id="lista-dividas-bianca"></ul>
-            <h3>Dívidas Conjunto</h3>
-            <ul id="lista-dividas-conjunto"></ul>
-        </section>
-        <section id="salarios">
-            <h2><i class="fas fa-wallet"></i> Salários e Descontos</h2>
-            <form id="form-salario">
-                <label for="pessoa-salario">Pessoa:</label>
-                <select id="pessoa-salario" required>
-                    <option value="luan">Luan</option>
-                    <option value="bianca">Bianca</option>
-                </select>
-                <label for="salario-bruto">Salário Bruto Mensal:</label>
-                <input type="number" id="salario-bruto" step="0.01" required>
-                <label for="descontos">Descontos Totais:</label>
-                <input type="number" id="descontos" step="0.01" value="0">
-                <button type="submit" class="btn btn-primary">Salvar Salário</button>
-            </form>
-            <div class="salarios-display">
-                <div>
-                    <h3>Salário Luan</h3>
-                    <p>Bruto: R$ <span id="salario-luan-bruto">0.00</span></p>
-                    <p>Descontos: R$ <span id="salario-luan-descontos">0.00</span></p>
-                    <p>Líquido: R$ <span id="salario-luan-liquido">0.00</span></p>
+            
+            <div class="login-hint">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Demo: <strong>root</strong> / <strong>root</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APPLICATION -->
+    <div id="appContainer" class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="header-avatar-wrap">
+                        <img src="img/perfil.png" alt="Avatar" class="profile-logo-small" onerror="this.style.display='none'">
+                        <div class="avatar-icon-sm"><i class="fa-solid fa-user"></i></div>
+                    </div>
+                    <div class="header-text">
+                        <p class="header-greeting">Bem-vindo de volta</p>
+                        <h2 class="header-title">Lopes Finanças</h2>
+                    </div>
                 </div>
-                <div>
-                    <h3>Salário Bianca</h3>
-                    <p>Bruto: R$ <span id="salario-bianca-bruto">0.00</span></p>
-                    <p>Descontos: R$ <span id="salario-bianca-descontos">0.00</span></p>
-                    <p>Líquido: R$ <span id="salario-bianca-liquido">0.00</span></p>
-                </div>
-                <div>
-                    <h3>Conjunto</h3>
-                    <p>Bruto Total: R$ <span id="salario-conjunto-bruto">0.00</span></p>
-                    <p>Descontos Totais: R$ <span id="salario-conjunto-descontos">0.00</span></p>
-                    <p>Líquido Total: R$ <span id="salario-conjunto-liquido">0.00</span></p>
+                <div class="header-actions">
+                    <button id="offlineBadge" class="header-badge-btn" style="display: none;" title="Offline">
+                        <i class="fa-solid fa-wifi-slash"></i>
+                    </button>
+                    <button id="themeToggle" class="header-icon-btn" title="Alternar Tema">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <button id="logoutBtn" class="header-icon-btn logout-btn" title="Sair">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
                 </div>
             </div>
-        </section>
-        <section id="filtros">
-            <h2><i class="fas fa-filter"></i> Filtros e Importação</h2>
-            <label for="filtro-mes">Mês:</label>
-            <input type="month" id="filtro-mes">
-            <label for="filtro-categoria">Categoria:</label>
-            <select id="filtro-categoria">
-                <option value="">Todas</option>
-                <option value="salario">Salário</option>
-                <option value="freelance">Freelance</option>
-                <option value="investimentos">Investimentos</option>
-                <option value="alimentacao">Alimentação</option>
-                <option value="transporte">Transporte</option>
-                <option value="lazer">Lazer</option>
-                <option value="saude">Saúde</option>
-                <option value="outros">Outros</option>
-            </select>
-            <button id="btn-filtrar" class="btn btn-secondary">Filtrar</button>
-            <button id="btn-limpar-filtros" class="btn btn-secondary">Limpar Filtros</button>
-            <button id="btn-exportar" class="btn btn-success">Exportar CSV</button>
-            <label for="importar-excel">Importar Excel:</label>
-            <input type="file" id="importar-excel" accept=".xlsx,.xls">
-            <button id="btn-importar" class="btn btn-info">Importar</button>
-        </section>
-        <section id="lembretes">
-            <h2><i class="fas fa-bell"></i> Lembretes</h2>
-            <p>Receba notificações para dívidas vencendo amanhã.</p>
-            <button id="btn-testar-notificacao" class="btn btn-warning">Testar Notificação</button>
-        </section>
-    </main>
-    
-    <!-- Floating Action Button -->
-    <button class="fab" id="fab-adicionar" title="Adicionar Transação">
-        <i class="fas fa-plus"></i>
-    </button>
+        </header>
 
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <button class="nav-item active" data-section="dashboard" title="Dashboard">
-            <i class="fas fa-chart-pie"></i>
-            <span>Resumo</span>
-        </button>
-        <button class="nav-item" data-section="formulario" title="Adicionar Transação">
-            <i class="fas fa-plus-circle"></i>
-            <span>Adicionar</span>
-        </button>
-        <button class="nav-item" data-section="dividas" title="Dívidas">
-            <i class="fas fa-file-invoice-dollar"></i>
-            <span>Dívidas</span>
-        </button>
-        <button class="nav-item" data-section="salarios" title="Salários">
-            <i class="fas fa-wallet"></i>
-            <span>Salários</span>
-        </button>
-    </nav>
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="bottom-nav-item active" data-tab="dashboard">
+                <span class="nav-icon-wrap"><i class="fa-solid fa-chart-pie"></i></span>
+                <span class="nav-label">Status</span>
+            </button>
+            <button class="bottom-nav-item" data-tab="transactions">
+                <span class="nav-icon-wrap"><i class="fa-solid fa-calendar-days"></i></span>
+                <span class="nav-label">Diário</span>
+            </button>
+            <div class="fab-container">
+                <button id="fabBtn" class="fab-btn" aria-label="Adicionar">
+                    <i class="fa-solid fa-plus fab-plus"></i>
+                </button>
+                <div id="quickActionsMenu" class="quick-actions-menu">
+                    <button class="quick-action-item" data-action="transaction">
+                        <div class="qa-icon-wrap"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
+                        <span class="action-label">Transação</span>
+                    </button>
+                    <button class="quick-action-item" data-action="debt">
+                        <div class="qa-icon-wrap"><i class="fa-solid fa-credit-card"></i></div>
+                        <span class="action-label">Dívida</span>
+                    </button>
+                    <button class="quick-action-item" data-action="salary">
+                        <div class="qa-icon-wrap"><i class="fa-solid fa-sack-dollar"></i></div>
+                        <span class="action-label">Salário</span>
+                    </button>
+                </div>
+            </div>
+            <button class="bottom-nav-item" data-tab="debts">
+                <span class="nav-icon-wrap"><i class="fa-solid fa-credit-card"></i></span>
+                <span class="nav-label">Dívidas</span>
+            </button>
+            <button class="bottom-nav-item" data-tab="settings">
+                <span class="nav-icon-wrap"><i class="fa-solid fa-gear"></i></span>
+                <span class="nav-label">Config</span>
+            </button>
+        </nav>
 
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="js/calendar.js"></script>
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- ====== DASHBOARD / Status TAB ====== -->
+            <section id="dashboard" class="tab-content active">
+                
+                <!-- Status page header -->
+                <div class="page-header">
+                    <h2 class="page-title">Status</h2>
+                    <div class="page-header-actions">
+                        <input type="month" id="monthFilter" class="month-filter-hidden">
+                        <button class="ph-icon-btn" onclick="document.getElementById('monthFilter').showPicker ? document.getElementById('monthFilter').showPicker() : document.getElementById('monthFilter').click()" title="Filtrar mÃªs">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Month Scroller -->
+                <div class="months-scroll-wrap">
+                    <div class="months-scroller" id="monthScroller">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Balance Card -->
+                <div class="balance-card">
+                    <p class="balance-label">Saldo líquido</p>
+                    <h1 class="balance-amount" id="totalBalance">R$ 0,00</h1>
+                    <div class="sparkline-wrap">
+                        <canvas id="monthlyChart" class="sparkline-canvas"></canvas>
+                    </div>
+                    <div class="sparkline-x-labels">
+                        <span>1</span>
+                        <span>11</span>
+                        <span>21</span>
+                    </div>
+                </div>
+
+                <!-- Income & Expense Cards -->
+                <div class="ie-grid">
+                    <div class="ie-card">
+                        <div class="ie-circle income-circle">
+                            <i class="fa-solid fa-arrow-trend-up"></i>
+                        </div>
+                        <div class="ie-info">
+                            <p class="ie-label">Receita</p>
+                            <p class="ie-value income-value" id="totalIncomeDash">R$ 0,00</p>
+                        </div>
+                    </div>
+                    <div class="ie-card">
+                        <div class="ie-circle expense-circle">
+                            <i class="fa-solid fa-arrow-trend-down"></i>
+                        </div>
+                        <div class="ie-info">
+                            <p class="ie-label">Despesa</p>
+                            <p class="ie-value expense-value" id="totalExpenses">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Minis -->
+                <div class="kpi-mini-row">
+                    <div class="kpi-mini-card">
+                        <div class="kpi-mini-icon debt-kpi-icon">
+                            <i class="fa-solid fa-credit-card"></i>
+                        </div>
+                        <div class="kpi-mini-text">
+                            <p class="kpi-mini-label">Dívidas ativas</p>
+                            <p class="kpi-mini-val" id="totalSpent">R$ 0,00</p>
+                        </div>
+                    </div>
+                    <div class="kpi-mini-card">
+                        <div class="kpi-mini-icon people-kpi-icon">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div class="kpi-mini-text">
+                            <p class="kpi-mini-label">Responsáveis</p>
+                            <p class="kpi-mini-val" id="totalResponsible">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <i class="fa-solid fa-chart-pie chart-icon"></i>
+                            <h3>Por Categoria</h3>
+                        </div>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <i class="fa-solid fa-chart-bar chart-icon"></i>
+                            <h3>Por Responsável</h3>
+                        </div>
+                        <canvas id="responsibleChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <i class="fa-solid fa-money-bill-trend-up chart-icon"></i>
+                            <h3>Salários</h3>
+                        </div>
+                        <canvas id="incomesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="list-section">
+                    <div class="list-section-header">
+                        <h3>Recentes</h3>
+                        <button class="see-all-btn" onclick="switchTab('transactions')">
+                            Ver tudo <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div id="recentTransactionsList" class="transactions-list"></div>
+                </div>
+            </section>
+
+            <!-- ====== TRANSACTIONS / DAILY TRANSACTION TAB ====== -->
+            <section id="transactions" class="tab-content">
+
+                <div class="page-header">
+                    <h2 class="page-title">Transações</h2>
+                    <div class="page-header-actions">
+                        <input type="month" id="historyMonth" class="month-filter-hidden">
+                        <select id="historyFilter" class="filter-chip">
+                            <option value="all">Todas</option>
+                            <option value="entrada">Receitas</option>
+                            <option value="saida">Despesas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Week Day Scroller -->
+                <div class="week-scroller-wrap">
+                    <div class="week-scroller" id="weekScroller">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Add Transaction Panel (collapsible) -->
+                <div class="add-panel" id="addTransactionPanel">
+                    <button class="add-panel-toggle" id="togglePanelBtn">
+                        <div class="apt-left">
+                            <div class="apt-icon"><i class="fa-solid fa-plus"></i></div>
+                            <span>Nova Transação</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down apt-chevron"></i>
+                    </button>
+                    <div class="add-panel-body" id="transactionPanelBody">
+                        <form id="transactionForm" class="form-container">
+                            <!-- Type Toggle -->
+                            <div class="type-toggle-group">
+                                <button type="button" class="type-toggle-btn expense-toggle active" data-value="saida" id="btnSaida">
+                                    <i class="fa-solid fa-arrow-up"></i> Despesa
+                                </button>
+                                <button type="button" class="type-toggle-btn income-toggle" data-value="entrada" id="btnEntrada">
+                                    <i class="fa-solid fa-arrow-down"></i> Receita
+                                </button>
+                            </div>
+                            <input type="hidden" id="transType" value="saida">
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="tranAmount">Valor (R$)</label>
+                                    <input type="number" id="tranAmount" placeholder="0,00" step="0.01" min="0.01" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tranDate">Data</label>
+                                    <input type="date" id="tranDate" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="tranCategory">Categoria</label>
+                                    <select id="tranCategory" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="alimentacao">ðŸ½ï¸ AlimentaÃ§Ã£o</option>
+                                        <option value="transporte">ðŸš— Transporte</option>
+                                        <option value="saude">ðŸ’Š SaÃºde</option>
+                                        <option value="educacao">ðŸ“š EducaÃ§Ã£o</option>
+                                        <option value="moradia">ðŸ  Moradia</option>
+                                        <option value="lazer">ðŸŽ® Lazer</option>
+                                        <option value="utilidades">âš¡ Utilidades</option>
+                                        <option value="outros">ðŸ“ Outros</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tranResponsible">Responsável</label>
+                                    <select id="tranResponsible" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="Luan">Luan</option>
+                                        <option value="Bianca">Bianca</option>
+                                        <option value="Ambos">Ambos</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tranDescription">Descrição (opcional)</label>
+                                <input type="text" id="tranDescription" placeholder="Ex: AlmoÃ§o no restaurante">
+                            </div>
+
+                            <button type="submit" class="btn-primary">
+                                <i class="fa-solid fa-check"></i> Registrar Transação
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Transaction History List -->
+                <div class="list-section">
+                    <div id="transactionHistoryList" class="transactions-list"></div>
+                </div>
+            </section>
+
+            <!-- ====== DEBTS TAB ====== -->
+            <section id="debts" class="tab-content">
+                <div class="page-header">
+                    <h2 class="page-title">dívidas</h2>
+                    <button id="addDebtBtn" class="add-new-btn">
+                        <i class="fa-solid fa-plus"></i> Nova
+                    </button>
+                </div>
+
+                <!-- Debt Modal -->
+                <div id="debtModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="fa-solid fa-credit-card"></i> Nova dívida</h3>
+                            <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form id="debtForm">
+                            <div class="form-group">
+                                <label for="debtCreditor">Credor</label>
+                                <input type="text" id="debtCreditor" placeholder="Nome do credor" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="debtAmount">Valor (R$)</label>
+                                <input type="number" id="debtAmount" placeholder="0,00" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="debtDueDate">Vencimento</label>
+                                <input type="date" id="debtDueDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="debtResponsible">Responsável</label>
+                                <select id="debtResponsible" required>
+                                    <option value="Luan">Luan</option>
+                                    <option value="Bianca">Bianca</option>
+                                    <option value="Ambos">Ambos</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="debtDescription">Descrição</label>
+                                <textarea id="debtDescription" placeholder="Descrição da dívida" rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fa-solid fa-check"></i> Registrar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Debt Summary -->
+                <div class="summary-cards-row">
+                    <div class="summary-mini">
+                        <div class="sm-icon debt-sm-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                        <div class="sm-text">
+                            <p class="sm-label">Total</p>
+                            <p class="sm-value" id="totalDebts">R$ 0,00</p>
+                        </div>
+                    </div>
+                    <div class="summary-mini">
+                        <div class="sm-icon active-sm-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                        <div class="sm-text">
+                            <p class="sm-label">Ativas</p>
+                            <p class="sm-value" id="activeDebts">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="debtsList" class="debts-list"></div>
+            </section>
+
+            <!-- ====== SALARIES TAB ====== -->
+            <section id="salaries" class="tab-content">
+                <div class="page-header">
+                    <h2 class="page-title">Financeiro</h2>
+                    <button id="addSalaryBtn" class="add-new-btn">
+                        <i class="fa-solid fa-plus"></i> Nova entrada
+                    </button>
+                </div>
+
+                <!-- Salary Modal -->
+                <div id="salaryModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="fa-solid fa-sack-dollar"></i> Nova Entrada</h3>
+                            <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form id="salaryForm">
+                            <div class="form-group">
+                                <label for="salaryPerson">Pessoa</label>
+                                <select id="salaryPerson" required>
+                                    <option value="Luan">SalÃ¡rio Luan</option>
+                                    <option value="Bianca">SalÃ¡rio Bianca</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="salaryAmount">Valor (R$)</label>
+                                <input type="number" id="salaryAmount" placeholder="0,00" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="salaryDate">Data</label>
+                                <input type="date" id="salaryDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="salaryDescription">Descrição</label>
+                                <input type="text" id="salaryDescription" placeholder="Ex: SalÃ¡rio mÃªs de marÃ§o">
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fa-solid fa-check"></i> Registrar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Person Income Cards -->
+                <div class="person-cards-grid">
+                    <div class="person-income-card luan-card">
+                        <div class="pic-header">
+                            <div class="pic-avatar luan-avatar"><i class="fa-solid fa-user-tie"></i></div>
+                            <span class="pic-name">Luan</span>
+                        </div>
+                        <p class="salary-current" id="luanSalary">R$ 0,00</p>
+                        <p class="salary-annual" id="luanAnnual">Anual: R$ 0,00</p>
+                    </div>
+                    <div class="person-income-card bianca-card">
+                        <div class="pic-header">
+                            <div class="pic-avatar bianca-avatar"><i class="fa-solid fa-user"></i></div>
+                            <span class="pic-name">Bianca</span>
+                        </div>
+                        <p class="salary-current" id="biancaSalary">R$ 0,00</p>
+                        <p class="salary-annual" id="biancaAnnual">Anual: R$ 0,00</p>
+                    </div>
+                    <div class="person-income-card combined-card">
+                        <div class="pic-header">
+                            <div class="pic-avatar combined-avatar"><i class="fa-solid fa-users"></i></div>
+                            <span class="pic-name">Combinado</span>
+                        </div>
+                        <p class="salary-current" id="combinedSalary">R$ 0,00</p>
+                        <p class="salary-annual" id="combinedAnnual">Anual: R$ 0,00</p>
+                    </div>
+                </div>
+
+                <div class="list-section">
+                    <div class="list-section-header">
+                        <h3>HistÃ³rico de Entradas</h3>
+                    </div>
+                    <div id="salaryHistoryList" class="transactions-list"></div>
+                </div>
+            </section>
+
+            <!-- ====== SETTINGS TAB ====== -->
+            <section id="settings" class="tab-content">
+                <div class="settings-profile-card">
+                    <div class="spc-avatar-wrap">
+                        <img src="img/perfil.png" alt="" onerror="this.style.display='none'">
+                        <div class="spc-avatar-fallback"><i class="fa-solid fa-user"></i></div>
+                    </div>
+                    <div class="spc-text">
+                        <h3>Lopes Finanças</h3>
+                        <p>Versão 1.0.0</p>
+                    </div>
+                </div>
+
+                <div class="settings-groups">
+                    <div class="settings-group">
+                        <p class="sg-label">DADOS</p>
+                        <div class="sg-body">
+                            <button id="exportBtn" class="settings-row">
+                                <div class="sr-icon export-icon"><i class="fa-solid fa-file-export"></i></div>
+                                <span class="sr-text">Exportar dados</span>
+                                <i class="fa-solid fa-chevron-right sr-arrow"></i>
+                            </button>
+                            <button id="importBtn" class="settings-row">
+                                <div class="sr-icon import-icon"><i class="fa-solid fa-file-import"></i></div>
+                                <span class="sr-text">Importar dados</span>
+                                <i class="fa-solid fa-chevron-right sr-arrow"></i>
+                            </button>
+                            <input type="file" id="importFile" style="display: none;" accept=".json">
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <p class="sg-label">SINCRONIZAÃ‡ÃƒO</p>
+                        <div class="sg-body">
+                            <div class="settings-row info-row">
+                                <div class="sr-icon sync-icon"><i class="fa-solid fa-wifi"></i></div>
+                                <span class="sr-text">Status</span>
+                                <span id="syncStatus" class="status-pill connected">Conectado</span>
+                            </div>
+                            <button id="syncBtn" class="settings-row">
+                                <div class="sr-icon sync2-icon"><i class="fa-solid fa-rotate"></i></div>
+                                <span class="sr-text">Sincronizar agora</span>
+                                <i class="fa-solid fa-chevron-right sr-arrow"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <p class="sg-label">APLICAÃ‡ÃƒO</p>
+                        <div class="sg-body">
+                            <button id="installBtn" class="settings-row" style="display: none;">
+                                <div class="sr-icon install-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                                <span class="sr-text">Instalar App</span>
+                                <i class="fa-solid fa-chevron-right sr-arrow"></i>
+                            </button>
+                            <button id="clearCacheBtn" class="settings-row danger-row">
+                                <div class="sr-icon danger-icon"><i class="fa-solid fa-trash-can"></i></div>
+                                <span class="sr-text">Limpar Cache</span>
+                                <i class="fa-solid fa-chevron-right sr-arrow"></i>
+                            </button>
+                            <div class="settings-row info-row">
+                                <div class="sr-icon pwa-icon"><i class="fa-solid fa-rocket"></i></div>
+                                <span class="sr-text">PWA habilitado</span>
+                                <span id="pwaStatus" class="status-pill">Verificando</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="settings-footer-text">Â© 2026 Luan Gs Â· Todos os direitos reservados</p>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker registrado'))
+                    .catch(err => console.log('SW Error:', err));
+            });
+        }
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+    <!-- Main Script -->
     <script src="js/script.js"></script>
 </body>
 </html>

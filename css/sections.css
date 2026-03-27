@@ -1,650 +1,634 @@
-/* ============================================
-   CUSTOMIZAÇÕES PARA SEÇÕES
-   ============================================ */
-
-section h2 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0 0 1.5rem 0;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--primary);
-}
-
-section h2 i {
-    color: var(--primary);
-    font-size: 1.6rem;
-    animation: float 3s ease-in-out infinite;
-}
-
-section h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    margin: 1.75rem 0 1rem 0;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding-left: 0.75rem;
-    border-left: 3px solid var(--primary);
-}
-
-section h3 i {
-    color: var(--primary);
-}
-
-/* ============================================
-   CALENDÁRIO
-   ============================================ */
-
-.calendar {
-    margin: 1.5rem 0;
-}
-
-.calendar-weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.weekday {
-    text-align: center;
-    font-weight: 700;
-    color: var(--primary);
-    padding: 0.75rem;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.5px;
-}
-
-.calendar-days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.5rem;
-}
-
-.calendar-day {
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    border: 2px solid var(--border-color);
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: var(--card-bg);
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.calendar-day:hover {
-    border-color: var(--primary);
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
-}
-
-.calendar-day.atual {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
-    border-color: var(--primary);
-    font-weight: 700;
-}
-
-.calendar-day.com-eventos::after {
-    content: '';
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    background: var(--primary);
-    border-radius: 50%;
-    bottom: 4px;
-}
-
-/* ============================================
-   GRID PARA SEÇÕES COM MÚLTIPLAS COLUNAS
-   ============================================ */
-
-#dividas form,
-#salarios form,
-#filtros {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-}
-
-@media (min-width: 768px) {
-    #dividas form,
-    #salarios form {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    #dividas form button,
-    #salarios form button {
-        grid-column: 1 / -1;
-    }
-}
-
-/* ============================================
-   SEÇÃO FILTROS
-   ============================================ */
-
-#filtros {
-    background: linear-gradient(135deg, rgba(76, 175, 80, 0.05), rgba(33, 150, 243, 0.05));
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    margin-bottom: 1.5rem;
-    border: 1px solid var(--border-color);
-}
-
-#filtros label {
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 700;
-}
-
-#filtros input,
-#filtros select {
-    margin-bottom: 0.75rem;
-}
-
-#filtros button {
-    width: 100%;
-    margin-bottom: 0.5rem;
-}
-
-@media (min-width: 768px) {
-    #filtros {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.25rem;
-        align-items: end;
-    }
-
-    #filtros label {
-        grid-column: 1 / -1;
-    }
-
-    #filtros button {
-        grid-column: auto;
-        width: 100%;
-        margin: 0;
-    }
-}
-
-/* ============================================
-   LISTA DE DÍVIDAS ESTILIZADA
-   ============================================ */
-
-#lista-dividas-luan,
-#lista-dividas-bianca,
-#lista-dividas-conjunto {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-#lista-dividas-luan li,
-#lista-dividas-bianca li,
-#lista-dividas-conjunto li {
-    display: flex;
-    justify-content: space-between;
-    align-items: start;
-    gap: 1rem;
-    background: var(--card-bg);
-    border-radius: 10px;
-    padding: 1rem;
-    box-shadow: 0 10px 20px rgba(0,0,0,.08);
-}
-
-.divida-dados {
-    display: grid;
-    gap: 0.25rem;
-}
-
-.divida-dados strong {
-    color: var(--text-primary);
-    font-size: 0.95rem;
-}
-
-.divida-dados small {
-    color: var(--text-secondary);
-    font-size: 0.82rem;
-}
-
-.btn-remover {
-    background: #f44336;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 0.5rem 0.75rem;
-    cursor: pointer;
-    transition: transform .2s ease, background .2s ease;
-}
-
-.btn-remover:hover {
-    transform: translateY(-1px);
-    background: #d32f2f;
-}
-
-/* ============================================
-   LAYOUT RESPONSIVO
-   ============================================ */
-
-@media (min-width: 600px) {
-    .charts {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .salarios-display {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 900px) {
-    .salarios-display {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ============================================
-   TRANSIÇÕES E HOVER EFEITOS
-   ============================================ */
-
-section h3:hover {
-    transform: translateX(5px);
-}
-
-/* ============================================
-   MODAL E POPUPS
-   ============================================ */
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    animation: fadeIn 0.3s ease;
-}
-
-.modal.show {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background-color: var(--card-bg);
-    padding: 2rem;
-    border-radius: 12px;
-    max-width: 500px;
-    width: 90%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.close {
-    color: var(--text-secondary);
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: color 0.3s;
-}
-
-.close:hover,
-.close:focus {
-    color: var(--primary);
-}
-
-/* ============================================
-   CARDS COM ÍCONES ESPECIAIS
-   ============================================ */
-
-.stat-card {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    border: none;
-    position: relative;
-}
-
-.stat-card::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.15), transparent);
-    border-radius: 50%;
-    animation: none;
-}
-
-.stat-card:hover::after {
-    animation: bubble 0.8s ease-out;
-}
-
-@keyframes bubble {
-    0% {
-        transform: scale(0);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 0;
-    }
-}
-
-/* CARD COM TOPO COLORIDO */
-.summary-card {
-    position: relative;
-    overflow: hidden;
-}
-
-.summary-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary), var(--secondary));
-    animation: gradientShift 3s ease-in-out infinite;
-    background-size: 200% 100%;
-}
-
-.summary-card:hover {
-    transform: translateY(-12px) rotateX(5deg);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* DÍVIDAS COM BARRA DE COR */
-#lista-dividas-luan li,
-#lista-dividas-bianca li,
-#lista-dividas-conjunto li {
-    border-left: 4px solid;
-    padding-left: 1.5rem;
-    position: relative;
-}
-
-#lista-dividas-luan li {
-    border-left-color: #FF9800;
-}
-
-#lista-dividas-bianca li {
-    border-left-color: #E91E63;
-}
-
-#lista-dividas-conjunto li {
-    border-left-color: #009688;
-}
-
-#lista-dividas-luan li::before {
-    content: '💳';
-    font-size: 1.2rem;
-    margin-right: 0.75rem;
-}
-
-#lista-dividas-bianca li::before {
-    content: '💳';
-    font-size: 1.2rem;
-    margin-right: 0.75rem;
-}
-
-#lista-dividas-conjunto li::before {
-    content: '👥';
-    font-size: 1.2rem;
-    margin-right: 0.75rem;
-}
-
-/* ============================================
-   LABELS COM ANIMAÇÃO
-   ============================================ */
-
-label {
-    position: relative;
-    display: block;
-}
-
-label::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -2px;
-    width: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--primary), var(--secondary));
-    transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.advanced-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-top: 2rem;
-}
-
-.stat-card.extra-small {
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card.extra-small::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent);
-    animation: shimmerMove 3s infinite;
-}
-
-@keyframes shimmerMove {
-    0% { transform: translate(-50%, -50%); }
-    100% { transform: translate(50%, 50%); }
-}
-
-.stat-card.extra-small i {
-    font-size: 2.5rem;
-    margin-bottom: 0.75rem;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
-}
-
-.stat-card.extra-small:hover {
-    transform: translateY(-10px) scale(1.03);
-}
-
-.stat-card.extra-small h4 {
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-secondary);
-}
-
-.stat-card.extra-small p {
-    font-size: 1.5rem;
-    color: var(--text-primary);
-    font-weight: 700;
-    margin: 0.75rem 0 0 0;
-}
-
-.tabs {
-    display: flex;
-    gap: 0.5rem;
-    border-bottom: 2px solid var(--border-color);
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-}
-
-.tab-button {
-    padding: 1rem 1.25rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-secondary);
-    font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-bottom: 3px solid transparent;
-    margin-bottom: -2px;
-}
-
-.tab-button:hover {
-    color: var(--primary);
-}
-
-.tab-button.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
-}
-
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
-}
-
-/* ============================================
-   BADGES E TAGS
-   ============================================ */
-
-.badge {
-    display: inline-block;
-    padding: 0.4rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.badge-primary {
-    background-color: rgba(76, 175, 80, 0.2);
-    color: var(--primary);
-}
-
-.badge-success {
-    background-color: rgba(40, 167, 69, 0.2);
-    color: #28a745;
-}
-
-.badge-danger {
-    background-color: rgba(244, 67, 54, 0.2);
-    color: #f44336;
-}
-
-.badge-warning {
-    background-color: rgba(255, 193, 7, 0.2);
-    color: #ff9800;
-}
-
-@media (min-width: 768px) {
-    .charts {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    #grafico, #grafico-dividas {
-        height: 300px;
-    }
-}
-
-/* ============================================
-   ALERTAS E NOTIFICAÇÕES
-   ============================================ */
-
-.alert {
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    animation: slideDown 0.3s ease-out;
-}
-
-.alert-success {
-    background: rgba(81, 207, 102, 0.1);
-    border-left: 4px solid var(--success);
-    color: var(--success);
-}
-
-.alert-danger {
-    background: rgba(255, 107, 107, 0.1);
-    border-left: 4px solid var(--danger);
-    color: var(--danger);
-}
-
-.alert-warning {
-    background: rgba(255, 217, 61, 0.1);
-    border-left: 4px solid var(--warning);
-    color: #F0A500;
-}
-
-.alert-info {
-    background: rgba(108, 99, 255, 0.1);
-    border-left: 4px solid var(--primary);
-    color: var(--primary);
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* ============================================
-   RESPONSIVIDADE PARA MAIOR TELA
-   ============================================ */
-
-@media (min-width: 1024px) {
-    #filtros {
-        grid-template-columns: 1fr 1fr 1fr 1fr;
-        gap: 1.5rem;
-    }
-
-    #filtros label {
-        grid-column: auto;
-    }
-
-    #filtros button {
-        grid-column: auto;
-    }
-}
-
-/* ============================================
-   MODO ESCURO
-   ============================================ */
-
-body.dark section {
-    background: var(--card-bg);
-}
-
-body.dark .chart-container,
-body.dark .salarios-display > div,
-body.dark form,
-body.dark #filtros {
-    background: var(--card-bg);
-    border-color: var(--border-color);
-}
+﻿/* ============================================================
+   SECTIONS.CSS — SECTION-SPECIFIC COMPONENTS
+   Stats  · Transactions · Debts · Salaries
+   ============================================================ */
+
+/* ═══════════════════════════════
+   DASHBOARD / STATS SECTION
+═══════════════════════════════ */
+
+/* Month Scroller */
+.months-scroll-wrap {
+  padding: 0 20px 12px;
+  overflow: hidden;
+}
+.months-scroller {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.months-scroller::-webkit-scrollbar { display: none; }
+.month-btn {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  padding: 7px 18px;
+  border-radius: var(--r-full);
+  font-size: 0.875rem;
+  font-weight: var(--fw-medium);
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  white-space: nowrap;
+  transition: all var(--ease);
+  cursor: pointer;
+}
+.month-btn:hover { border-color: var(--primary); color: var(--primary); }
+.month-btn.active {
+  background: var(--grad-primary);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+}
+
+/* Balance Card */
+.balance-card {
+  margin: 0 16px 16px;
+  background: var(--bg-card);
+  border-radius: var(--r-xl);
+  padding: 24px 24px 12px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+.balance-card::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: rgba(var(--primary-rgb), 0.06);
+}
+.balance-label {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.01em;
+}
+.balance-amount {
+  font-size: 2.375rem;
+  font-weight: var(--fw-black);
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 20px;
+}
+.sparkline-wrap {
+  height: 80px;
+  width: 100%;
+  position: relative;
+}
+.sparkline-canvas { width: 100% !important; height: 80px !important; }
+.sparkline-x-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 4px 0;
+}
+.sparkline-x-labels span { font-size: 0.6875rem; color: var(--text-muted); }
+
+/* Income / Expense Cards */
+.ie-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+.ie-card {
+  background: var(--bg-card);
+  border-radius: var(--r-lg);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1.5px solid var(--border);
+  transition: all var(--ease);
+}
+.ie-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.ie-circle {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.0625rem;
+  flex-shrink: 0;
+}
+.income-circle { background: var(--income-bg); color: var(--income-dark); }
+.expense-circle { background: var(--expense-bg); color: var(--expense); }
+.ie-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+  font-weight: var(--fw-medium);
+}
+.ie-value {
+  font-size: 1rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+}
+.income-value { color: var(--income-dark); }
+.expense-value { color: var(--expense); }
+
+/* KPI Mini Row */
+.kpi-mini-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 16px 20px;
+}
+.kpi-mini-card {
+  background: var(--bg-card);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-xs);
+  border: 1.5px solid var(--border);
+}
+.kpi-mini-icon {
+  width: 38px; height: 38px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+.debt-kpi-icon   { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
+.people-kpi-icon { background: rgba(76,201,240, 0.12); color: var(--income-dark); }
+.kpi-mini-label  { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 2px; }
+.kpi-mini-val    { font-size: 0.9375rem; font-weight: var(--fw-bold); color: var(--text-primary); }
+
+/* Charts Grid */
+.charts-grid {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.chart-card {
+  background: var(--bg-card);
+  border-radius: var(--r-xl);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.chart-card-header h3 {
+  font-size: 0.9375rem;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+}
+.chart-icon { color: var(--primary); font-size: 0.875rem; }
+
+
+/* ═══════════════════════════════
+   TRANSACTIONS SECTION
+═══════════════════════════════ */
+
+/* Week Day Scroller */
+.week-scroller-wrap {
+  padding: 0 20px 16px;
+  overflow: hidden;
+}
+.week-scroller {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.week-scroller::-webkit-scrollbar { display: none; }
+.week-day-btn {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: all var(--ease);
+  min-width: 54px;
+}
+.week-day-btn:hover { border-color: var(--primary); }
+.week-day-btn.active {
+  background: var(--grad-primary);
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+}
+.wday-name {
+  font-size: 0.6875rem;
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.wday-num {
+  font-size: 1.125rem;
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+.week-day-btn.active .wday-name,
+.week-day-btn.active .wday-num { color: #fff; }
+
+/* Add Transaction Panel */
+.add-panel {
+  margin: 0 16px 16px;
+  background: var(--bg-card);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+}
+.add-panel-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 16px 18px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+  font-size: 0.9375rem;
+  transition: background var(--ease);
+}
+.add-panel-toggle:hover { background: var(--bg-card-alt); }
+.apt-left { display: flex; align-items: center; gap: 12px; }
+.apt-icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--grad-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+}
+.apt-chevron {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  transition: transform var(--ease-med);
+}
+.add-panel-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 400ms ease;
+}
+.add-panel-body.open { max-height: 700px; }
+
+.form-container {
+  padding: 0 18px 18px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+/* Type Toggle */
+.type-toggle-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.type-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  font-size: 0.875rem;
+  font-weight: var(--fw-medium);
+  background: var(--bg-card-alt);
+  color: var(--text-secondary);
+  border: 2px solid var(--border);
+  transition: all var(--ease);
+  cursor: pointer;
+}
+.expense-toggle.active {
+  background: var(--expense-bg);
+  color: var(--expense);
+  border-color: var(--expense);
+}
+.income-toggle.active {
+  background: var(--income-bg);
+  color: var(--income-dark);
+  border-color: var(--income);
+}
+
+/* ─── TRANSACTION ITEMS ─── */
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.day-group-label {
+  font-size: 0.8125rem;
+  font-weight: var(--fw-semi);
+  color: var(--text-secondary);
+  padding: 8px 4px 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.transaction-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-card);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
+  transition: all var(--ease);
+}
+.transaction-item:hover { box-shadow: var(--shadow-sm); transform: translateX(3px); }
+
+.trans-icon-wrap {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  flex-shrink: 0;
+  font-style: normal;
+}
+/* Category colors */
+.cat-alimentacao { background: #FFF3E0; color: #F57C00; }
+.cat-transporte  { background: #E3F2FD; color: #1565C0; }
+.cat-saude       { background: #F3E5F5; color: #7B1FA2; }
+.cat-educacao    { background: #EDE7F6; color: #4527A0; }
+.cat-moradia     { background: #E8F5E9; color: #2E7D32; }
+.cat-lazer       { background: #FCE4EC; color: #C62828; }
+.cat-utilidades  { background: #E0F7FA; color: #00838F; }
+.cat-outros      { background: #F5F5F5; color: #616161; }
+.cat-entrada     { background: var(--income-bg); color: var(--income-dark); }
+.cat-saida       { background: var(--expense-bg); color: var(--expense); }
+.cat-salario     { background: var(--income-bg); color: var(--income-dark); }
+
+.trans-info { flex: 1; min-width: 0; }
+.trans-name {
+  font-size: 0.9375rem;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.trans-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.trans-cat-badge {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: var(--fw-medium);
+}
+.trans-amount {
+  font-size: 1rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.trans-amount.entrada { color: var(--income-dark); }
+.trans-amount.saida   { color: var(--expense); }
+.trans-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Daily total row */
+.daily-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--bg-card);
+  border-radius: var(--r-md);
+  margin-top: 8px;
+  font-weight: var(--fw-semi);
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  border-top: 1.5px solid var(--border);
+}
+
+/* Day group wrapper */
+.transaction-day-group {
+  background: var(--bg-card);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.trans-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--bg-card-alt);
+  border-bottom: 1px solid var(--border);
+}
+.trans-day-label {
+  font-size: 0.8125rem;
+  font-weight: var(--fw-semi);
+  color: var(--text-secondary);
+}
+.trans-day-total {
+  font-size: 0.8125rem;
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+.transaction-day-group .transaction-item {
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+}
+.transaction-day-group .transaction-item:last-child { border-bottom: none; }
+.transaction-day-group .transaction-item:hover { transform: none; background: var(--bg-card-alt); }
+
+
+/* ═══════════════════════════════
+   DEBTS SECTION
+═══════════════════════════════ */
+
+.summary-cards-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+.summary-mini {
+  background: var(--bg-card);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-xs);
+  border: 1.5px solid var(--border);
+}
+.sm-icon {
+  width: 40px; height: 40px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9375rem;
+  flex-shrink: 0;
+}
+.debt-sm-icon   { background: var(--expense-bg); color: var(--expense); }
+.active-sm-icon { background: var(--warning-bg); color: var(--warning); }
+.sm-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px; }
+.sm-value { font-size: 1rem; font-weight: var(--fw-bold); color: var(--text-primary); }
+
+.debts-list {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.debt-item {
+  background: var(--bg-card);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-xs);
+  border: 1.5px solid var(--border);
+  transition: all var(--ease);
+}
+.debt-item:hover { box-shadow: var(--shadow-sm); }
+.debt-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.debt-creditor {
+  font-size: 1rem;
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+.debt-amount-badge {
+  font-size: 1.0625rem;
+  font-weight: var(--fw-black);
+  color: var(--expense);
+  letter-spacing: -0.02em;
+}
+.debt-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.debt-meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--bg-card-alt);
+  padding: 3px 8px;
+  border-radius: var(--r-full);
+}
+.debt-meta-tag i { font-size: 0.6875rem; color: var(--text-muted); }
+.debt-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  font-size: 0.75rem;
+  font-weight: var(--fw-semi);
+}
+.debt-status-badge.overdue   { background: var(--danger-bg);  color: var(--danger); }
+.debt-status-badge.due-soon  { background: var(--warning-bg); color: var(--warning); }
+.debt-status-badge.active    { background: var(--info-bg);    color: var(--info); }
+.debt-status-badge.paid      { background: var(--success-bg); color: var(--success); }
+.debt-item-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+
+/* ═══════════════════════════════
+   SALARY / FINANCEIRO SECTION
+═══════════════════════════════ */
+
+.person-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+.person-income-card {
+  border-radius: var(--r-xl);
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.person-income-card::before {
+  content: '';
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: rgba(255,255,255, 0.18);
+}
+.luan-card     { background: linear-gradient(135deg, #4361EE 0%, #3A0CA3 100%); grid-column: span 1; }
+.bianca-card   { background: linear-gradient(135deg, #F72585 0%, #B5179E 100%); grid-column: span 1; }
+.combined-card { background: linear-gradient(135deg, #4CC9F0 0%, #0077B6 100%); grid-column: span 2; }
+
+.pic-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.pic-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.875rem;
+}
+.pic-name { color: rgba(255,255,255,0.85); font-size: 0.875rem; font-weight: var(--fw-medium); }
+.person-income-card .salary-current {
+  font-size: 1.375rem;
+  font-weight: var(--fw-black);
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin-bottom: 2px;
+}
+.person-income-card .salary-annual {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.65);
+  font-weight: var(--fw-normal);
+}
+
+/* Keep .salary-current / .salary-annual used elsewhere */
+.salary-current { font-size: 1.5rem; font-weight: var(--fw-bold); color: var(--text-primary); }
+.salary-annual  { font-size: 0.8125rem; color: var(--text-muted); }

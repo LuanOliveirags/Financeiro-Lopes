@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Backend API
+  api:
+    build: .
+    container_name: financeiro-api
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app.py
+      - DATABASE_URL=postgresql://postgres:password@db:5432/financeiro
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    command: flask run --host=0.0.0.0
+    networks:
+      - financeiro-network
+
+  # Banco de Dados PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: financeiro-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=financeiro
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - financeiro-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Adminer (gerenciador de banco de dados)
+  adminer:
+    image: adminer
+    container_name: financeiro-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - financeiro-network
+
+volumes:
+  postgres_data:
+
+networks:
+  financeiro-network:
+    driver: bridge
+
+# Para iniciar:
+# docker-compose up
+
+# Para parar:
+# docker-compose down
+
+# Para remover dados:
+# docker-compose down -v
