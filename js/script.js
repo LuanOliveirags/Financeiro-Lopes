@@ -981,6 +981,9 @@ function addDebt(e) {
   const manualInstValue = parseFloat(document.getElementById('debtInstallmentValue').value) || (totalAmount / installments);
 
   const isFinanciamento = debtType === 'financiamento';
+  const isCartao = debtType === 'cartao';
+  const cartaoMode = document.getElementById('cartaoMode').value;
+  const usesInstallments = isFinanciamento || (isCartao && cartaoMode === 'parcelado');
 
   const creditor = debtType === 'cartao'
     ? document.getElementById('debtCardIssuer').value
