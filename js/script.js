@@ -7,16 +7,38 @@ const CONFIG = {
   credentials: {
     username: 'root',
     password: 'root'
-  },
-  firebase: {
-    apiKey: "AIzaSyDxxxxxxxxxxxxxxxxxxx", // Adicionar sua key
-    authDomain: "seu-projeto.firebaseapp.com",
-    projectId: "seu-projeto",
-    storageBucket: "seu-projeto.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:xxxxxxxxxxxxxxxx"
   }
 };
+
+// ===== FIREBASE — INICIALIZAÇÃO =====
+// Substitua as credenciais abaixo pelas do seu projeto Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyAMx-ZoL4cco2NmPzEfIe5yYC1WLHPc0vk",
+  authDomain: "financeiro-lopes.firebaseapp.com",
+  projectId: "financeiro-lopes",
+  storageBucket: "financeiro-lopes.firebasestorage.app",
+  messagingSenderId: "621443570583",
+  appId: "1:621443570583:web:1a5ad0106d2606561482d2",
+  measurementId: "G-7FHPEHP5G5"
+};
+
+let db = null;
+let firebaseReady = false;
+
+function initFirebase() {
+  try {
+    if (typeof firebase !== 'undefined' && firebaseConfig.apiKey) {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      firebaseReady = true;
+      console.log('Firebase Firestore conectado!');
+    } else {
+      console.warn('Firebase não configurado. Usando localStorage apenas.');
+    }
+  } catch (error) {
+    console.warn('Erro ao iniciar Firebase:', error);
+  }
+}
 
 // ===== ESTADO GLOBAL =====
 const state = {
@@ -45,6 +67,7 @@ const CATEGORY_MAP = {
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', () => {
+  initFirebase();
   initializeApp();
   setupEventListeners();
   loadDataFromStorage();
@@ -54,24 +77,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof initWeekScroller === 'function') initWeekScroller();
 
   // Set today's date as default in forms
-  document.getElementById('tranDate').valueAsDate = new Date();
-  document.getElementById('debtDueDate').valueAsDate = new Date();
-  document.getElementById('salaryDate').valueAsDate = new Date();
-  document.getElementById('monthFilter').valueAsDate = new Date();
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const monthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  document.getElementById('tranDate').value = todayStr;
+  document.getElementById('debtDueDate').value = todayStr;
+  document.getElementById('salaryDate').value = todayStr;
+  document.getElementById('monthFilter').value = monthStr;
 
-  // ===== PWA: REGISTRO DO SERVICE WORKER =====
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(reg => {
-          console.log('Service Worker registrado com sucesso:', reg.scope);
-        })
-        .catch(err => {
-          console.warn('Falha ao registrar o Service Worker:', err);
-        });
-    });
-  }
-  document.getElementById('historyMonth').valueAsDate = new Date();
+  document.getElementById('historyMonth').value = monthStr;
 
   // Garante que a aba Status esteja ativa ao iniciar
   switchTab('dashboard');
@@ -161,17 +175,25 @@ function toDateStr(d) {
 function initializeApp() {
   console.log('Inicializando Financeiro Lopes...');
   
-  // Initialize Firebase (quando configurado)
-  // if (CONFIG.firebase.apiKey) {
-  //   initializeFirebase();
-  // }
-  
   // Check PWA Status
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations()
       .then(registrations => {
-        document.getElementById('pwaStatus').textContent = registrations.length > 0 ? 'Sim' : 'Não';
+        const el = document.getElementById('pwaStatus');
+        if (el) el.textContent = registrations.length > 0 ? 'Sim' : 'Não';
       });
+  }
+
+  // Atualizar status do Firebase na tela
+  const syncEl = document.getElementById('syncStatus');
+  if (syncEl) {
+    if (firebaseReady) {
+      syncEl.textContent = 'Conectado';
+      syncEl.className = 'status-pill connected';
+    } else {
+      syncEl.textContent = 'Local';
+      syncEl.className = 'status-pill disconnected';
+    }
   }
 }
 
@@ -433,20 +455,23 @@ function addTransaction(e) {
   
   state.transactions.push(transaction);
   saveDataToStorage();
+  saveToFirebase('transactions', transaction);
   
   // Show success message
   showAlert('Transação registrada com sucesso!', 'success');
   
   // Reset form
   e.target.reset();
-  document.getElementById('tranDate').valueAsDate = new Date();
+  const now = new Date();
+  document.getElementById('tranDate').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  // Reset toggle visual para Despesa
+  document.getElementById('transType').value = 'saida';
+  document.querySelectorAll('.type-toggle-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btnSaida').classList.add('active');
   
   // Update displays
   updateDashboard();
   updateTransactionHistory();
-  
-  // Sync with Firebase
-  syncTransactionsToFirebase();
 }
 
 // ===== ADICIONAR DÍVIDA =====
@@ -471,6 +496,7 @@ function addDebt(e) {
   
   state.debts.push(debt);
   saveDataToStorage();
+  saveToFirebase('debts', debt);
   
   showAlert('Dívida registrada com sucesso!', 'success');
   
@@ -481,9 +507,6 @@ function addDebt(e) {
   // Update displays
   updateDebtsList();
   updateDashboard();
-  
-  // Sync
-  syncDataToFirebase();
 }
 
 // ===== ADICIONAR SALÁRIO =====
@@ -506,6 +529,7 @@ function addSalary(e) {
   
   state.salaries.push(salary);
   saveDataToStorage();
+  saveToFirebase('salaries', salary);
   
   showAlert('Entrada registrada com sucesso!', 'success');
   
@@ -516,21 +540,32 @@ function addSalary(e) {
   // Update displays
   updateSalaryDisplay();
   updateDashboard();
-  
-  // Sync
-  syncDataToFirebase();
 }
 
 // ===== ATUALIZAR DASHBOARD =====
 function updateDashboard() {
-  const selectedMonth = new Date(document.getElementById('monthFilter').value || new Date());
-  const month = selectedMonth.getMonth();
-  const year = selectedMonth.getFullYear();
+  const monthVal = document.getElementById('monthFilter').value;
+  let month, year;
+  if (monthVal) {
+    const parts = monthVal.split('-');
+    year = parseInt(parts[0]);
+    month = parseInt(parts[1]) - 1;
+  } else {
+    const now = new Date();
+    month = now.getMonth();
+    year = now.getFullYear();
+  }
   
-  // Filter data for current month
+  // Filter data for current month (usando T12:00:00 para evitar bug de fuso horário)
   const monthTransactions = state.transactions.filter(t => {
-    const tDate = new Date(t.date);
+    const tDate = new Date(t.date + 'T12:00:00');
     return tDate.getMonth() === month && tDate.getFullYear() === year;
+  });
+  
+  // Salários do mês
+  const monthSalaries = state.salaries.filter(s => {
+    const sDate = new Date(s.date + 'T12:00:00');
+    return sDate.getMonth() === month && sDate.getFullYear() === year;
   });
   
   const monthDebts = state.debts.filter(d => d.status === 'active');
@@ -540,10 +575,14 @@ function updateDashboard() {
     .filter(t => t.type === 'saida')
     .reduce((sum, t) => sum + t.amount, 0);
   
-  const totalIncome = monthTransactions
+  const totalTransactionIncome = monthTransactions
     .filter(t => t.type === 'entrada')
     .reduce((sum, t) => sum + t.amount, 0);
   
+  const totalSalaryIncome = monthSalaries
+    .reduce((sum, s) => sum + s.amount, 0);
+  
+  const totalIncome = totalTransactionIncome + totalSalaryIncome;
   const totalBalance = totalIncome - totalExpenses;
   const totalDebt = monthDebts.reduce((sum, d) => sum + d.amount, 0);
   const responsibleCount = new Set(monthTransactions.map(t => t.responsible)).size;
@@ -581,9 +620,17 @@ function createBalanceSparkline(transactions) {
   const ctx = document.getElementById('monthlyChart');
   if (!ctx) return null;
 
-  const selectedMonth = new Date(document.getElementById('monthFilter').value || new Date());
-  const month = selectedMonth.getMonth();
-  const year  = selectedMonth.getFullYear();
+  const monthVal = document.getElementById('monthFilter').value;
+  let month, year;
+  if (monthVal) {
+    const parts = monthVal.split('-');
+    year = parseInt(parts[0]);
+    month = parseInt(parts[1]) - 1;
+  } else {
+    const now = new Date();
+    month = now.getMonth();
+    year = now.getFullYear();
+  }
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const dailyNet = Array(daysInMonth).fill(0);
@@ -637,6 +684,9 @@ function createCategoryChart(transactions) {
     categories[t.category] = (categories[t.category] || 0) + t.amount;
   });
 
+  // Se não houver dados, não renderizar gráfico
+  if (Object.keys(categories).length === 0) return null;
+
   const COLORS = ['#F72585','#4CC9F0','#7209B7','#4361EE','#06D6A0','#F8961E','#4895EF','#9CA3AF'];
 
   return new Chart(ctx, {
@@ -667,6 +717,9 @@ function createResponsibleChart(transactions) {
     if (!responsible[t.responsible]) responsible[t.responsible] = { entrada: 0, saida: 0 };
     responsible[t.responsible][t.type] += t.amount;
   });
+
+  // Se não houver dados, não renderizar gráfico
+  if (Object.keys(responsible).length === 0) return null;
 
   return new Chart(ctx, {
     type: 'bar',
@@ -706,6 +759,9 @@ function createIncomesChart(salaries) {
   });
 
   const months = Object.keys(incomesData).sort();
+
+  // Se não houver dados, não renderizar gráfico
+  if (months.length === 0) return null;
 
   return new Chart(ctx, {
     type: 'bar',
@@ -759,13 +815,13 @@ function renderTransactionItem(t) {
     <div class="transaction-item">
       <div class="trans-icon-wrap ${iconCss}">${icon}</div>
       <div class="trans-info">
-        <div class="trans-name">${t.description || catLabel}</div>
+        <div class="trans-name">${esc(t.description) || catLabel}</div>
         <div class="trans-meta">
           <span>${formatDate(t.date)}</span>
           <span>·</span>
           <span class="trans-cat-badge ${iconCss}">${catLabel}</span>
           <span>·</span>
-          <span>${t.responsible}</span>
+          <span>${esc(t.responsible)}</span>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
@@ -844,7 +900,7 @@ function updateDebtsList() {
     return;
   }
   
-  const sorted = state.debts.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+  const sorted = state.debts.sort((a, b) => new Date(a.dueDate + 'T12:00:00') - new Date(b.dueDate + 'T12:00:00'));
   
   container.innerHTML = sorted.map(d => {
     const dueDate = new Date(d.dueDate + 'T12:00:00');
@@ -860,13 +916,13 @@ function updateDebtsList() {
     return `
       <div class="debt-item">
         <div class="debt-item-top">
-          <span class="debt-creditor">${d.creditor}</span>
+          <span class="debt-creditor">${esc(d.creditor)}</span>
           <span class="debt-amount-badge">${formatCurrency(d.amount)}</span>
         </div>
         <div class="debt-item-meta">
-          <span class="debt-meta-tag"><i class="fa-solid fa-user"></i> ${d.responsible}</span>
+          <span class="debt-meta-tag"><i class="fa-solid fa-user"></i> ${esc(d.responsible)}</span>
           <span class="debt-meta-tag"><i class="fa-solid fa-calendar"></i> ${formatDate(d.dueDate)}</span>
-          ${d.description ? `<span class="debt-meta-tag">${d.description}</span>` : ''}
+          ${d.description ? `<span class="debt-meta-tag">${esc(d.description)}</span>` : ''}
           <span class="debt-status-badge ${statusBadge}">${statusLabel}</span>
         </div>
         <div class="debt-item-actions">
@@ -921,11 +977,11 @@ function updateSalaryHistory() {
     <div class="transaction-item">
       <div class="trans-icon-wrap cat-entrada">${personIcon[s.person] || '💰'}</div>
       <div class="trans-info">
-        <div class="trans-name">${s.description || `Salário de ${s.person}`}</div>
+        <div class="trans-name">${esc(s.description) || `Salário de ${esc(s.person)}`}</div>
         <div class="trans-meta">
           <span>${formatDate(s.date)}</span>
           <span>·</span>
-          <span>${s.person}</span>
+          <span>${esc(s.person)}</span>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
@@ -943,6 +999,7 @@ function deleteTransaction(id) {
   if (confirm('Deseja deletar esta transação?')) {
     state.transactions = state.transactions.filter(t => t.id !== id);
     saveDataToStorage();
+    deleteFromFirebase('transactions', id);
     updateDashboard();
     updateTransactionHistory();
     showAlert('Transação deletada com sucesso!', 'success');
@@ -954,6 +1011,7 @@ function deleteDebt(id) {
   if (confirm('Deseja deletar esta dívida?')) {
     state.debts = state.debts.filter(d => d.id !== id);
     saveDataToStorage();
+    deleteFromFirebase('debts', id);
     updateDebtsList();
     showAlert('Dívida deletada com sucesso!', 'success');
   }
@@ -965,6 +1023,7 @@ function payDebt(id) {
   if (debt && confirm(`Marcar dívida de R$ ${debt.amount.toFixed(2)} como paga?`)) {
     debt.status = 'paid';
     saveDataToStorage();
+    updateInFirebase('debts', id, { status: 'paid' });
     updateDebtsList();
     showAlert('Dívida marcada como paga!', 'success');
   }
@@ -975,14 +1034,16 @@ function deleteSalary(id) {
   if (confirm('Deseja deletar este salário?')) {
     state.salaries = state.salaries.filter(s => s.id !== id);
     saveDataToStorage();
+    deleteFromFirebase('salaries', id);
     updateSalaryDisplay();
     updateDashboard();
     showAlert('Salário deletado com sucesso!', 'success');
   }
 }
 
-// ===== ARMAZENAMENTO LOCAL =====
+// ===== ARMAZENAMENTO LOCAL + FIREBASE =====
 function saveDataToStorage() {
+  // Sempre salva no localStorage (funciona offline)
   const data = {
     transactions: state.transactions,
     debts: state.debts,
@@ -993,6 +1054,7 @@ function saveDataToStorage() {
 }
 
 function loadDataFromStorage() {
+  // Carrega do localStorage primeiro (rápido)
   const data = localStorage.getItem('financeiro_data');
   if (data) {
     try {
@@ -1001,8 +1063,115 @@ function loadDataFromStorage() {
       state.debts = parsed.debts || [];
       state.salaries = parsed.salaries || [];
     } catch (e) {
-      console.error('Erro ao carregar dados:', e);
+      console.error('Erro ao carregar dados locais:', e);
     }
+  }
+  // Depois tenta carregar do Firebase (mais atualizado)
+  if (firebaseReady) {
+    loadDataFromFirebase().then(() => {
+      listenFirebaseChanges();
+    });
+  }
+}
+
+// ===== FIREBASE FIRESTORE — CRUD =====
+async function saveToFirebase(collection, item) {
+  if (!firebaseReady) return;
+  try {
+    await db.collection(collection).doc(item.id).set(item);
+    console.log(`Salvo no Firebase: ${collection}/${item.id}`);
+  } catch (error) {
+    console.error(`Erro ao salvar no Firebase (${collection}):`, error);
+  }
+}
+
+async function deleteFromFirebase(collection, id) {
+  if (!firebaseReady) return;
+  try {
+    await db.collection(collection).doc(id).delete();
+    console.log(`Deletado do Firebase: ${collection}/${id}`);
+  } catch (error) {
+    console.error(`Erro ao deletar do Firebase (${collection}):`, error);
+  }
+}
+
+async function updateInFirebase(collection, id, data) {
+  if (!firebaseReady) return;
+  try {
+    await db.collection(collection).doc(id).update(data);
+    console.log(`Atualizado no Firebase: ${collection}/${id}`);
+  } catch (error) {
+    console.error(`Erro ao atualizar no Firebase (${collection}):`, error);
+  }
+}
+
+async function loadDataFromFirebase() {
+  if (!firebaseReady) return;
+  try {
+    // Carregar transações
+    const transSnap = await db.collection('transactions').orderBy('createdAt', 'desc').get();
+    if (!transSnap.empty) {
+      state.transactions = transSnap.docs.map(doc => doc.data());
+    }
+
+    // Carregar dívidas
+    const debtsSnap = await db.collection('debts').orderBy('createdAt', 'desc').get();
+    if (!debtsSnap.empty) {
+      state.debts = debtsSnap.docs.map(doc => doc.data());
+    }
+
+    // Carregar salários
+    const salSnap = await db.collection('salaries').orderBy('createdAt', 'desc').get();
+    if (!salSnap.empty) {
+      state.salaries = salSnap.docs.map(doc => doc.data());
+    }
+
+    // Salva localmente também
+    saveDataToStorage();
+
+    // Atualiza a interface
+    updateDashboard();
+    updateTransactionHistory();
+    updateDebtsList();
+    updateSalaryDisplay();
+
+    console.log('Dados carregados do Firebase com sucesso!');
+  } catch (error) {
+    console.error('Erro ao carregar do Firebase:', error);
+  }
+}
+
+// Escutar mudanças em tempo real do Firestore (com debounce para evitar loop)
+let _fbSyncTimer = null;
+function listenFirebaseChanges() {
+  if (!firebaseReady) return;
+
+  const debouncedLoad = () => {
+    clearTimeout(_fbSyncTimer);
+    _fbSyncTimer = setTimeout(() => loadDataFromFirebase(), 500);
+  };
+
+  db.collection('transactions').onSnapshot(debouncedLoad);
+  db.collection('debts').onSnapshot(debouncedLoad);
+  db.collection('salaries').onSnapshot(debouncedLoad);
+}
+
+// Sincronizar todos os dados locais para o Firebase
+async function syncAllToFirebase() {
+  if (!firebaseReady) return;
+  try {
+    for (const t of state.transactions) {
+      await db.collection('transactions').doc(t.id).set(t);
+    }
+    for (const d of state.debts) {
+      await db.collection('debts').doc(d.id).set(d);
+    }
+    for (const s of state.salaries) {
+      await db.collection('salaries').doc(s.id).set(s);
+    }
+    console.log('Todos os dados sincronizados com Firebase!');
+  } catch (error) {
+    console.error('Erro na sincronização completa:', error);
   }
 }
 
@@ -1043,6 +1212,9 @@ function importData(e) {
         state.salaries = data.salaries || [];
         saveDataToStorage();
         
+        // Sincronizar com Firebase
+        syncAllToFirebase();
+        
         updateDashboard();
         updateTransactionHistory();
         updateDebtsList();
@@ -1060,38 +1232,24 @@ function importData(e) {
 }
 
 // ===== SINCRONIZAR COM FIREBASE =====
-function syncTransactionsToFirebase() {
-  if (state.syncStatus === 'offline') {
-    console.log('Offline - Dados serão sincronizados quando voltar online');
-    return;
-  }
-  
-  // Implementar sincronização com Firebase
-  console.log('Sincronizando transações...');
-}
-
-function syncDataToFirebase() {
-  if (state.syncStatus === 'offline') {
-    console.log('Offline - Dados serão sincronizados quando voltar online');
-    return;
-  }
-  
-  // Implementar sincronização com Firebase
-  console.log('Sincronizando dados...');
-}
-
 function syncData() {
   if (state.syncStatus === 'offline') {
     showAlert('Sem conexão! Sincronização será feita quando voltar online.', 'warning');
     return;
   }
   
+  if (!firebaseReady) {
+    showAlert('Firebase não configurado. Configure as credenciais no script.js.', 'warning');
+    return;
+  }
+  
   showAlert('Sincronizando dados...', 'info');
   
-  // Simulate sync
-  setTimeout(() => {
-    showAlert('Dados sincronizados com sucesso!', 'success');
-  }, 1000);
+  syncAllToFirebase().then(() => {
+    showAlert('Dados sincronizados com Firebase!', 'success');
+  }).catch(() => {
+    showAlert('Erro ao sincronizar.', 'danger');
+  });
 }
 
 // ===== LIMPAR CACHE =====
@@ -1123,7 +1281,7 @@ function setupOnlineOfflineListeners() {
     const ss = document.getElementById('syncStatus');
     if (ss) { ss.textContent = 'Conectado'; ss.className = 'status-pill connected'; }
     showAlert('Conexão restaurada!', 'success');
-    syncData();
+    if (firebaseReady) syncAllToFirebase();
   });
   
   window.addEventListener('offline', () => {
@@ -1159,7 +1317,7 @@ function initializeTheme() {
   localStorage.setItem('theme', theme);
   
   // Listen for system theme changes
-  window.matchMedia('(prefers-color-scheme: dark)').addListener((e) => {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
     if (!localStorage.getItem('theme')) {
       const newTheme = e.matches ? 'dark' : 'light';
       applyTheme(newTheme);
@@ -1200,6 +1358,14 @@ function generateId() {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
+// Sanitizar texto para evitar XSS ao usar innerHTML
+function esc(str) {
+  if (!str) return '';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
 function formatCurrency(value) {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -1208,7 +1374,7 @@ function formatCurrency(value) {
 }
 
 function formatDate(dateString) {
-  const date = new Date(dateString);
+  const date = new Date(dateString + (dateString.includes('T') ? '' : 'T12:00:00'));
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -1247,26 +1413,24 @@ function emptyState(text) {
     </div>`;
 }
 
-// ===== INICIALIZAÇÃO DO FIREBASE (QUANDO CONFIGURADO) =====
-function initializeFirebase() {
-  try {
-    firebase.initializeApp(CONFIG.firebase);
-    console.log('Firebase inicializado com sucesso!');
-  } catch (error) {
-    console.log('Firebase não configurado. Usando localStorage apenas.');
-  }
-}
-
 // ===== EVENT LISTENERS PARA RESPONSIVIDADE =====
 window.addEventListener('resize', () => {
   // Recreate charts on resize for responsiveness
   if (document.querySelector('.tab-content.active')?.id === 'dashboard') {
-    const selectedMonth = new Date(document.getElementById('monthFilter').value || new Date());
-    const month = selectedMonth.getMonth();
-    const year = selectedMonth.getFullYear();
+    const monthVal = document.getElementById('monthFilter').value;
+    let month, year;
+    if (monthVal) {
+      const parts = monthVal.split('-');
+      year = parseInt(parts[0]);
+      month = parseInt(parts[1]) - 1;
+    } else {
+      const now = new Date();
+      month = now.getMonth();
+      year = now.getFullYear();
+    }
     
     const monthTransactions = state.transactions.filter(t => {
-      const tDate = new Date(t.date);
+      const tDate = new Date(t.date + 'T12:00:00');
       return tDate.getMonth() === month && tDate.getFullYear() === year;
     });
     

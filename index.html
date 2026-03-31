@@ -84,8 +84,8 @@
                         <div class="avatar-icon-sm"><i class="fa-solid fa-user"></i></div>
                     </div>
                     <div class="header-text">
-                        <p class="header-greeting">Bem-vindo de volta</p>
-                        <h2 class="header-title">Lopes Finanças</h2>
+                        <p class="header-greeting">Lopes Finanças</p>
+                        <h2 class="header-title">Nome do usuário</h2>
                     </div>
                 </div>
                 <div class="header-actions">
@@ -152,7 +152,7 @@
                     <h2 class="page-title">Status</h2>
                     <div class="page-header-actions">
                         <input type="month" id="monthFilter" class="month-filter-hidden">
-                        <button class="ph-icon-btn" onclick="document.getElementById('monthFilter').showPicker ? document.getElementById('monthFilter').showPicker() : document.getElementById('monthFilter').click()" title="Filtrar mÃªs">
+                        <button class="ph-icon-btn" onclick="document.getElementById('monthFilter').showPicker ? document.getElementById('monthFilter').showPicker() : document.getElementById('monthFilter').click()" title="Filtrar mês">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </button>
                     </div>
@@ -320,14 +320,14 @@
                                     <label for="tranCategory">Categoria</label>
                                     <select id="tranCategory" required>
                                         <option value="">Selecione...</option>
-                                        <option value="alimentacao">ðŸ½ï¸ AlimentaÃ§Ã£o</option>
-                                        <option value="transporte">ðŸš— Transporte</option>
-                                        <option value="saude">ðŸ’Š SaÃºde</option>
-                                        <option value="educacao">ðŸ“š EducaÃ§Ã£o</option>
-                                        <option value="moradia">ðŸ  Moradia</option>
-                                        <option value="lazer">ðŸŽ® Lazer</option>
-                                        <option value="utilidades">âš¡ Utilidades</option>
-                                        <option value="outros">ðŸ“ Outros</option>
+                                        <option value="alimentacao">🍽️ Alimentação</option>
+                                        <option value="transporte">🚗 Transporte</option>
+                                        <option value="saude">💊 Saúde</option>
+                                        <option value="educacao">📚 Educação</option>
+                                        <option value="moradia">🏠 Moradia</option>
+                                        <option value="lazer">🎮 Lazer</option>
+                                        <option value="utilidades">⚡ Utilidades</option>
+                                        <option value="outros">📁 Outros</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -343,7 +343,7 @@
 
                             <div class="form-group">
                                 <label for="tranDescription">Descrição (opcional)</label>
-                                <input type="text" id="tranDescription" placeholder="Ex: AlmoÃ§o no restaurante">
+                                <input type="text" id="tranDescription" placeholder="Ex: Almoço no restaurante">
                             </div>
 
                             <button type="submit" class="btn-primary">
@@ -362,7 +362,7 @@
             <!-- ====== DEBTS TAB ====== --> <!-- Aba de dívidas -->
             <section id="debts" class="tab-content">
                 <div class="page-header">
-                    <h2 class="page-title">dívidas</h2>
+                    <h2 class="page-title">Dívidas</h2>
                     <button id="addDebtBtn" class="add-new-btn">
                         <i class="fa-solid fa-plus"></i> Nova
                     </button>
@@ -448,8 +448,8 @@
                             <div class="form-group">
                                 <label for="salaryPerson">Pessoa</label>
                                 <select id="salaryPerson" required>
-                                    <option value="Luan">SalÃ¡rio Luan</option>
-                                    <option value="Bianca">SalÃ¡rio Bianca</option>
+                                    <option value="Luan">Salário Luan</option>
+                                    <option value="Bianca">Salário Bianca</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -462,7 +462,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="salaryDescription">Descrição</label>
-                                <input type="text" id="salaryDescription" placeholder="Ex: SalÃ¡rio mÃªs de marÃ§o">
+                                <input type="text" id="salaryDescription" placeholder="Ex: Salário mês de março">
                             </div>
                             <button type="submit" class="btn-primary">
                                 <i class="fa-solid fa-check"></i> Registrar
@@ -501,7 +501,7 @@
 
                 <div class="list-section">
                     <div class="list-section-header">
-                        <h3>HistÃ³rico de Entradas</h3>
+                        <h3>Histórico de Entradas</h3>
                     </div>
                     <div id="salaryHistoryList" class="transactions-list"></div>
                 </div>
@@ -539,7 +539,7 @@
                     </div>
 
                     <div class="settings-group">
-                        <p class="sg-label">SINCRONIZAÃ‡ÃƒO</p>
+                        <p class="sg-label">SINCRONIZAÇÃO</p>
                         <div class="sg-body">
                             <div class="settings-row info-row">
                                 <div class="sr-icon sync-icon"><i class="fa-solid fa-wifi"></i></div>
@@ -576,7 +576,7 @@
                     </div>
                 </div>
 
-                <p class="settings-footer-text">Â© 2026 Luan Gs Â· Todos os direitos reservados</p>
+                <p class="settings-footer-text">© 2026 Luan Gs · Todos os direitos reservados</p>
             </section>
 
         </main>
@@ -595,6 +595,10 @@
 
     <!-- Chart.js --> <!-- Biblioteca de gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+    <!-- Firebase SDK --> <!-- Conexão com banco de dados Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
     <!-- Main Script --> <!-- Script principal da aplicação -->
     <script src="js/script.js"></script>
