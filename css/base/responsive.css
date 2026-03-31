@@ -2,13 +2,14 @@
    RESPONSIVE.CSS — MEDIA QUERIES
    ============================================================ */
 
-/* Tablet & larger */
+/* ─── Tablet & larger ─── */
 @media (min-width: 640px) {
   .ie-grid            { gap: 16px; }
   .kpi-mini-row       { gap: 16px; }
   .person-cards-grid  { gap: 16px; }
   .charts-grid        { display: grid; grid-template-columns: repeat(2, 1fr); }
   .summary-cards-row  { gap: 16px; }
+  .debt-overview-panel { gap: 16px; }
 }
 
 @media (min-width: 768px) {
@@ -16,24 +17,288 @@
   .bottom-nav          { max-width: 700px; left: 50%; transform: translateX(-50%); border-radius: 20px 20px 0 0; width: 100%; }
   .balance-card        { margin: 0 auto 16px; max-width: 680px; }
   .ie-grid, .kpi-mini-row, .person-cards-grid, .charts-grid, .summary-cards-row { max-width: 680px; margin-left: auto; margin-right: auto; }
+  .debt-overview-panel { max-width: 680px; margin-left: auto; margin-right: auto; }
   .list-section, .debts-list, .add-panel, .week-scroller-wrap, .months-scroll-wrap, .page-header { max-width: 700px; margin-left: auto; margin-right: auto; }
+  .debt-alerts { max-width: 700px; margin-left: auto; margin-right: auto; }
   .settings-profile-card, .settings-groups { max-width: 680px; margin-left: auto; margin-right: auto; }
 }
 
-/* Small mobile */
+/* ─── Mobile ≤ 480px ─── */
+@media (max-width: 480px) {
+  /* Debt type toggle: 4 columns → 2×2 */
+  .debt-type-group {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .debt-type-group .type-toggle-btn {
+    font-size: 0.7rem;
+    padding: 9px 6px;
+  }
+
+  /* Cartão sub-mode buttons */
+  .cartao-mode-group .type-toggle-btn {
+    font-size: 0.7rem;
+    padding: 8px 4px;
+  }
+
+  /* Modal adjustments */
+  .modal { padding: 10px; }
+  .modal-content { padding: 18px; }
+  .modal-header h3 { font-size: 1rem; }
+
+  /* Chart cards */
+  .chart-card { padding: 16px; }
+  .chart-card-header h3 { font-size: 0.875rem; }
+
+  /* Debt items */
+  .debt-item { padding: 14px; }
+  .debt-item-header { gap: 10px; }
+  .debt-amount-badge { font-size: 0.8125rem; padding: 5px 10px; }
+
+  /* Debt actions: wrap if needed */
+  .debt-item-actions {
+    flex-wrap: wrap;
+  }
+  .debt-item-actions button {
+    font-size: 0.7rem;
+    padding: 5px 10px;
+  }
+
+  /* Debt meta tags */
+  .debt-item-meta .debt-meta-tag {
+    font-size: 0.65rem;
+    padding: 2px 7px;
+  }
+
+  /* Debt overview cards */
+  .debt-overview-card { padding: 14px; }
+  .debt-ov-amount { font-size: 1.1rem; }
+  .debt-ov-title { font-size: 0.7rem; }
+
+  /* KPI cards */
+  .kpi-mini-card { padding: 12px; gap: 10px; }
+  .kpi-mini-icon { width: 34px; height: 34px; font-size: 0.8125rem; }
+  .kpi-mini-val { font-size: 0.875rem; }
+  .kpi-mini-label { font-size: 0.65rem; }
+  .kpi-mini-sub { font-size: 0.6rem; }
+
+  /* Balance card */
+  .balance-card { padding: 20px 18px 12px; margin: 0 12px 14px; }
+  .balance-amount { font-size: 2rem; }
+
+  /* Income/Expense grid */
+  .ie-grid { padding: 0 12px 14px; gap: 10px; }
+  .ie-card { padding: 12px; gap: 10px; }
+  .ie-circle { width: 40px; height: 40px; font-size: 1rem; }
+  .ie-value { font-size: 0.9375rem; }
+
+  /* Person income cards (salaries) */
+  .person-cards-grid { padding: 0 12px 14px; }
+  .person-income-card { padding: 14px; }
+  .person-income-card .salary-current { font-size: 1.2rem; }
+  .pic-avatar { width: 30px; height: 30px; font-size: 0.8125rem; }
+
+  /* Page header */
+  .page-header { padding: 16px 16px 10px; }
+  .page-title { font-size: 1.3rem; }
+
+  /* Transaction items */
+  .transaction-item { padding: 12px 14px; gap: 12px; }
+  .trans-icon-wrap { width: 40px; height: 40px; font-size: 1rem; }
+  .trans-name { font-size: 0.875rem; }
+  .trans-amount { font-size: 0.9375rem; }
+
+  /* Debt alerts */
+  .debt-alerts { padding: 0 12px; }
+  .debt-alert { font-size: 0.8rem; padding: 8px 12px; }
+
+  /* Summary cards */
+  .summary-cards-row { padding: 0 12px 14px; }
+
+  /* Deductions / additions */
+  .deduction-add-row { flex-wrap: wrap; }
+  .deduction-add-row .form-group { flex: 1; min-width: 0; }
+}
+
+/* ─── Small mobile ≤ 400px ─── */
 @media (max-width: 400px) {
-  .balance-amount { font-size: 1.875rem; }
+  /* Nav */
   .bottom-nav-item { padding: 4px 8px; min-width: 40px; }
   .nav-label { font-size: 0.625rem; }
   .fab-btn { width: 50px; height: 50px; }
   .nav-icon-wrap { width: 32px; height: 32px; font-size: 0.875rem; }
-  .ie-card { padding: 12px; gap: 10px; }
-  .ie-circle { width: 38px; height: 38px; font-size: 0.9375rem; }
-  .ie-value { font-size: 0.875rem; }
+
+  /* Balance */
+  .balance-amount { font-size: 1.875rem; }
+  .balance-card { padding: 18px 14px 10px; margin: 0 10px 12px; }
+
+  /* IE grid */
+  .ie-card { padding: 10px; gap: 8px; }
+  .ie-circle { width: 36px; height: 36px; font-size: 0.875rem; }
+  .ie-value { font-size: 0.8125rem; }
+  .ie-label { font-size: 0.6875rem; }
+
+  /* KPI: 2 columns still but tighter */
+  .kpi-mini-row { gap: 8px; padding: 0 10px 16px; }
+  .kpi-mini-card { padding: 10px 8px; gap: 8px; }
+  .kpi-mini-icon { width: 30px; height: 30px; font-size: 0.75rem; }
+  .kpi-mini-val { font-size: 0.8125rem; }
+  .kpi-mini-label { font-size: 0.6rem; }
+
+  /* Debt overview panel: stack to 1 column */
+  .debt-overview-panel {
+    grid-template-columns: 1fr;
+  }
+  .debt-overview-card { padding: 12px; }
+  .debt-ov-amount { font-size: 1rem; }
+
+  /* Summary cards: stack to 1 column */
+  .summary-cards-row {
+    grid-template-columns: 1fr;
+    padding: 0 10px 12px;
+  }
+
+  /* Debt items */
+  .debt-item { padding: 12px; }
+  .debt-amount-badge { font-size: 0.75rem; padding: 4px 8px; }
+
+  /* Debt actions: stack vertically */
+  .debt-item-actions {
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+  }
+  .debt-item-actions button {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 10px;
+    font-size: 0.7rem;
+  }
+
+  /* Person cards (salary) */
+  .person-cards-grid {
+    grid-template-columns: 1fr;
+    padding: 0 10px 14px;
+  }
+  .luan-card, .bianca-card { grid-column: span 1; }
+  .combined-card { grid-column: span 1; }
+  .person-income-card .salary-current { font-size: 1.1rem; }
+
+  /* Charts */
+  .charts-grid { padding: 0 10px 12px; gap: 10px; }
+  .chart-card { padding: 14px; }
+
+  /* Month scroller */
+  .months-scroll-wrap { padding: 0 10px 10px; }
+  .month-btn { padding: 6px 14px; font-size: 0.8125rem; }
+
+  /* Modal */
+  .modal { padding: 6px; }
+  .modal-content { padding: 16px; border-radius: 18px 18px 10px 10px; }
+  .modal-header { margin-bottom: 14px; }
+  .modal-header h3 { font-size: 0.9375rem; gap: 8px; }
+
+  /* Transactions */
+  .transaction-item { padding: 10px 12px; gap: 10px; }
+  .trans-icon-wrap { width: 36px; height: 36px; font-size: 0.9375rem; }
+  .trans-name { font-size: 0.8125rem; }
+  .trans-amount { font-size: 0.875rem; }
+
+  /* Debt alerts */
+  .debt-alert { font-size: 0.75rem; padding: 8px 10px; gap: 8px; }
+  .debt-alert i { font-size: 0.875rem; }
+
+  /* Page header */
+  .page-header { padding: 14px 12px 8px; }
+  .page-title { font-size: 1.2rem; }
+
+  /* Add panel */
+  .add-panel { margin: 0 10px 14px; }
+  .add-panel-toggle { padding: 14px 14px; font-size: 0.875rem; }
+  .form-container { padding: 0 14px 14px; padding-top: 14px; }
+
+  /* Week scroller */
+  .week-scroller-wrap { padding: 0 10px 14px; }
+  .week-day-btn { padding: 8px 10px; min-width: 48px; }
+  .wday-num { font-size: 1rem; }
 }
 
-/* Safe area (notch handling) */
+/* ─── Very small mobile ≤ 360px ─── */
+@media (max-width: 360px) {
+  /* Balance */
+  .balance-amount { font-size: 1.625rem; }
+  .balance-label { font-size: 0.75rem; }
+
+  /* IE grid: stack to 1 column */
+  .ie-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 0 10px 12px;
+  }
+
+  /* KPI: stack to 1 column */
+  .kpi-mini-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 0 10px 14px;
+  }
+
+  /* Debt type toggle stays 2×2 but smaller text */
+  .debt-type-group .type-toggle-btn {
+    font-size: 0.65rem;
+    padding: 7px 4px;
+  }
+
+  /* Cartão sub-mode: stack to full width if too tight */
+  .cartao-mode-group {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .cartao-mode-group .type-toggle-btn {
+    font-size: 0.7rem;
+    padding: 8px 10px;
+  }
+
+  /* Smaller page title */
+  .page-title { font-size: 1.1rem; }
+
+  /* Modal even tighter */
+  .modal-content { padding: 14px; }
+  .modal-header h3 { font-size: 0.875rem; }
+
+  /* Transaction items */
+  .trans-icon-wrap { width: 32px; height: 32px; font-size: 0.8125rem; }
+  .trans-name { font-size: 0.75rem; }
+  .trans-meta { font-size: 0.6875rem; }
+  .trans-amount { font-size: 0.8125rem; }
+
+  /* Debt items further size reduction */
+  .debt-item-meta .debt-meta-tag { font-size: 0.6rem; }
+  .debt-amount-badge { font-size: 0.7rem; }
+
+  /* Salary cards */
+  .person-income-card { padding: 12px; }
+  .person-income-card .salary-current { font-size: 1rem; }
+  .pic-name { font-size: 0.8125rem; }
+  .pic-avatar { width: 28px; height: 28px; font-size: 0.75rem; }
+
+  /* Chart card titles */
+  .chart-card { padding: 12px; }
+  .chart-card-header h3 { font-size: 0.8125rem; }
+  .chart-card-header { gap: 8px; margin-bottom: 12px; }
+}
+
+/* ─── Safe area (notch handling) ─── */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .bottom-nav { padding-bottom: calc(12px + env(safe-area-inset-bottom)); height: calc(76px + env(safe-area-inset-bottom)); }
   .main-content { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+}
+
+/* ─── Touch-friendly tap targets ─── */
+@media (pointer: coarse) {
+  .debt-item-actions button { min-height: 36px; }
+  .btn-remove-deduction { min-height: 32px; min-width: 32px; }
+  .modal-close-btn { width: 36px; height: 36px; }
+  .ph-icon-btn { width: 40px; height: 40px; }
+  .month-btn { min-height: 36px; }
+  .week-day-btn { min-height: 48px; }
 }
