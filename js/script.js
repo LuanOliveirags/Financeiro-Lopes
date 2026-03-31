@@ -1399,6 +1399,17 @@ function updateDashboard() {
   const totalDebt = monthDebts.reduce((sum, d) => sum + d.amount, 0);
   const responsibleCount = new Set(monthTransactions.map(t => t.responsible)).size;
 
+  // Separar dívidas ativas: mensais vs financiamentos
+  const monthlyDebtsActive = monthDebts.filter(d => d.debtType !== 'financiamento' && d.debtType !== 'parcelada');
+  const financingDebtsActive = monthDebts.filter(d => d.debtType === 'financiamento' || d.debtType === 'parcelada');
+  const totalMonthlyDebts = monthlyDebtsActive.reduce((sum, d) => sum + d.amount, 0);
+  const totalFinancingInstallment = financingDebtsActive.reduce((sum, d) => sum + (d.installmentValue || d.amount), 0);
+  const totalFinancingRemaining = financingDebtsActive.reduce((sum, d) => {
+    const instVal = d.installmentValue || (d.amount / (d.installments || 1));
+    const paid = d.paidInstallments || 0;
+    return sum + (d.amount - (instVal * paid));
+  }, 0);
+
   // Dívidas pagas no mês (pela data do pagamento via transação)
   const paidDebtsThisMonth = state.transactions.filter(t => {
     if (!t.fromDebt) return false;
@@ -1416,6 +1427,16 @@ function updateDashboard() {
   document.getElementById('totalSpent').textContent = formatCurrency(totalDebt);
   document.getElementById('totalResponsible').textContent = responsibleCount;
   
+  // Dívidas mensais vs financiamentos no dashboard
+  const dashMonthly = document.getElementById('dashMonthlyDebts');
+  if (dashMonthly) dashMonthly.textContent = formatCurrency(totalMonthlyDebts);
+  const dashMonthlyCount = document.getElementById('dashMonthlyCount');
+  if (dashMonthlyCount) dashMonthlyCount.textContent = `${monthlyDebtsActive.length} ativa${monthlyDebtsActive.length !== 1 ? 's' : ''}`;
+  const dashFinancing = document.getElementById('dashFinancingDebts');
+  if (dashFinancing) dashFinancing.textContent = formatCurrency(totalFinancingInstallment);
+  const dashFinancingRem = document.getElementById('dashFinancingRemaining');
+  if (dashFinancingRem) dashFinancingRem.textContent = `Restante: ${formatCurrency(totalFinancingRemaining)}`;
+
   const paidDebtsEl = document.getElementById('totalPaidDebts');
   if (paidDebtsEl) paidDebtsEl.textContent = formatCurrency(totalPaidDebts);
 
@@ -1725,6 +1746,12 @@ function updateDebtsList() {
   const totalMonthly = monthlyDebts.reduce((sum, d) => sum + d.amount, 0);
   // Total financiamento = soma das parcelas mensais (installmentValue)
   const totalFinancing = financingDebts.reduce((sum, d) => sum + (d.installmentValue || d.amount), 0);
+  // Total restante dos financiamentos
+  const totalFinancingRemaining = financingDebts.reduce((sum, d) => {
+    const instVal = d.installmentValue || (d.amount / (d.installments || 1));
+    const paid = d.paidInstallments || 0;
+    return sum + (d.amount - (instVal * paid));
+  }, 0);
   
   const activeCount = activeDebts.length;
 
@@ -1738,6 +1765,14 @@ function updateDebtsList() {
   document.getElementById('activeDebts').textContent = activeCount;
   const paidTabEl = document.getElementById('totalPaidDebtsTab');
   if (paidTabEl) paidTabEl.textContent = formatCurrency(totalPaid);
+
+  // Contadores e restante na aba de dívidas
+  const monthlyCountEl = document.getElementById('monthlyDebtCount');
+  if (monthlyCountEl) monthlyCountEl.textContent = `${monthlyDebts.length} dívida${monthlyDebts.length !== 1 ? 's' : ''}`;
+  const financingCountEl = document.getElementById('financingDebtCount');
+  if (financingCountEl) financingCountEl.textContent = `${financingDebts.length} dívida${financingDebts.length !== 1 ? 's' : ''}`;
+  const financingRemEl = document.getElementById('financingRemaining');
+  if (financingRemEl) financingRemEl.textContent = `Restante: ${formatCurrency(totalFinancingRemaining)}`;
   
   if (state.debts.length === 0) {
     container.innerHTML = emptyState('Nenhuma dívida registrada ✅');

@@ -177,6 +177,9 @@
 .people-kpi-icon { background: rgba(76,201,240, 0.12); color: var(--income-dark); }
 .kpi-mini-label  { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 2px; }
 .kpi-mini-val    { font-size: 0.9375rem; font-weight: var(--fw-bold); color: var(--text-primary); }
+.kpi-mini-sub    { font-size: 0.65rem; color: var(--text-muted); margin-top: 1px; }
+.kpi-highlight-monthly { border-color: rgba(255,159,67,0.35); }
+.kpi-highlight-financing { border-color: rgba(67,97,238,0.35); }
 
 /* Charts Grid */
 .charts-grid {
@@ -495,6 +498,86 @@
 /* ═══════════════════════════════
    DEBTS SECTION
 ═══════════════════════════════ */
+
+/* ═══════════════════════════════
+   DEBT OVERVIEW PANEL
+═══════════════════════════════ */
+.debt-overview-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 16px 12px;
+}
+.debt-overview-card {
+  background: var(--bg-card);
+  border-radius: var(--r-xl);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.debt-ov-monthly { border-left: 3px solid #FF9F43; }
+.debt-ov-financing { border-left: 3px solid #4361EE; }
+.debt-ov-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.debt-ov-icon {
+  width: 36px; height: 36px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.debt-ov-title {
+  font-size: 0.85rem;
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.debt-ov-subtitle {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+.debt-ov-amount {
+  font-size: 1.25rem;
+  font-weight: var(--fw-extrabold);
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+.debt-ov-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.debt-ov-count {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+.debt-ov-badge {
+  font-size: 0.6rem;
+  font-weight: var(--fw-semibold);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.badge-monthly {
+  background: rgba(255,159,67,0.15);
+  color: #FF9F43;
+}
+.debt-ov-remaining {
+  font-size: 0.65rem;
+  font-weight: var(--fw-semibold);
+  color: #4361EE;
+  background: rgba(67,97,238,0.1);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
 
 .summary-cards-row {
   display: grid;
