@@ -590,6 +590,51 @@
 .debt-status-badge.active    { background: var(--info-bg);    color: var(--info); }
 .debt-status-badge.paid      { background: var(--success-bg); color: var(--success); }
 .debt-item-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.btn-edit {
+  background: rgba(67,97,238,0.12);
+  color: #4361EE;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.2s;
+}
+.btn-edit:hover { background: rgba(67,97,238,0.22); }
+
+/* ═══════════════════════════════
+   DEBT ALERTS
+═══════════════════════════════ */
+.debt-alerts { display: flex; flex-direction: column; gap: 8px; padding: 0 16px; margin-bottom: 8px; }
+.debt-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.debt-alert i { font-size: 1rem; flex-shrink: 0; }
+.debt-alert-overdue {
+  background: rgba(239,71,111,0.12);
+  color: #EF476F;
+  border-left: 3px solid #EF476F;
+}
+.debt-alert-today {
+  background: rgba(255,209,102,0.18);
+  color: #E6A800;
+  border-left: 3px solid #FFD166;
+}
+.debt-alert-soon {
+  background: rgba(255,159,67,0.12);
+  color: #E07020;
+  border-left: 3px solid #FF9F43;
+}
 
 
 /* ═══════════════════════════════
@@ -829,3 +874,11 @@
 .cat-pets         { background: rgba(255,165,0,0.15);   color: #FFA500; }
 .cat-assinaturas  { background: rgba(138,43,226,0.15);  color: #8A2BE2; }
 .cat-investimentos{ background: rgba(0,128,0,0.15);     color: #008000; }
+
+/* Debt type toggle with 3 options */
+.debt-type-group { display: flex; gap: 6px; }
+.debt-type-group .type-toggle-btn { flex: 1; font-size: 0.75rem; padding: 8px 6px; white-space: nowrap; }
+
+/* Debt type visual indicators */
+.debt-item.debt-financing { border-left: 3px solid #4361EE; }
+.debt-item.debt-fixed { border-left: 3px solid #F8961E; }

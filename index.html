@@ -392,14 +392,15 @@
                     </button>
                 </div>
 
-                <!-- Debt Modal --> <!-- Modal para adicionar nova dívida -->
+                <!-- Debt Modal --> <!-- Modal para adicionar/editar dívida -->
                 <div id="debtModal" class="modal">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h3><i class="fa-solid fa-credit-card"></i> Nova dívida</h3>
+                            <h3 id="debtModalTitle"><i class="fa-solid fa-credit-card"></i> Nova dívida</h3>
                             <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                         <form id="debtForm">
+                            <input type="hidden" id="editDebtId" value="">
                             <div class="form-group">
                                 <label for="debtCreditor">Credor</label>
                                 <input type="text" id="debtCreditor" placeholder="Nome do credor" required>
@@ -408,23 +409,26 @@
                             <!-- Tipo de dívida -->
                             <div class="form-group">
                                 <label>Tipo</label>
-                                <div class="type-toggle-group">
+                                <div class="type-toggle-group debt-type-group">
                                     <button type="button" class="type-toggle-btn active debt-type-toggle" data-value="unica">
                                         <i class="fa-solid fa-receipt"></i> Única
                                     </button>
-                                    <button type="button" class="type-toggle-btn debt-type-toggle" data-value="parcelada">
-                                        <i class="fa-solid fa-layer-group"></i> Parcelada
+                                    <button type="button" class="type-toggle-btn debt-type-toggle" data-value="fixa">
+                                        <i class="fa-solid fa-rotate"></i> Fixa
+                                    </button>
+                                    <button type="button" class="type-toggle-btn debt-type-toggle" data-value="financiamento">
+                                        <i class="fa-solid fa-building-columns"></i> Financ.
                                     </button>
                                 </div>
                                 <input type="hidden" id="debtType" value="unica">
                             </div>
 
                             <div class="form-group">
-                                <label for="debtAmount">Valor Total (R$)</label>
+                                <label for="debtAmount" id="debtAmountLabel">Valor (R$)</label>
                                 <input type="number" id="debtAmount" placeholder="0,00" step="0.01" required>
                             </div>
 
-                            <!-- Campos de parcelamento (visíveis apenas se parcelada) -->
+                            <!-- Campos de parcelamento (financiamento) -->
                             <div id="installmentFields" style="display:none">
                                 <div class="form-row">
                                     <div class="form-group">
@@ -482,22 +486,34 @@
                                 <label for="debtDescription">Descrição</label>
                                 <textarea id="debtDescription" placeholder="Descrição da dívida" rows="3"></textarea>
                             </div>
-                            <button type="submit" class="btn-primary">
+                            <button type="submit" class="btn-primary" id="debtSubmitBtn">
                                 <i class="fa-solid fa-check"></i> Registrar
                             </button>
                         </form>
                     </div>
                 </div>
 
+                <!-- Alertas de vencimento -->
+                <div id="debtAlerts" class="debt-alerts"></div>
+
                 <!-- Debt Summary --> <!-- Resumo das dívidas -->
                 <div class="summary-cards-row">
                     <div class="summary-mini">
                         <div class="sm-icon debt-sm-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
                         <div class="sm-text">
-                            <p class="sm-label">Total Ativas</p>
+                            <p class="sm-label">Mensal (Fixas + Únicas)</p>
                             <p class="sm-value" id="totalDebts">R$ 0,00</p>
                         </div>
                     </div>
+                    <div class="summary-mini">
+                        <div class="sm-icon" style="background:rgba(67,97,238,0.15)"><i class="fa-solid fa-building-columns" style="color:#4361EE"></i></div>
+                        <div class="sm-text">
+                            <p class="sm-label">Financiamentos</p>
+                            <p class="sm-value" id="totalFinancing">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="summary-cards-row">
                     <div class="summary-mini">
                         <div class="sm-icon active-sm-icon"><i class="fa-solid fa-hourglass-half"></i></div>
                         <div class="sm-text">
@@ -513,6 +529,9 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Alertas de vencimento -->
+                <div id="debtAlerts" class="debt-alerts"></div>
 
                 <div id="debtsList" class="debts-list"></div>
             </section>

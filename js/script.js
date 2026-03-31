@@ -707,6 +707,7 @@ function setupEventListeners() {
   
   // Debt Modal
   document.getElementById('addDebtBtn').addEventListener('click', () => {
+    resetDebtModal();
     document.getElementById('debtModal').classList.add('active');
   });
   document.getElementById('debtForm').addEventListener('submit', addDebt);
@@ -720,7 +721,9 @@ function setupEventListeners() {
   // Modal Close Buttons
   document.querySelectorAll('.modal .close').forEach(closeBtn => {
     closeBtn.addEventListener('click', function() {
-      this.closest('.modal').classList.remove('active');
+      const modal = this.closest('.modal');
+      modal.classList.remove('active');
+      if (modal.id === 'debtModal') resetDebtModal();
     });
   });
   
@@ -729,6 +732,7 @@ function setupEventListeners() {
     modal.addEventListener('click', function(e) {
       if (e.target === this) {
         this.classList.remove('active');
+        if (this.id === 'debtModal') resetDebtModal();
       }
     });
   });
@@ -969,51 +973,148 @@ function addTransaction(e) {
 function addDebt(e) {
   e.preventDefault();
   
+  const editId = document.getElementById('editDebtId').value;
   const debtType = document.getElementById('debtType').value;
   const totalAmount = parseFloat(document.getElementById('debtAmount').value);
   const installments = parseInt(document.getElementById('debtInstallments').value) || 1;
   const paidInstallments = parseInt(document.getElementById('debtPaidInstallments').value) || 0;
   const manualInstValue = parseFloat(document.getElementById('debtInstallmentValue').value) || (totalAmount / installments);
 
-  const debt = {
-    id: generateId(),
-    creditor: document.getElementById('debtCreditor').value,
-    amount: totalAmount,
-    dueDate: document.getElementById('debtDueDate').value,
-    responsible: document.getElementById('debtResponsible').value,
-    category: document.getElementById('debtCategory').value || '',
-    description: document.getElementById('debtDescription').value,
-    debtType: debtType,
-    installments: debtType === 'parcelada' ? installments : 1,
-    paidInstallments: debtType === 'parcelada' ? paidInstallments : 0,
-    installmentValue: debtType === 'parcelada' ? manualInstValue : totalAmount,
-    status: 'active',
-    paidAt: null,
-    createdAt: new Date().toISOString()
-  };
-  
-  if (!debt.creditor || !debt.amount || !debt.dueDate) {
+  const isFinanciamento = debtType === 'financiamento';
+
+  const creditor = document.getElementById('debtCreditor').value;
+  const dueDate = document.getElementById('debtDueDate').value;
+  const responsible = document.getElementById('debtResponsible').value;
+  const category = document.getElementById('debtCategory').value || '';
+  const description = document.getElementById('debtDescription').value;
+
+  if (!creditor || !totalAmount || !dueDate) {
     alert('Por favor, preencha todos os campos obrigatórios!');
     return;
   }
-  
-  state.debts.push(debt);
-  saveDataToStorage();
-  saveToFirebase('debts', debt);
-  
-  showAlert('Dívida registrada com sucesso!', 'success');
+
+  if (editId) {
+    // Modo edição
+    const debt = state.debts.find(d => d.id === editId);
+    if (!debt) return;
+
+    debt.creditor = creditor;
+    debt.amount = totalAmount;
+    debt.dueDate = dueDate;
+    debt.responsible = responsible;
+    debt.category = category;
+    debt.description = description;
+    debt.debtType = debtType;
+    debt.installments = isFinanciamento ? installments : 1;
+    debt.paidInstallments = isFinanciamento ? paidInstallments : 0;
+    debt.installmentValue = isFinanciamento ? manualInstValue : totalAmount;
+
+    saveDataToStorage();
+    updateInFirebase('debts', editId, {
+      creditor: debt.creditor,
+      amount: debt.amount,
+      dueDate: debt.dueDate,
+      responsible: debt.responsible,
+      category: debt.category,
+      description: debt.description,
+      debtType: debt.debtType,
+      installments: debt.installments,
+      paidInstallments: debt.paidInstallments,
+      installmentValue: debt.installmentValue
+    });
+
+    showAlert('Dívida atualizada com sucesso!', 'success');
+  } else {
+    // Modo criação
+    const debt = {
+      id: generateId(),
+      creditor,
+      amount: totalAmount,
+      dueDate,
+      responsible,
+      category,
+      description,
+      debtType: debtType,
+      installments: isFinanciamento ? installments : 1,
+      paidInstallments: isFinanciamento ? paidInstallments : 0,
+      installmentValue: isFinanciamento ? manualInstValue : totalAmount,
+      status: 'active',
+      paidAt: null,
+      createdAt: new Date().toISOString()
+    };
+    
+    state.debts.push(debt);
+    saveDataToStorage();
+    saveToFirebase('debts', debt);
+    
+    showAlert('Dívida registrada com sucesso!', 'success');
+  }
   
   // Reset and close modal
-  e.target.reset();
-  document.getElementById('debtType').value = 'unica';
-  document.getElementById('installmentFields').style.display = 'none';
-  document.querySelectorAll('.debt-type-toggle').forEach(b => b.classList.remove('active'));
-  document.querySelector('.debt-type-toggle[data-value="unica"]').classList.add('active');
+  resetDebtModal();
   document.getElementById('debtModal').classList.remove('active');
   
   // Update displays
   updateDebtsList();
   updateDashboard();
+}
+
+// ===== RESETAR MODAL DE DÍVIDA =====
+function resetDebtModal() {
+  document.getElementById('debtForm').reset();
+  document.getElementById('editDebtId').value = '';
+  document.getElementById('debtType').value = 'unica';
+  document.getElementById('installmentFields').style.display = 'none';
+  document.querySelectorAll('.debt-type-toggle').forEach(b => b.classList.remove('active'));
+  document.querySelector('.debt-type-toggle[data-value="unica"]').classList.add('active');
+  document.getElementById('debtAmountLabel').textContent = 'Valor (R$)';
+  document.getElementById('debtModalTitle').innerHTML = '<i class="fa-solid fa-credit-card"></i> Nova dívida';
+  document.getElementById('debtSubmitBtn').innerHTML = '<i class="fa-solid fa-check"></i> Registrar';
+}
+
+// ===== EDITAR DÍVIDA =====
+function editDebt(id) {
+  const debt = state.debts.find(d => d.id === id);
+  if (!debt) return;
+
+  // Preencher modal com dados da dívida
+  document.getElementById('editDebtId').value = debt.id;
+  document.getElementById('debtCreditor').value = debt.creditor;
+  document.getElementById('debtAmount').value = debt.amount;
+  document.getElementById('debtDueDate').value = debt.dueDate;
+  document.getElementById('debtResponsible').value = debt.responsible;
+  document.getElementById('debtCategory').value = debt.category || '';
+  document.getElementById('debtDescription').value = debt.description || '';
+
+  // Setar tipo
+  const debtType = (debt.debtType === 'parcelada') ? 'financiamento' : (debt.debtType || 'unica');
+  document.getElementById('debtType').value = debtType;
+  document.querySelectorAll('.debt-type-toggle').forEach(b => b.classList.remove('active'));
+  const activeBtn = document.querySelector(`.debt-type-toggle[data-value="${debtType}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  // Mostrar/esconder campos de parcelas
+  const isFinanciamento = debtType === 'financiamento';
+  document.getElementById('installmentFields').style.display = isFinanciamento ? 'block' : 'none';
+  if (isFinanciamento) {
+    document.getElementById('debtInstallments').value = debt.installments || '';
+    document.getElementById('debtInstallmentValue').value = debt.installmentValue || '';
+    document.getElementById('debtPaidInstallments').value = debt.paidInstallments || 0;
+    const remaining = debt.amount - ((debt.installmentValue || 0) * (debt.paidInstallments || 0));
+    document.getElementById('debtRemainingValue').value = remaining.toFixed(2);
+    document.getElementById('debtAmountLabel').textContent = 'Valor Total (R$)';
+  } else if (debtType === 'fixa') {
+    document.getElementById('debtAmountLabel').textContent = 'Valor Mensal (R$)';
+  } else {
+    document.getElementById('debtAmountLabel').textContent = 'Valor (R$)';
+  }
+
+  // Atualizar título e botão do modal
+  document.getElementById('debtModalTitle').innerHTML = '<i class="fa-solid fa-pen"></i> Editar dívida';
+  document.getElementById('debtSubmitBtn').innerHTML = '<i class="fa-solid fa-check"></i> Salvar';
+
+  // Abrir modal
+  document.getElementById('debtModal').classList.add('active');
 }
 
 // ===== SETUP DEBT TYPE TOGGLE & INSTALLMENT FIELDS =====
@@ -1024,7 +1125,12 @@ function setupDebtTypeListeners() {
       this.classList.add('active');
       const val = this.dataset.value;
       document.getElementById('debtType').value = val;
-      document.getElementById('installmentFields').style.display = val === 'parcelada' ? 'block' : 'none';
+      document.getElementById('installmentFields').style.display = val === 'financiamento' ? 'block' : 'none';
+      // Atualizar label do valor conforme tipo
+      const amountLabel = document.getElementById('debtAmountLabel');
+      if (val === 'financiamento') amountLabel.textContent = 'Valor Total (R$)';
+      else if (val === 'fixa') amountLabel.textContent = 'Valor Mensal (R$)';
+      else amountLabel.textContent = 'Valor (R$)';
     });
   });
 
@@ -1609,18 +1715,27 @@ function updateTransactionHistory() {
 function updateDebtsList() {
   const container = document.getElementById('debtsList');
   
-  const totalDebts = state.debts
-    .filter(d => d.status === 'active')
-    .reduce((sum, d) => sum + d.amount, 0);
+  const activeDebts = state.debts.filter(d => d.status === 'active');
+
+  // Separar: mensal (fixa + única) vs financiamento
+  const monthlyDebts = activeDebts.filter(d => d.debtType !== 'financiamento' && d.debtType !== 'parcelada');
+  const financingDebts = activeDebts.filter(d => d.debtType === 'financiamento' || d.debtType === 'parcelada');
+
+  // Total mensal = soma dos amounts de únicas/fixas
+  const totalMonthly = monthlyDebts.reduce((sum, d) => sum + d.amount, 0);
+  // Total financiamento = soma das parcelas mensais (installmentValue)
+  const totalFinancing = financingDebts.reduce((sum, d) => sum + (d.installmentValue || d.amount), 0);
   
-  const activeDebts = state.debts.filter(d => d.status === 'active').length;
+  const activeCount = activeDebts.length;
 
   const totalPaid = state.debts
     .filter(d => d.status === 'paid')
     .reduce((sum, d) => sum + d.amount, 0);
   
-  document.getElementById('totalDebts').textContent = formatCurrency(totalDebts);
-  document.getElementById('activeDebts').textContent = activeDebts;
+  document.getElementById('totalDebts').textContent = formatCurrency(totalMonthly);
+  const financingEl = document.getElementById('totalFinancing');
+  if (financingEl) financingEl.textContent = formatCurrency(totalFinancing);
+  document.getElementById('activeDebts').textContent = activeCount;
   const paidTabEl = document.getElementById('totalPaidDebtsTab');
   if (paidTabEl) paidTabEl.textContent = formatCurrency(totalPaid);
   
@@ -1647,14 +1762,21 @@ function updateDebtsList() {
     else if (daysUntilDue < 7) { statusBadge = 'due-soon'; statusLabel = `${daysUntilDue}d restantes`; }
 
     // Informação de parcelas
-    const isInstallment = d.debtType === 'parcelada' && d.installments > 1;
+    const isFinanciamento = (d.debtType === 'financiamento' || d.debtType === 'parcelada') && d.installments > 1;
+    const isFixa = d.debtType === 'fixa';
     const paidInst = d.paidInstallments || 0;
     const instValue = d.installmentValue || (d.amount / (d.installments || 1));
     const remaining = d.amount - (instValue * paidInst);
     const catInfo = d.category ? CATEGORY_MAP[d.category] : null;
+
+    // Tipo badge
+    let typeBadge = '';
+    let typeIcon = '';
+    if (isFinanciamento) { typeBadge = 'Financiamento'; typeIcon = '<i class="fa-solid fa-building-columns"></i>'; }
+    else if (isFixa) { typeBadge = 'Fixa'; typeIcon = '<i class="fa-solid fa-rotate"></i>'; }
     
     let installmentHtml = '';
-    if (isInstallment) {
+    if (isFinanciamento) {
       const progressPct = Math.round((paidInst / d.installments) * 100);
       installmentHtml = `
         <div class="debt-installment-info">
@@ -1666,11 +1788,16 @@ function updateDebtsList() {
         </div>`;
     }
     
+    // Botão de ação
+    let payBtnLabel = 'Pagar';
+    if (isFinanciamento) payBtnLabel = 'Pagar parcela';
+    else if (isFixa) payBtnLabel = 'Pagar mês';
+
     return `
-      <div class="debt-item ${d.status === 'paid' ? 'debt-paid' : ''}">
+      <div class="debt-item ${d.status === 'paid' ? 'debt-paid' : ''} ${isFinanciamento ? 'debt-financing' : ''} ${isFixa ? 'debt-fixed' : ''}">
         <div class="debt-item-top">
           <span class="debt-creditor">${esc(d.creditor)}</span>
-          <span class="debt-amount-badge">${formatCurrency(d.amount)}</span>
+          <span class="debt-amount-badge">${isFinanciamento ? formatCurrency(instValue) : formatCurrency(d.amount)}</span>
         </div>
         ${installmentHtml}
         <div class="debt-item-meta">
@@ -1678,18 +1805,76 @@ function updateDebtsList() {
           <span class="debt-meta-tag"><i class="fa-solid fa-calendar"></i> ${formatDate(d.dueDate)}</span>
           ${catInfo ? `<span class="debt-meta-tag">${catInfo.icon} ${catInfo.label}</span>` : ''}
           ${d.description ? `<span class="debt-meta-tag">${esc(d.description)}</span>` : ''}
-          ${isInstallment ? `<span class="debt-meta-tag"><i class="fa-solid fa-layer-group"></i> Parcelada</span>` : ''}
+          ${typeBadge ? `<span class="debt-meta-tag">${typeIcon} ${typeBadge}</span>` : ''}
           <span class="debt-status-badge ${statusBadge}">${statusLabel}</span>
         </div>
         <div class="debt-item-actions">
-          ${d.status !== 'paid' ? `<button onclick="payDebt('${d.id}')" class="btn-pay"><i class="fa-solid fa-check"></i> ${isInstallment ? 'Pagar parcela' : 'Pagar'}</button>` : ''}
+          ${d.status !== 'paid' ? `<button onclick="editDebt('${d.id}')" class="btn-edit"><i class="fa-solid fa-pen"></i> Editar</button>` : ''}
+          ${d.status !== 'paid' ? `<button onclick="payDebt('${d.id}')" class="btn-pay"><i class="fa-solid fa-check"></i> ${payBtnLabel}</button>` : ''}
           <button onclick="deleteDebt('${d.id}')" class="btn-delete"><i class="fa-solid fa-trash"></i> Excluir</button>
         </div>
       </div>`;
   }).join('');
+
+  // Atualizar alertas de vencimento
+  updateDebtAlerts();
 }
 
-// ===== ATUALIZAR EXIBIÇÃO DE SALÁRIOS =====
+// ===== ALERTAS DE VENCIMENTO =====
+function updateDebtAlerts() {
+  const container = document.getElementById('debtAlerts');
+  if (!container) return;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const activeDebts = state.debts.filter(d => d.status === 'active');
+  const alerts = [];
+
+  activeDebts.forEach(d => {
+    const dueDate = new Date(d.dueDate + 'T12:00:00');
+    dueDate.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      alerts.push({
+        type: 'overdue',
+        icon: 'fa-circle-exclamation',
+        label: `<strong>${esc(d.creditor)}</strong> venceu há ${Math.abs(diffDays)} dia(s) — ${formatCurrency(d.installmentValue || d.amount)}`,
+        days: diffDays
+      });
+    } else if (diffDays === 0) {
+      alerts.push({
+        type: 'today',
+        icon: 'fa-bell',
+        label: `<strong>${esc(d.creditor)}</strong> vence <strong>hoje</strong> — ${formatCurrency(d.installmentValue || d.amount)}`,
+        days: diffDays
+      });
+    } else if (diffDays <= 7) {
+      alerts.push({
+        type: 'soon',
+        icon: 'fa-clock',
+        label: `<strong>${esc(d.creditor)}</strong> vence em ${diffDays} dia(s) (${formatDate(d.dueDate)}) — ${formatCurrency(d.installmentValue || d.amount)}`,
+        days: diffDays
+      });
+    }
+  });
+
+  // Ordenar: atrasadas primeiro, depois por proximidade
+  alerts.sort((a, b) => a.days - b.days);
+
+  if (alerts.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = alerts.map(a => `
+    <div class="debt-alert debt-alert-${a.type}">
+      <i class="fa-solid ${a.icon}"></i>
+      <span>${a.label}</span>
+    </div>
+  `).join('');
+}
 function updateSalaryDisplay() {
   const luanSalaries = state.salaries.filter(s => s.person === 'Luan');
   const biancaSalaries = state.salaries.filter(s => s.person === 'Bianca');
@@ -1802,8 +1987,8 @@ function payDebt(id) {
   const debt = state.debts.find(d => d.id === id);
   if (!debt) return;
 
-  // Dívida parcelada: pagar uma parcela
-  if (debt.debtType === 'parcelada' && debt.installments > 1) {
+  // Financiamento: pagar uma parcela
+  if ((debt.debtType === 'financiamento' || debt.debtType === 'parcelada') && debt.installments > 1) {
     const paidSoFar = (debt.paidInstallments || 0);
     const remaining = debt.installments - paidSoFar;
     if (remaining <= 0) {
@@ -1816,7 +2001,6 @@ function payDebt(id) {
 
     debt.paidInstallments = parcNum;
 
-    // Registra como despesa no histórico
     const transaction = {
       id: generateId(),
       type: 'saida',
@@ -1831,13 +2015,11 @@ function payDebt(id) {
     state.transactions.push(transaction);
     saveToFirebase('transactions', transaction);
 
-    // Se todas pagas, marca como paga
     if (parcNum >= debt.installments) {
       debt.status = 'paid';
       debt.paidAt = new Date().toISOString();
-      showAlert(`Todas as ${debt.installments} parcelas pagas! Dívida quitada!`, 'success');
+      showAlert(`Todas as ${debt.installments} parcelas pagas! Financiamento quitado!`, 'success');
     } else {
-      // Avança vencimento em 1 mês
       const nextDue = new Date(debt.dueDate + 'T12:00:00');
       nextDue.setMonth(nextDue.getMonth() + 1);
       debt.dueDate = toDateStr(nextDue);
@@ -1850,6 +2032,33 @@ function payDebt(id) {
       dueDate: debt.dueDate,
       paidAt: debt.paidAt
     });
+
+  } else if (debt.debtType === 'fixa') {
+    // Dívida fixa mensal: pagar o mês, avança vencimento, não marca como "paga" definitivamente
+    if (!confirm(`Pagar ${esc(debt.creditor)} deste mês: ${formatCurrency(debt.amount)}?`)) return;
+
+    const transaction = {
+      id: generateId(),
+      type: 'saida',
+      amount: debt.amount,
+      category: debt.category || 'outros',
+      responsible: debt.responsible,
+      date: toDateStr(new Date()),
+      description: `${debt.creditor} - Mensal`,
+      fromDebt: debt.id,
+      createdAt: new Date().toISOString()
+    };
+    state.transactions.push(transaction);
+    saveToFirebase('transactions', transaction);
+
+    // Avança vencimento para o próximo mês
+    const nextDue = new Date(debt.dueDate + 'T12:00:00');
+    nextDue.setMonth(nextDue.getMonth() + 1);
+    debt.dueDate = toDateStr(nextDue);
+
+    updateInFirebase('debts', id, { dueDate: debt.dueDate });
+    showAlert(`${debt.creditor} pago! Próximo vencimento: ${formatDate(debt.dueDate)}`, 'success');
+
   } else {
     // Dívida única
     if (!confirm(`Marcar dívida de ${formatCurrency(debt.amount)} como paga?`)) return;
@@ -1857,7 +2066,6 @@ function payDebt(id) {
     debt.status = 'paid';
     debt.paidAt = new Date().toISOString();
 
-    // Registra como despesa no histórico
     const transaction = {
       id: generateId(),
       type: 'saida',
