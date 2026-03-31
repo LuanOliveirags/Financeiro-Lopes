@@ -13,7 +13,7 @@
 
 @media (min-width: 768px) {
   .header-content, .main-content > * { max-width: 700px; margin-left: auto; margin-right: auto; }
-  .bottom-nav          { max-width: 700px; left: 50%; transform: translateX(-50%); border-radius: 20px 20px 0 0; }
+  .bottom-nav          { max-width: 700px; left: 50%; transform: translateX(-50%); border-radius: 20px 20px 0 0; width: 100%; }
   .balance-card        { margin: 0 auto 16px; max-width: 680px; }
   .ie-grid, .kpi-mini-row, .person-cards-grid, .charts-grid, .summary-cards-row { max-width: 680px; margin-left: auto; margin-right: auto; }
   .list-section, .debts-list, .add-panel, .week-scroller-wrap, .months-scroll-wrap, .page-header { max-width: 700px; margin-left: auto; margin-right: auto; }
@@ -23,8 +23,10 @@
 /* Small mobile */
 @media (max-width: 400px) {
   .balance-amount { font-size: 1.875rem; }
-  .bottom-nav-item { padding: 4px 10px; min-width: 44px; }
+  .bottom-nav-item { padding: 4px 8px; min-width: 40px; }
   .nav-label { font-size: 0.625rem; }
+  .fab-btn { width: 50px; height: 50px; }
+  .nav-icon-wrap { width: 32px; height: 32px; font-size: 0.875rem; }
 }
 
 /* Safe area (notch handling) */
