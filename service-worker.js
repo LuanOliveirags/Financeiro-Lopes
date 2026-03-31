@@ -1,16 +1,16 @@
 // Service Worker para PWA - Caching e Offline Support
-const CACHE_NAME = 'financeiro-lopes-v1';
+const CACHE_NAME = 'financeiro-lopes-v2';
 const URLS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/css/app-style.css',
-  '/css/sections.css',
-  '/css/calendar-style.css',
-  '/css/animations.css',
-  '/css/base/responsive.css',
-  '/js/script.js',
-  '/manifest.json'
+  './',
+  './index.html',
+  './css/style.css',
+  './css/app-style.css',
+  './css/sections.css',
+  './css/calendar-style.css',
+  './css/animations.css',
+  './css/base/responsive.css',
+  './js/script.js',
+  './manifest.json'
 ];
 
 // Install Event
@@ -19,10 +19,11 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Cache aberto');
-        return cache.addAll(URLS_TO_CACHE.map(url => {
-          // Try to add URL, ignore errors
-          return cache.add(url).catch(() => console.log('Failed to cache:', url));
-        }));
+        return Promise.all(
+          URLS_TO_CACHE.map(url =>
+            cache.add(url).catch(() => console.log('Falha ao cachear:', url))
+          )
+        );
       })
       .catch((error) => console.log('Erro ao cachear:', error))
   );
