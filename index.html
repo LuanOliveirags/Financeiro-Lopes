@@ -28,7 +28,7 @@
     <title>Financeiro Lopes</title>
 </head>
 <body>
-    <!-- LOGIN PAGE -->
+    <!-- LOGIN PAGE --> <!-- Página de Login do sistema -->
     <div id="loginContainer" class="login-container active">
         <div class="login-bg-blobs">
             <div class="blob blob-1"></div>
@@ -73,9 +73,9 @@
         </div>
     </div>
 
-    <!-- MAIN APPLICATION -->
+    <!-- MAIN APPLICATION --> <!-- Aplicação principal após login -->
     <div id="appContainer" class="app-container">
-        <!-- Header -->
+        <!-- Header --> <!-- Cabeçalho do aplicativo, mostra usuário e ações rápidas -->
         <header class="header">
             <div class="header-content">
                 <div class="header-left">
@@ -102,7 +102,7 @@
             </div>
         </header>
 
-        <!-- Bottom Navigation -->
+        <!-- Bottom Navigation --> <!-- Navegação inferior para alternar entre abas principais -->
         <nav class="bottom-nav">
             <button class="bottom-nav-item active" data-tab="dashboard">
                 <span class="nav-icon-wrap"><i class="fa-solid fa-chart-pie"></i></span>
@@ -141,13 +141,13 @@
             </button>
         </nav>
 
-        <!-- Main Content -->
+        <!-- Main Content --> <!-- Conteúdo principal das abas -->
         <main class="main-content">
 
-            <!-- ====== DASHBOARD / Status TAB ====== -->
+            <!-- ====== DASHBOARD / Status TAB ====== --> <!-- Aba de status geral e resumo financeiro -->
             <section id="dashboard" class="tab-content active">
                 
-                <!-- Status page header -->
+                <!-- Status page header --> <!-- Cabeçalho da página de status -->
                 <div class="page-header">
                     <h2 class="page-title">Status</h2>
                     <div class="page-header-actions">
@@ -158,14 +158,14 @@
                     </div>
                 </div>
 
-                <!-- Month Scroller -->
+                <!-- Month Scroller --> <!-- Rolagem de meses para filtrar dados -->
                 <div class="months-scroll-wrap">
                     <div class="months-scroller" id="monthScroller">
                         <!-- Populated by JS -->
                     </div>
                 </div>
 
-                <!-- Balance Card -->
+                <!-- Balance Card --> <!-- Cartão de saldo líquido -->
                 <div class="balance-card">
                     <p class="balance-label">Saldo líquido</p>
                     <h1 class="balance-amount" id="totalBalance">R$ 0,00</h1>
@@ -179,7 +179,7 @@
                     </div>
                 </div>
 
-                <!-- Income & Expense Cards -->
+                <!-- Income & Expense Cards --> <!-- Cartões de receita e despesa -->
                 <div class="ie-grid">
                     <div class="ie-card">
                         <div class="ie-circle income-circle">
@@ -201,7 +201,7 @@
                     </div>
                 </div>
 
-                <!-- KPI Minis -->
+                <!-- KPI Minis --> <!-- Indicadores rápidos: dívidas e responsáveis -->
                 <div class="kpi-mini-row">
                     <div class="kpi-mini-card">
                         <div class="kpi-mini-icon debt-kpi-icon">
@@ -223,7 +223,7 @@
                     </div>
                 </div>
 
-                <!-- Charts Section -->
+                <!-- Charts Section --> <!-- Gráficos de categorias, responsáveis e salários -->
                 <div class="charts-grid">
                     <div class="chart-card">
                         <div class="chart-card-header">
@@ -248,7 +248,7 @@
                     </div>
                 </div>
 
-                <!-- Recent Transactions -->
+                <!-- Recent Transactions --> <!-- Lista de transações recentes -->
                 <div class="list-section">
                     <div class="list-section-header">
                         <h3>Recentes</h3>
@@ -260,7 +260,7 @@
                 </div>
             </section>
 
-            <!-- ====== TRANSACTIONS / DAILY TRANSACTION TAB ====== -->
+            <!-- ====== TRANSACTIONS / DAILY TRANSACTION TAB ====== --> <!-- Aba de transações diárias -->
             <section id="transactions" class="tab-content">
 
                 <div class="page-header">
@@ -275,14 +275,14 @@
                     </div>
                 </div>
 
-                <!-- Week Day Scroller -->
+                <!-- Week Day Scroller --> <!-- Rolagem de dias da semana -->
                 <div class="week-scroller-wrap">
                     <div class="week-scroller" id="weekScroller">
                         <!-- Populated by JS -->
                     </div>
                 </div>
 
-                <!-- Add Transaction Panel (collapsible) -->
+                <!-- Add Transaction Panel (collapsible) --> <!-- Painel para adicionar nova transação -->
                 <div class="add-panel" id="addTransactionPanel">
                     <button class="add-panel-toggle" id="togglePanelBtn">
                         <div class="apt-left">
@@ -353,13 +353,13 @@
                     </div>
                 </div>
 
-                <!-- Transaction History List -->
+                <!-- Transaction History List --> <!-- Lista de histórico de transações -->
                 <div class="list-section">
                     <div id="transactionHistoryList" class="transactions-list"></div>
                 </div>
             </section>
 
-            <!-- ====== DEBTS TAB ====== -->
+            <!-- ====== DEBTS TAB ====== --> <!-- Aba de dívidas -->
             <section id="debts" class="tab-content">
                 <div class="page-header">
                     <h2 class="page-title">dívidas</h2>
@@ -368,7 +368,7 @@
                     </button>
                 </div>
 
-                <!-- Debt Modal -->
+                <!-- Debt Modal --> <!-- Modal para adicionar nova dívida -->
                 <div id="debtModal" class="modal">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -407,7 +407,7 @@
                     </div>
                 </div>
 
-                <!-- Debt Summary -->
+                <!-- Debt Summary --> <!-- Resumo das dívidas -->
                 <div class="summary-cards-row">
                     <div class="summary-mini">
                         <div class="sm-icon debt-sm-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
@@ -428,7 +428,7 @@
                 <div id="debtsList" class="debts-list"></div>
             </section>
 
-            <!-- ====== SALARIES TAB ====== -->
+            <!-- ====== SALARIES TAB ====== --> <!-- Aba de salários/entradas -->
             <section id="salaries" class="tab-content">
                 <div class="page-header">
                     <h2 class="page-title">Financeiro</h2>
@@ -437,7 +437,7 @@
                     </button>
                 </div>
 
-                <!-- Salary Modal -->
+                <!-- Salary Modal --> <!-- Modal para adicionar novo salário/entrada -->
                 <div id="salaryModal" class="modal">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -471,7 +471,7 @@
                     </div>
                 </div>
 
-                <!-- Person Income Cards -->
+                <!-- Person Income Cards --> <!-- Cartões de salário por pessoa -->
                 <div class="person-cards-grid">
                     <div class="person-income-card luan-card">
                         <div class="pic-header">
@@ -507,7 +507,7 @@
                 </div>
             </section>
 
-            <!-- ====== SETTINGS TAB ====== -->
+            <!-- ====== SETTINGS TAB ====== --> <!-- Aba de configurações -->
             <section id="settings" class="tab-content">
                 <div class="settings-profile-card">
                     <div class="spc-avatar-wrap">
@@ -582,7 +582,7 @@
         </main>
     </div>
 
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration --> <!-- Registro do Service Worker para PWA -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -593,10 +593,10 @@
         }
     </script>
 
-    <!-- Chart.js -->
+    <!-- Chart.js --> <!-- Biblioteca de gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
-    <!-- Main Script -->
+    <!-- Main Script --> <!-- Script principal da aplicação -->
     <script src="js/script.js"></script>
 </body>
 </html>
