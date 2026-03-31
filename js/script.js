@@ -59,14 +59,18 @@ const state = {
 
 // ===== MAPEAMENTO DE CATEGORIAS =====
 const CATEGORY_MAP = {
-  alimentacao: { icon: '🍽️', label: 'Alimentação',  css: 'cat-alimentacao' },
-  transporte:  { icon: '🚗', label: 'Transporte',   css: 'cat-transporte'  },
-  saude:       { icon: '💊', label: 'Saúde',        css: 'cat-saude'       },
-  educacao:    { icon: '📚', label: 'Educação',     css: 'cat-educacao'    },
-  moradia:     { icon: '🏠', label: 'Moradia',      css: 'cat-moradia'     },
-  lazer:       { icon: '🎮', label: 'Lazer',        css: 'cat-lazer'       },
-  utilidades:  { icon: '⚡', label: 'Utilidades',   css: 'cat-utilidades'  },
-  outros:      { icon: '📁', label: 'Outros',       css: 'cat-outros'      }
+  alimentacao:  { icon: '🍽️', label: 'Alimentação',  css: 'cat-alimentacao'  },
+  transporte:   { icon: '🚗', label: 'Transporte',   css: 'cat-transporte'   },
+  saude:        { icon: '💊', label: 'Saúde',        css: 'cat-saude'        },
+  educacao:     { icon: '📚', label: 'Educação',     css: 'cat-educacao'     },
+  moradia:      { icon: '🏠', label: 'Moradia',      css: 'cat-moradia'      },
+  lazer:        { icon: '🎮', label: 'Lazer',        css: 'cat-lazer'        },
+  utilidades:   { icon: '⚡', label: 'Utilidades',   css: 'cat-utilidades'   },
+  beleza:       { icon: '💅', label: 'Beleza',       css: 'cat-beleza'       },
+  pets:         { icon: '🐾', label: 'Pets',         css: 'cat-pets'         },
+  assinaturas:  { icon: '📺', label: 'Assinaturas',  css: 'cat-assinaturas'  },
+  investimentos:{ icon: '📈', label: 'Investimentos', css: 'cat-investimentos'},
+  outros:       { icon: '📁', label: 'Outros',       css: 'cat-outros'       }
 };
 
 // ===== INICIALIZAÇÃO =====
@@ -857,6 +861,12 @@ function setupEventListeners() {
 
   // Initialize theme on load
   initializeTheme();
+
+  // Setup deduction listeners for salary modal
+  setupDeductionListeners();
+
+  // Setup debt type toggle & installment field listeners
+  setupDebtTypeListeners();
 }
 
 // ===== TROCA DE ABAS =====
@@ -959,14 +969,25 @@ function addTransaction(e) {
 function addDebt(e) {
   e.preventDefault();
   
+  const debtType = document.getElementById('debtType').value;
+  const totalAmount = parseFloat(document.getElementById('debtAmount').value);
+  const installments = parseInt(document.getElementById('debtInstallments').value) || 1;
+  const paidInstallments = parseInt(document.getElementById('debtPaidInstallments').value) || 0;
+
   const debt = {
     id: generateId(),
     creditor: document.getElementById('debtCreditor').value,
-    amount: parseFloat(document.getElementById('debtAmount').value),
+    amount: totalAmount,
     dueDate: document.getElementById('debtDueDate').value,
     responsible: document.getElementById('debtResponsible').value,
+    category: document.getElementById('debtCategory').value || '',
     description: document.getElementById('debtDescription').value,
+    debtType: debtType,
+    installments: debtType === 'parcelada' ? installments : 1,
+    paidInstallments: debtType === 'parcelada' ? paidInstallments : 0,
+    installmentValue: debtType === 'parcelada' ? (totalAmount / installments) : totalAmount,
     status: 'active',
+    paidAt: null,
     createdAt: new Date().toISOString()
   };
   
@@ -983,6 +1004,10 @@ function addDebt(e) {
   
   // Reset and close modal
   e.target.reset();
+  document.getElementById('debtType').value = 'unica';
+  document.getElementById('installmentFields').style.display = 'none';
+  document.querySelectorAll('.debt-type-toggle').forEach(b => b.classList.remove('active'));
+  document.querySelector('.debt-type-toggle[data-value="unica"]').classList.add('active');
   document.getElementById('debtModal').classList.remove('active');
   
   // Update displays
@@ -990,20 +1015,62 @@ function addDebt(e) {
   updateDashboard();
 }
 
+// ===== SETUP DEBT TYPE TOGGLE & INSTALLMENT FIELDS =====
+function setupDebtTypeListeners() {
+  document.querySelectorAll('.debt-type-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.debt-type-toggle').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      const val = this.dataset.value;
+      document.getElementById('debtType').value = val;
+      document.getElementById('installmentFields').style.display = val === 'parcelada' ? 'block' : 'none';
+    });
+  });
+
+  // Calcular valor da parcela automaticamente
+  const amountInput = document.getElementById('debtAmount');
+  const installmentsInput = document.getElementById('debtInstallments');
+  const paidInput = document.getElementById('debtPaidInstallments');
+
+  function updateInstallmentCalc() {
+    const total = parseFloat(amountInput.value) || 0;
+    const inst = parseInt(installmentsInput.value) || 1;
+    const paid = parseInt(paidInput.value) || 0;
+    const instValue = total / inst;
+    const remaining = total - (instValue * paid);
+    document.getElementById('debtInstallmentValue').value = instValue.toFixed(2);
+    document.getElementById('debtRemainingValue').value = remaining.toFixed(2);
+  }
+
+  if (amountInput) amountInput.addEventListener('input', updateInstallmentCalc);
+  if (installmentsInput) installmentsInput.addEventListener('input', updateInstallmentCalc);
+  if (paidInput) paidInput.addEventListener('input', updateInstallmentCalc);
+}
+
 // ===== ADICIONAR SALÁRIO =====
+// Variável temporária para descontos do modal
+let tempDeductions = [];
+
 function addSalary(e) {
   e.preventDefault();
   
+  const grossAmount = parseFloat(document.getElementById('salaryAmount').value);
+  const totalDeductionsVal = tempDeductions.reduce((sum, d) => sum + d.value, 0);
+  const netAmount = grossAmount - totalDeductionsVal;
+
   const salary = {
     id: generateId(),
     person: document.getElementById('salaryPerson').value,
-    amount: parseFloat(document.getElementById('salaryAmount').value),
+    amount: netAmount,
+    grossAmount: grossAmount,
+    deductions: tempDeductions.length > 0 ? [...tempDeductions] : [],
+    totalDeductions: totalDeductionsVal,
     date: document.getElementById('salaryDate').value,
     description: document.getElementById('salaryDescription').value,
     createdAt: new Date().toISOString()
   };
   
-  if (!salary.person || !salary.amount || !salary.date) {
+  if (!salary.person || !grossAmount || !salary.date) {
     alert('Por favor, preencha todos os campos obrigatórios!');
     return;
   }
@@ -1016,11 +1083,88 @@ function addSalary(e) {
   
   // Reset and close modal
   e.target.reset();
+  tempDeductions = [];
+  updateDeductionsUI();
   document.getElementById('salaryModal').classList.remove('active');
   
   // Update displays
   updateSalaryDisplay();
   updateDashboard();
+}
+
+// ===== DESCONTOS DO SALÁRIO =====
+function setupDeductionListeners() {
+  const toggleBtn = document.getElementById('toggleDeductionsBtn');
+  const body = document.getElementById('deductionsBody');
+  if (toggleBtn && body) {
+    toggleBtn.addEventListener('click', () => {
+      const isOpen = body.classList.toggle('open');
+      const chevron = toggleBtn.querySelector('.deductions-chevron');
+      if (chevron) chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0)';
+    });
+  }
+
+  const addBtn = document.getElementById('addDeductionBtn');
+  if (addBtn) {
+    addBtn.addEventListener('click', addDeduction);
+  }
+
+  // Atualizar preview do salário líquido quando bruto mudar
+  const salaryAmountInput = document.getElementById('salaryAmount');
+  if (salaryAmountInput) {
+    salaryAmountInput.addEventListener('input', updateNetSalaryPreview);
+  }
+}
+
+function addDeduction() {
+  const nameInput = document.getElementById('deductionName');
+  const valueInput = document.getElementById('deductionValue');
+  const name = nameInput.value.trim();
+  const value = parseFloat(valueInput.value);
+
+  if (!name || !value || value <= 0) {
+    showAlert('Preencha nome e valor do desconto.', 'warning');
+    return;
+  }
+
+  tempDeductions.push({ id: generateId(), name, value });
+  nameInput.value = '';
+  valueInput.value = '';
+  updateDeductionsUI();
+}
+
+function removeDeduction(id) {
+  tempDeductions = tempDeductions.filter(d => d.id !== id);
+  updateDeductionsUI();
+}
+
+function updateDeductionsUI() {
+  const container = document.getElementById('deductionsList');
+  if (!container) return;
+
+  container.innerHTML = tempDeductions.map(d => `
+    <div class="deduction-item">
+      <span class="deduction-name">${esc(d.name)}</span>
+      <span class="deduction-value">- ${formatCurrency(d.value)}</span>
+      <button type="button" class="btn-remove-deduction" onclick="removeDeduction('${d.id}')">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  `).join('');
+
+  const total = tempDeductions.reduce((sum, d) => sum + d.value, 0);
+  const totalEl = document.getElementById('totalDeductions');
+  if (totalEl) totalEl.textContent = formatCurrency(total);
+
+  updateNetSalaryPreview();
+}
+
+function updateNetSalaryPreview() {
+  const gross = parseFloat(document.getElementById('salaryAmount').value) || 0;
+  const totalDed = tempDeductions.reduce((sum, d) => sum + d.value, 0);
+  const net = gross - totalDed;
+  const netEl = document.getElementById('netSalaryPreview');
+  if (netEl) netEl.textContent = formatCurrency(net);
 }
 
 // ===== ATUALIZAR DASHBOARD =====
@@ -1067,12 +1211,29 @@ function updateDashboard() {
   const totalBalance = totalIncome - totalExpenses;
   const totalDebt = monthDebts.reduce((sum, d) => sum + d.amount, 0);
   const responsibleCount = new Set(monthTransactions.map(t => t.responsible)).size;
+
+  // Dívidas pagas no mês (pela data do pagamento via transação)
+  const paidDebtsThisMonth = state.transactions.filter(t => {
+    if (!t.fromDebt) return false;
+    const tDate = new Date(t.date + 'T12:00:00');
+    return tDate.getMonth() === month && tDate.getFullYear() === year;
+  });
+  const totalPaidDebts = paidDebtsThisMonth.reduce((sum, t) => sum + t.amount, 0);
+
+  // Descontos do mês
+  const totalMonthDeductions = monthSalaries.reduce((sum, s) => sum + (s.totalDeductions || 0), 0);
   
   // Update KPI Cards
   document.getElementById('totalExpenses').textContent = formatCurrency(totalExpenses);
   document.getElementById('totalBalance').textContent = formatCurrency(totalBalance);
   document.getElementById('totalSpent').textContent = formatCurrency(totalDebt);
   document.getElementById('totalResponsible').textContent = responsibleCount;
+  
+  const paidDebtsEl = document.getElementById('totalPaidDebts');
+  if (paidDebtsEl) paidDebtsEl.textContent = formatCurrency(totalPaidDebts);
+
+  const deductionsDashEl = document.getElementById('totalDeductionsDash');
+  if (deductionsDashEl) deductionsDashEl.textContent = formatCurrency(totalMonthDeductions);
   // Income card on dashboard
   const incomeEl = document.getElementById('totalIncomeDash');
   if (incomeEl) incomeEl.textContent = formatCurrency(totalIncome);
@@ -1372,16 +1533,26 @@ function updateDebtsList() {
     .reduce((sum, d) => sum + d.amount, 0);
   
   const activeDebts = state.debts.filter(d => d.status === 'active').length;
+
+  const totalPaid = state.debts
+    .filter(d => d.status === 'paid')
+    .reduce((sum, d) => sum + d.amount, 0);
   
   document.getElementById('totalDebts').textContent = formatCurrency(totalDebts);
   document.getElementById('activeDebts').textContent = activeDebts;
+  const paidTabEl = document.getElementById('totalPaidDebtsTab');
+  if (paidTabEl) paidTabEl.textContent = formatCurrency(totalPaid);
   
   if (state.debts.length === 0) {
     container.innerHTML = emptyState('Nenhuma dívida registrada ✅');
     return;
   }
   
-  const sorted = state.debts.sort((a, b) => new Date(a.dueDate + 'T12:00:00') - new Date(b.dueDate + 'T12:00:00'));
+  const sorted = state.debts.sort((a, b) => {
+    // Ativas primeiro, pagas por último
+    if (a.status !== b.status) return a.status === 'active' ? -1 : 1;
+    return new Date(a.dueDate + 'T12:00:00') - new Date(b.dueDate + 'T12:00:00');
+  });
   
   container.innerHTML = sorted.map(d => {
     const dueDate = new Date(d.dueDate + 'T12:00:00');
@@ -1393,21 +1564,44 @@ function updateDebtsList() {
     if (d.status === 'paid') { statusBadge = 'paid'; statusLabel = 'Paga'; }
     else if (daysUntilDue < 0) { statusBadge = 'overdue'; statusLabel = 'Atrasada'; }
     else if (daysUntilDue < 7) { statusBadge = 'due-soon'; statusLabel = `${daysUntilDue}d restantes`; }
+
+    // Informação de parcelas
+    const isInstallment = d.debtType === 'parcelada' && d.installments > 1;
+    const paidInst = d.paidInstallments || 0;
+    const instValue = d.installmentValue || (d.amount / (d.installments || 1));
+    const remaining = d.amount - (instValue * paidInst);
+    const catInfo = d.category ? CATEGORY_MAP[d.category] : null;
+    
+    let installmentHtml = '';
+    if (isInstallment) {
+      const progressPct = Math.round((paidInst / d.installments) * 100);
+      installmentHtml = `
+        <div class="debt-installment-info">
+          <div class="debt-installment-bar">
+            <div class="debt-installment-progress" style="width:${progressPct}%"></div>
+          </div>
+          <span class="debt-installment-text">${paidInst}/${d.installments} parcelas · Parcela: ${formatCurrency(instValue)}</span>
+          <span class="debt-installment-remaining">Restante: ${formatCurrency(remaining)}</span>
+        </div>`;
+    }
     
     return `
-      <div class="debt-item">
+      <div class="debt-item ${d.status === 'paid' ? 'debt-paid' : ''}">
         <div class="debt-item-top">
           <span class="debt-creditor">${esc(d.creditor)}</span>
           <span class="debt-amount-badge">${formatCurrency(d.amount)}</span>
         </div>
+        ${installmentHtml}
         <div class="debt-item-meta">
           <span class="debt-meta-tag"><i class="fa-solid fa-user"></i> ${esc(d.responsible)}</span>
           <span class="debt-meta-tag"><i class="fa-solid fa-calendar"></i> ${formatDate(d.dueDate)}</span>
+          ${catInfo ? `<span class="debt-meta-tag">${catInfo.icon} ${catInfo.label}</span>` : ''}
           ${d.description ? `<span class="debt-meta-tag">${esc(d.description)}</span>` : ''}
+          ${isInstallment ? `<span class="debt-meta-tag"><i class="fa-solid fa-layer-group"></i> Parcelada</span>` : ''}
           <span class="debt-status-badge ${statusBadge}">${statusLabel}</span>
         </div>
         <div class="debt-item-actions">
-          ${d.status !== 'paid' ? `<button onclick="payDebt('${d.id}')" class="btn-pay"><i class="fa-solid fa-check"></i> Pagar</button>` : ''}
+          ${d.status !== 'paid' ? `<button onclick="payDebt('${d.id}')" class="btn-pay"><i class="fa-solid fa-check"></i> ${isInstallment ? 'Pagar parcela' : 'Pagar'}</button>` : ''}
           <button onclick="deleteDebt('${d.id}')" class="btn-delete"><i class="fa-solid fa-trash"></i> Excluir</button>
         </div>
       </div>`;
@@ -1451,10 +1645,17 @@ function updateSalaryHistory() {
   }
   
   const sorted = state.salaries.slice().reverse();
-  const personCss = { Luan: 'cat-transporte', Bianca: 'cat-lazer' };
   const personIcon = { Luan: '👔', Bianca: '💼' };
   
-  container.innerHTML = sorted.map(s => `
+  container.innerHTML = sorted.map(s => {
+    const hasDeductions = s.deductions && s.deductions.length > 0;
+    const grossLabel = hasDeductions ? `Bruto: ${formatCurrency(s.grossAmount || s.amount)}` : '';
+    const deductionsHtml = hasDeductions ? `
+      <div class="salary-deductions-detail">
+        ${s.deductions.map(d => `<span class="deduction-tag">↓ ${esc(d.name)}: ${formatCurrency(d.value)}</span>`).join('')}
+      </div>` : '';
+
+    return `
     <div class="transaction-item">
       <div class="trans-icon-wrap cat-entrada">${personIcon[s.person] || '💰'}</div>
       <div class="trans-info">
@@ -1463,7 +1664,9 @@ function updateSalaryHistory() {
           <span>${formatDate(s.date)}</span>
           <span>·</span>
           <span>${esc(s.person)}</span>
+          ${grossLabel ? `<span>·</span><span>${grossLabel}</span>` : ''}
         </div>
+        ${deductionsHtml}
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <div class="trans-amount entrada">+${formatCurrency(s.amount)}</div>
@@ -1472,7 +1675,7 @@ function updateSalaryHistory() {
         </button>
       </div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 // ===== DELETAR TRANSAÇÃO =====
@@ -1501,13 +1704,86 @@ function deleteDebt(id) {
 // ===== PAGAR DÍVIDA =====
 function payDebt(id) {
   const debt = state.debts.find(d => d.id === id);
-  if (debt && confirm(`Marcar dívida de R$ ${debt.amount.toFixed(2)} como paga?`)) {
+  if (!debt) return;
+
+  // Dívida parcelada: pagar uma parcela
+  if (debt.debtType === 'parcelada' && debt.installments > 1) {
+    const paidSoFar = (debt.paidInstallments || 0);
+    const remaining = debt.installments - paidSoFar;
+    if (remaining <= 0) {
+      showAlert('Todas as parcelas já foram pagas!', 'info');
+      return;
+    }
+    const installmentValue = debt.installmentValue || (debt.amount / debt.installments);
+    const parcNum = paidSoFar + 1;
+    if (!confirm(`Pagar parcela ${parcNum}/${debt.installments} de ${formatCurrency(installmentValue)}?`)) return;
+
+    debt.paidInstallments = parcNum;
+
+    // Registra como despesa no histórico
+    const transaction = {
+      id: generateId(),
+      type: 'saida',
+      amount: installmentValue,
+      category: debt.category || 'outros',
+      responsible: debt.responsible,
+      date: toDateStr(new Date()),
+      description: `${debt.creditor} - Parcela ${parcNum}/${debt.installments}`,
+      fromDebt: debt.id,
+      createdAt: new Date().toISOString()
+    };
+    state.transactions.push(transaction);
+    saveToFirebase('transactions', transaction);
+
+    // Se todas pagas, marca como paga
+    if (parcNum >= debt.installments) {
+      debt.status = 'paid';
+      debt.paidAt = new Date().toISOString();
+      showAlert(`Todas as ${debt.installments} parcelas pagas! Dívida quitada!`, 'success');
+    } else {
+      // Avança vencimento em 1 mês
+      const nextDue = new Date(debt.dueDate + 'T12:00:00');
+      nextDue.setMonth(nextDue.getMonth() + 1);
+      debt.dueDate = toDateStr(nextDue);
+      showAlert(`Parcela ${parcNum}/${debt.installments} paga! Próximo vencimento: ${formatDate(debt.dueDate)}`, 'success');
+    }
+
+    updateInFirebase('debts', id, {
+      paidInstallments: debt.paidInstallments,
+      status: debt.status,
+      dueDate: debt.dueDate,
+      paidAt: debt.paidAt
+    });
+  } else {
+    // Dívida única
+    if (!confirm(`Marcar dívida de ${formatCurrency(debt.amount)} como paga?`)) return;
+
     debt.status = 'paid';
-    saveDataToStorage();
-    updateInFirebase('debts', id, { status: 'paid' });
-    updateDebtsList();
-    showAlert('Dívida marcada como paga!', 'success');
+    debt.paidAt = new Date().toISOString();
+
+    // Registra como despesa no histórico
+    const transaction = {
+      id: generateId(),
+      type: 'saida',
+      amount: debt.amount,
+      category: debt.category || 'outros',
+      responsible: debt.responsible,
+      date: toDateStr(new Date()),
+      description: `Dívida paga: ${debt.creditor}`,
+      fromDebt: debt.id,
+      createdAt: new Date().toISOString()
+    };
+    state.transactions.push(transaction);
+    saveToFirebase('transactions', transaction);
+
+    updateInFirebase('debts', id, { status: 'paid', paidAt: debt.paidAt });
+    showAlert('Dívida marcada como paga e registrada como despesa!', 'success');
   }
+
+  saveDataToStorage();
+  updateDebtsList();
+  updateDashboard();
+  updateTransactionHistory();
 }
 
 // ===== DELETAR SALÁRIO =====

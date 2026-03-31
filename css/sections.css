@@ -654,3 +654,151 @@
 /* Keep .salary-current / .salary-annual used elsewhere */
 .salary-current { font-size: 1.5rem; font-weight: var(--fw-bold); color: var(--text-primary); }
 .salary-annual  { font-size: 0.8125rem; color: var(--text-muted); }
+
+/* ═══════════════════════════════
+   DESCONTOS DO SALÁRIO
+═══════════════════════════════ */
+.deductions-section {
+  margin-top: 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.deductions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  transition: background var(--ease);
+}
+.deductions-header:hover { background: var(--bg-hover, rgba(255,255,255,0.05)); }
+.deductions-header i.deductions-chevron { transition: transform 0.3s ease; }
+.deductions-body {
+  display: none;
+  padding: 12px 14px;
+  gap: 8px;
+  flex-direction: column;
+}
+.deductions-body.open { display: flex; }
+.deduction-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: var(--r-md);
+  background: rgba(247,37,133,0.08);
+  font-size: 0.8125rem;
+  gap: 8px;
+}
+.deduction-name { flex: 1; color: var(--text-primary); }
+.deduction-value { color: #F72585; font-weight: var(--fw-semibold); white-space: nowrap; }
+.btn-remove-deduction {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  border-radius: var(--r-sm);
+  transition: all var(--ease);
+}
+.btn-remove-deduction:hover { color: #F72585; background: rgba(247,37,133,0.15); }
+.deduction-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.btn-add-deduction {
+  background: var(--grad-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-md);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  transition: transform var(--ease), box-shadow var(--ease);
+}
+.btn-add-deduction:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(247,37,133,0.3); }
+.deduction-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8125rem;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  color: var(--text-secondary);
+}
+.deduction-total-value { font-weight: var(--fw-semibold); color: #F72585; }
+.net-salary-row { border-top: 1.5px solid var(--border); padding-top: 8px; }
+.net-salary-value { font-weight: var(--fw-bold); color: #06D6A0; font-size: 0.9375rem; }
+
+/* Salary deductions detail in history */
+.salary-deductions-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.deduction-tag {
+  font-size: 0.6875rem;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  background: rgba(247,37,133,0.1);
+  color: #F72585;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════
+   DÍVIDA PARCELADA / INSTALLMENTS
+═══════════════════════════════ */
+.debt-installment-info {
+  padding: 8px 0;
+}
+.debt-installment-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.1);
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.debt-installment-progress {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #06D6A0, #4CC9F0);
+  transition: width 0.5s ease;
+}
+.debt-installment-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.debt-installment-remaining {
+  font-size: 0.75rem;
+  color: #F72585;
+  font-weight: var(--fw-semibold);
+  display: block;
+  margin-top: 2px;
+}
+.debt-item.debt-paid {
+  opacity: 0.6;
+}
+.debt-item.debt-paid .debt-amount-badge {
+  text-decoration: line-through;
+}
+
+/* New category colors */
+.cat-beleza       { background: rgba(255,105,180,0.15); color: #FF69B4; }
+.cat-pets         { background: rgba(255,165,0,0.15);   color: #FFA500; }
+.cat-assinaturas  { background: rgba(138,43,226,0.15);  color: #8A2BE2; }
+.cat-investimentos{ background: rgba(0,128,0,0.15);     color: #008000; }

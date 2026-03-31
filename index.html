@@ -213,12 +213,32 @@
                         </div>
                     </div>
                     <div class="kpi-mini-card">
+                        <div class="kpi-mini-icon paid-kpi-icon" style="background:rgba(6,214,160,0.15)">
+                            <i class="fa-solid fa-circle-check" style="color:#06D6A0"></i>
+                        </div>
+                        <div class="kpi-mini-text">
+                            <p class="kpi-mini-label">Dívidas pagas (mês)</p>
+                            <p class="kpi-mini-val" id="totalPaidDebts">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="kpi-mini-row">
+                    <div class="kpi-mini-card">
                         <div class="kpi-mini-icon people-kpi-icon">
                             <i class="fa-solid fa-users"></i>
                         </div>
                         <div class="kpi-mini-text">
                             <p class="kpi-mini-label">Responsáveis</p>
                             <p class="kpi-mini-val" id="totalResponsible">0</p>
+                        </div>
+                    </div>
+                    <div class="kpi-mini-card">
+                        <div class="kpi-mini-icon" style="background:rgba(247,37,133,0.15)">
+                            <i class="fa-solid fa-money-bill-wave" style="color:#F72585"></i>
+                        </div>
+                        <div class="kpi-mini-text">
+                            <p class="kpi-mini-label">Descontos (mês)</p>
+                            <p class="kpi-mini-val" id="totalDeductionsDash">R$ 0,00</p>
                         </div>
                     </div>
                 </div>
@@ -327,6 +347,10 @@
                                         <option value="moradia">🏠 Moradia</option>
                                         <option value="lazer">🎮 Lazer</option>
                                         <option value="utilidades">⚡ Utilidades</option>
+                                        <option value="beleza">💅 Beleza</option>
+                                        <option value="pets">🐾 Pets</option>
+                                        <option value="assinaturas">📺 Assinaturas</option>
+                                        <option value="investimentos">📈 Investimentos</option>
                                         <option value="outros">📁 Outros</option>
                                     </select>
                                 </div>
@@ -380,10 +404,50 @@
                                 <label for="debtCreditor">Credor</label>
                                 <input type="text" id="debtCreditor" placeholder="Nome do credor" required>
                             </div>
+
+                            <!-- Tipo de dívida -->
                             <div class="form-group">
-                                <label for="debtAmount">Valor (R$)</label>
+                                <label>Tipo</label>
+                                <div class="type-toggle-group">
+                                    <button type="button" class="type-toggle-btn active debt-type-toggle" data-value="unica">
+                                        <i class="fa-solid fa-receipt"></i> Única
+                                    </button>
+                                    <button type="button" class="type-toggle-btn debt-type-toggle" data-value="parcelada">
+                                        <i class="fa-solid fa-layer-group"></i> Parcelada
+                                    </button>
+                                </div>
+                                <input type="hidden" id="debtType" value="unica">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="debtAmount">Valor Total (R$)</label>
                                 <input type="number" id="debtAmount" placeholder="0,00" step="0.01" required>
                             </div>
+
+                            <!-- Campos de parcelamento (visíveis apenas se parcelada) -->
+                            <div id="installmentFields" style="display:none">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="debtInstallments">Nº Parcelas</label>
+                                        <input type="number" id="debtInstallments" placeholder="Ex: 48" min="2" step="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="debtInstallmentValue">Valor Parcela (R$)</label>
+                                        <input type="number" id="debtInstallmentValue" placeholder="0,00" step="0.01" readonly>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="debtPaidInstallments">Parcelas Pagas</label>
+                                        <input type="number" id="debtPaidInstallments" placeholder="0" min="0" step="1" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="debtRemainingValue">Restante (R$)</label>
+                                        <input type="number" id="debtRemainingValue" placeholder="0,00" step="0.01" readonly>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="form-group">
                                 <label for="debtDueDate">Vencimento</label>
                                 <input type="date" id="debtDueDate" required>
@@ -394,6 +458,24 @@
                                     <option value="Luan">Luan</option>
                                     <option value="Bianca">Bianca</option>
                                     <option value="Ambos">Ambos</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="debtCategory">Categoria</label>
+                                <select id="debtCategory">
+                                    <option value="">Selecione...</option>
+                                    <option value="alimentacao">🍽️ Alimentação</option>
+                                    <option value="transporte">🚗 Transporte</option>
+                                    <option value="saude">💊 Saúde</option>
+                                    <option value="educacao">📚 Educação</option>
+                                    <option value="moradia">🏠 Moradia</option>
+                                    <option value="lazer">🎮 Lazer</option>
+                                    <option value="utilidades">⚡ Utilidades</option>
+                                    <option value="beleza">💅 Beleza</option>
+                                    <option value="pets">🐾 Pets</option>
+                                    <option value="assinaturas">📺 Assinaturas</option>
+                                    <option value="investimentos">📈 Investimentos</option>
+                                    <option value="outros">📁 Outros</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -412,7 +494,7 @@
                     <div class="summary-mini">
                         <div class="sm-icon debt-sm-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
                         <div class="sm-text">
-                            <p class="sm-label">Total</p>
+                            <p class="sm-label">Total Ativas</p>
                             <p class="sm-value" id="totalDebts">R$ 0,00</p>
                         </div>
                     </div>
@@ -421,6 +503,13 @@
                         <div class="sm-text">
                             <p class="sm-label">Ativas</p>
                             <p class="sm-value" id="activeDebts">0</p>
+                        </div>
+                    </div>
+                    <div class="summary-mini">
+                        <div class="sm-icon" style="background:rgba(6,214,160,0.15)"><i class="fa-solid fa-circle-check" style="color:#06D6A0"></i></div>
+                        <div class="sm-text">
+                            <p class="sm-label">Total Pagas</p>
+                            <p class="sm-value" id="totalPaidDebtsTab">R$ 0,00</p>
                         </div>
                     </div>
                 </div>
@@ -453,7 +542,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="salaryAmount">Valor (R$)</label>
+                                <label for="salaryAmount">Valor Bruto (R$)</label>
                                 <input type="number" id="salaryAmount" placeholder="0,00" step="0.01" required>
                             </div>
                             <div class="form-group">
@@ -464,6 +553,37 @@
                                 <label for="salaryDescription">Descrição</label>
                                 <input type="text" id="salaryDescription" placeholder="Ex: Salário mês de março">
                             </div>
+
+                            <!-- Descontos do Salário -->
+                            <div class="deductions-section">
+                                <div class="deductions-header" id="toggleDeductionsBtn">
+                                    <span><i class="fa-solid fa-minus-circle"></i> Descontos</span>
+                                    <i class="fa-solid fa-chevron-down deductions-chevron"></i>
+                                </div>
+                                <div class="deductions-body" id="deductionsBody">
+                                    <div id="deductionsList"></div>
+                                    <div class="form-row deduction-add-row">
+                                        <div class="form-group" style="flex:2">
+                                            <input type="text" id="deductionName" placeholder="Ex: INSS, IRRF, VT...">
+                                        </div>
+                                        <div class="form-group" style="flex:1">
+                                            <input type="number" id="deductionValue" placeholder="0,00" step="0.01">
+                                        </div>
+                                        <button type="button" class="btn-add-deduction" id="addDeductionBtn" title="Adicionar desconto">
+                                            <i class="fa-solid fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div class="deduction-total-row">
+                                        <span>Total Descontos:</span>
+                                        <span id="totalDeductions" class="deduction-total-value">R$ 0,00</span>
+                                    </div>
+                                    <div class="deduction-total-row net-salary-row">
+                                        <span><strong>Salário Líquido:</strong></span>
+                                        <span id="netSalaryPreview" class="net-salary-value">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button type="submit" class="btn-primary">
                                 <i class="fa-solid fa-check"></i> Registrar
                             </button>
