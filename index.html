@@ -438,11 +438,31 @@
                                     <button type="button" class="type-toggle-btn debt-type-toggle" data-value="fixa">
                                         <i class="fa-solid fa-rotate"></i> Fixa
                                     </button>
+                                    <button type="button" class="type-toggle-btn debt-type-toggle" data-value="cartao">
+                                        <i class="fa-solid fa-credit-card"></i> Cartão
+                                    </button>
                                     <button type="button" class="type-toggle-btn debt-type-toggle" data-value="financiamento">
                                         <i class="fa-solid fa-building-columns"></i> Financ.
                                     </button>
                                 </div>
                                 <input type="hidden" id="debtType" value="unica">
+                            </div>
+
+                            <!-- Sub-opções do cartão -->
+                            <div id="cartaoOptions" class="form-group" style="display:none">
+                                <label>Modalidade do cartão</label>
+                                <div class="type-toggle-group cartao-mode-group">
+                                    <button type="button" class="type-toggle-btn active cartao-mode-toggle" data-value="unica">
+                                        <i class="fa-solid fa-receipt"></i> Única
+                                    </button>
+                                    <button type="button" class="type-toggle-btn cartao-mode-toggle" data-value="recorrente">
+                                        <i class="fa-solid fa-rotate"></i> Recorrente
+                                    </button>
+                                    <button type="button" class="type-toggle-btn cartao-mode-toggle" data-value="parcelado">
+                                        <i class="fa-solid fa-layer-group"></i> Parcelado
+                                    </button>
+                                </div>
+                                <input type="hidden" id="cartaoMode" value="unica">
                             </div>
 
                             <div class="form-group">

@@ -959,9 +959,12 @@
 .cat-investimentos{ background: rgba(0,128,0,0.15);     color: #008000; }
 
 /* Debt type toggle with 3 options */
-.debt-type-group { display: flex; gap: 6px; }
-.debt-type-group .type-toggle-btn { flex: 1; font-size: 0.75rem; padding: 8px 6px; white-space: nowrap; }
+.debt-type-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.debt-type-group .type-toggle-btn { font-size: 0.72rem; padding: 8px 4px; white-space: nowrap; }
+.cartao-mode-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.cartao-mode-group .type-toggle-btn { font-size: 0.72rem; padding: 7px 4px; white-space: nowrap; }
 
 /* Debt type visual indicators */
 .debt-item.debt-financing { border-left: 3px solid #4361EE; }
 .debt-item.debt-fixed { border-left: 3px solid #F8961E; }
+.debt-item.debt-cartao { border-left: 3px solid #8B5CF6; }
