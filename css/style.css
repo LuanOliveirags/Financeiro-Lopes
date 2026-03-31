@@ -145,10 +145,8 @@ body {
 }
 
 /* ─── SCROLLBAR ─── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: var(--r-full); }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+::-webkit-scrollbar { width: 0; height: 0; background: transparent; }
+* { scrollbar-width: none; }
 
 /* ─── TYPOGRAPHY ─── */
 h1, h2, h3, h4 { font-weight: var(--fw-bold); line-height: 1.2; color: var(--text-primary); }
