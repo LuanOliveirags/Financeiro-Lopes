@@ -3,12 +3,7 @@
 // ========================================
 
 // ===== CONFIGURAÇÕES GLOBAIS =====
-const CONFIG = {
-  credentials: {
-    username: 'root',
-    password: 'root'
-  }
-};
+const CONFIG = {};
 
 // ===== FIREBASE — INICIALIZAÇÃO =====
 // Substitua as credenciais abaixo pelas do seu projeto Firebase
@@ -44,6 +39,7 @@ function initFirebase() {
 const state = {
   isLoggedIn: false,
   user: null,
+  currentUser: null,
   currentMonth: new Date(),
   transactions: [],
   debts: [],
@@ -68,6 +64,7 @@ const CATEGORY_MAP = {
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', () => {
   initFirebase();
+  createDefaultAdmin();
   initializeApp();
   setupEventListeners();
   loadDataFromStorage();
@@ -197,34 +194,150 @@ function initializeApp() {
   }
 }
 
+// ===== GESTÃO DE USUÁRIOS =====
+async function hashPassword(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function createDefaultAdmin() {
+  if (!firebaseReady) return;
+  try {
+    const snap = await db.collection('users').where('login', '==', 'luangs').get();
+    if (snap.empty) {
+      const hash = await hashPassword('Space@10');
+      await db.collection('users').doc('admin-luangs').set({
+        id: 'admin-luangs',
+        fullName: 'Luan Gs',
+        email: 'luanoliveirags@gmail.com',
+        login: 'luangs',
+        passwordHash: hash,
+        role: 'admin',
+        createdAt: new Date().toISOString()
+      });
+      console.log('Usuário admin padrão criado com sucesso!');
+    }
+  } catch (error) {
+    console.error('Erro ao criar admin padrão:', error);
+  }
+}
+
+async function loginUser(login, password) {
+  const hash = await hashPassword(password);
+  if (firebaseReady) {
+    const snap = await db.collection('users').where('login', '==', login).get();
+    if (!snap.empty) {
+      const userData = snap.docs[0].data();
+      if (userData.passwordHash === hash) return userData;
+    }
+    return null;
+  }
+  throw new Error('Firebase não disponível. Verifique sua conexão.');
+}
+
+async function registerUser(fullName, email, login, password) {
+  if (!firebaseReady) throw new Error('Firebase não disponível.');
+  const existing = await db.collection('users').where('login', '==', login).get();
+  if (!existing.empty) throw new Error('Esse login já está em uso.');
+  const emailCheck = await db.collection('users').where('email', '==', email).get();
+  if (!emailCheck.empty) throw new Error('Esse e-mail já está cadastrado.');
+
+  const hash = await hashPassword(password);
+  const id = `user-${Date.now()}`;
+  const user = {
+    id,
+    fullName,
+    email,
+    login,
+    passwordHash: hash,
+    role: 'user',
+    createdAt: new Date().toISOString()
+  };
+  await db.collection('users').doc(id).set(user);
+  return user;
+}
+
+async function changeUserPassword(userId, oldPassword, newPassword) {
+  if (!firebaseReady) throw new Error('Firebase não disponível.');
+  const doc = await db.collection('users').doc(userId).get();
+  if (!doc.exists) throw new Error('Usuário não encontrado.');
+  const userData = doc.data();
+  const oldHash = await hashPassword(oldPassword);
+  if (userData.passwordHash !== oldHash) throw new Error('Senha atual incorreta.');
+
+  const newHash = await hashPassword(newPassword);
+  await db.collection('users').doc(userId).update({ passwordHash: newHash });
+
+  // Atualiza sessão local
+  if (state.currentUser && state.currentUser.id === userId) {
+    state.currentUser.passwordHash = newHash;
+    localStorage.setItem('user', JSON.stringify(state.currentUser));
+  }
+  return true;
+}
+
+function applyUserToUI() {
+  const user = state.currentUser;
+  if (!user) return;
+
+  const headerTitle = document.getElementById('headerUserName');
+  if (headerTitle) headerTitle.textContent = user.fullName;
+
+  const profileName = document.getElementById('settingsUserName');
+  if (profileName) profileName.textContent = user.fullName;
+  const profileEmail = document.getElementById('settingsUserEmail');
+  if (profileEmail) profileEmail.textContent = user.email;
+  const profileRole = document.getElementById('settingsUserRole');
+  if (profileRole) {
+    profileRole.textContent = user.role === 'admin' ? 'Administrador' : 'Usuário';
+    profileRole.className = user.role === 'admin' ? 'status-pill connected' : 'status-pill';
+  }
+
+  const adminSection = document.getElementById('adminSection');
+  if (adminSection) adminSection.style.display = user.role === 'admin' ? 'block' : 'none';
+}
+
 // ===== AUTENTICAÇÃO =====
-document.getElementById('loginForm').addEventListener('submit', function(e) {
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
   e.preventDefault();
-  
-  const username = document.getElementById('username').value;
+  const login = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
   const errorDiv = document.getElementById('loginError');
-  
-  if (username === CONFIG.credentials.username && password === CONFIG.credentials.password) {
-    errorDiv.classList.remove('show');
-    state.isLoggedIn = true;
-    state.user = username;
-    localStorage.setItem('user', username);
-    localStorage.setItem('loginTime', new Date().toISOString());
-    
-    // Show app, hide login
-    document.getElementById('loginContainer').classList.remove('active');
-    document.getElementById('appContainer').classList.add('active');
-    
-    // Load data
-    loadDataFromStorage();
-    updateDashboard();
-    
-    // Clear form
-    this.reset();
-  } else {
-    errorDiv.textContent = 'Usuário ou senha incorretos!';
+  const submitBtn = this.querySelector('button[type="submit"]');
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entrando...';
+
+  try {
+    const user = await loginUser(login, password);
+    if (user) {
+      errorDiv.classList.remove('show');
+      state.isLoggedIn = true;
+      state.user = user.login;
+      state.currentUser = user;
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('loginTime', new Date().toISOString());
+
+      document.getElementById('loginContainer').classList.remove('active');
+      document.getElementById('appContainer').classList.add('active');
+
+      applyUserToUI();
+      loadDataFromStorage();
+      updateDashboard();
+      this.reset();
+    } else {
+      errorDiv.textContent = 'Usuário ou senha incorretos!';
+      errorDiv.classList.add('show');
+    }
+  } catch (err) {
+    errorDiv.textContent = err.message || 'Erro ao fazer login.';
     errorDiv.classList.add('show');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<span>Entrar</span><i class="fa-solid fa-arrow-right"></i>';
   }
 });
 
@@ -233,8 +346,9 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   if (confirm('Tem certeza que deseja sair?')) {
     state.isLoggedIn = false;
     state.user = null;
+    state.currentUser = null;
     localStorage.removeItem('user');
-    
+
     document.getElementById('appContainer').classList.remove('active');
     document.getElementById('loginContainer').classList.add('active');
     document.getElementById('loginForm').reset();
@@ -244,14 +358,25 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 
 // ===== VERIFICAR LOGIN STATUS =====
 function checkLoginStatus() {
-  const user = localStorage.getItem('user');
-  if (user) {
-    state.isLoggedIn = true;
-    state.user = user;
-    document.getElementById('loginContainer').classList.remove('active');
-    document.getElementById('appContainer').classList.add('active');
-    loadDataFromStorage();
-    updateDashboard();
+  const userData = localStorage.getItem('user');
+  if (userData) {
+    try {
+      const user = JSON.parse(userData);
+      if (user && user.login) {
+        state.isLoggedIn = true;
+        state.user = user.login;
+        state.currentUser = user;
+        document.getElementById('loginContainer').classList.remove('active');
+        document.getElementById('appContainer').classList.add('active');
+        applyUserToUI();
+        loadDataFromStorage();
+        updateDashboard();
+        return;
+      }
+    } catch (e) {
+      // Formato antigo ou corrompido
+    }
+    localStorage.removeItem('user');
   }
 }
 
@@ -373,7 +498,89 @@ function setupEventListeners() {
   
   // Theme Toggle
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-  
+
+  // ===== GESTÃO DE USUÁRIOS — EVENT LISTENERS =====
+  const changePassBtn = document.getElementById('changePasswordBtn');
+  if (changePassBtn) {
+    changePassBtn.addEventListener('click', () => {
+      document.getElementById('changePasswordModal').classList.add('active');
+    });
+  }
+
+  const createUserBtn = document.getElementById('createUserBtn');
+  if (createUserBtn) {
+    createUserBtn.addEventListener('click', () => {
+      document.getElementById('createUserModal').classList.add('active');
+    });
+  }
+
+  const changePassForm = document.getElementById('changePasswordForm');
+  if (changePassForm) {
+    changePassForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const currentPass = document.getElementById('currentPassword').value;
+      const newPass = document.getElementById('newPassword').value;
+      const confirmPass = document.getElementById('confirmPassword').value;
+
+      if (newPass !== confirmPass) {
+        showAlert('As senhas não coincidem!', 'danger');
+        return;
+      }
+      if (newPass.length < 6) {
+        showAlert('A nova senha deve ter pelo menos 6 caracteres.', 'danger');
+        return;
+      }
+
+      const btn = this.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Alterando...';
+
+      try {
+        await changeUserPassword(state.currentUser.id, currentPass, newPass);
+        showAlert('Senha alterada com sucesso!', 'success');
+        this.reset();
+        document.getElementById('changePasswordModal').classList.remove('active');
+      } catch (err) {
+        showAlert(err.message || 'Erro ao alterar senha.', 'danger');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Alterar Senha';
+      }
+    });
+  }
+
+  const createUserForm = document.getElementById('createUserForm');
+  if (createUserForm) {
+    createUserForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const fullName = document.getElementById('newUserFullName').value.trim();
+      const email = document.getElementById('newUserEmail').value.trim();
+      const login = document.getElementById('newUserLogin').value.trim().toLowerCase();
+      const password = document.getElementById('newUserPassword').value;
+
+      if (password.length < 6) {
+        showAlert('A senha deve ter pelo menos 6 caracteres.', 'danger');
+        return;
+      }
+
+      const btn = this.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cadastrando...';
+
+      try {
+        await registerUser(fullName, email, login, password);
+        showAlert(`Usuário "${login}" cadastrado com sucesso!`, 'success');
+        this.reset();
+        document.getElementById('createUserModal').classList.remove('active');
+      } catch (err) {
+        showAlert(err.message || 'Erro ao cadastrar usuário.', 'danger');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Cadastrar';
+      }
+    });
+  }
+
   // Initialize theme on load
   initializeTheme();
 }

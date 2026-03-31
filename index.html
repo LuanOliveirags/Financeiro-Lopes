@@ -68,7 +68,7 @@
             
             <div class="login-hint">
                 <i class="fa-solid fa-circle-info"></i>
-                <span>Demo: <strong>root</strong> / <strong>root</strong></span>
+                <span>Utilize seu login e senha cadastrados</span>
             </div>
         </div>
     </div>
@@ -85,7 +85,7 @@
                     </div>
                     <div class="header-text">
                         <p class="header-greeting">Lopes Finanças</p>
-                        <h2 class="header-title">Nome do usuário</h2>
+                        <h2 class="header-title" id="headerUserName">Usuário</h2>
                     </div>
                 </div>
                 <div class="header-actions">
@@ -515,8 +515,9 @@
                         <div class="spc-avatar-fallback"><i class="fa-solid fa-user"></i></div>
                     </div>
                     <div class="spc-text">
-                        <h3>Lopes Finanças</h3>
-                        <p>Versão 1.0.0</p>
+                        <h3 id="settingsUserName">Usuário</h3>
+                        <p id="settingsUserEmail">—</p>
+                        <span id="settingsUserRole" class="status-pill connected">Usuário</span>
                     </div>
                 </div>
 
@@ -535,6 +536,28 @@
                                 <i class="fa-solid fa-chevron-right sr-arrow"></i>
                             </button>
                             <input type="file" id="importFile" style="display: none;" accept=".json">
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <p class="sg-label">CONTA</p>
+                        <div class="sg-body">
+                            <button id="changePasswordBtn" class="settings-row">
+                                <div class="sr-icon"><i class="fa-solid fa-key"></i></div>
+                                <span class="sr-text">Alterar senha</span>
+                                <i class="fa-solid fa-chevron-right sr-arrow"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="settings-group" id="adminSection" style="display:none">
+                        <p class="sg-label">ADMINISTRAÇÃO</p>
+                        <div class="sg-body">
+                            <button id="createUserBtn" class="settings-row">
+                                <div class="sr-icon"><i class="fa-solid fa-user-plus"></i></div>
+                                <span class="sr-text">Cadastrar usuário</span>
+                                <i class="fa-solid fa-chevron-right sr-arrow"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -573,6 +596,64 @@
                                 <span id="pwaStatus" class="status-pill">Verificando</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Modal: Alterar Senha -->
+                <div id="changePasswordModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="fa-solid fa-key"></i> Alterar Senha</h3>
+                            <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form id="changePasswordForm">
+                            <div class="form-group">
+                                <label for="currentPassword">Senha atual</label>
+                                <input type="password" id="currentPassword" placeholder="Digite sua senha atual" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newPassword">Nova senha</label>
+                                <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres" required minlength="6">
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirmar nova senha</label>
+                                <input type="password" id="confirmPassword" placeholder="Repita a nova senha" required minlength="6">
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fa-solid fa-check"></i> Alterar Senha
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Modal: Cadastrar Usuário (admin) -->
+                <div id="createUserModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="fa-solid fa-user-plus"></i> Cadastrar Usuário</h3>
+                            <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form id="createUserForm">
+                            <div class="form-group">
+                                <label for="newUserFullName">Nome completo</label>
+                                <input type="text" id="newUserFullName" placeholder="Nome completo do usuário" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserEmail">E-mail</label>
+                                <input type="email" id="newUserEmail" placeholder="email@exemplo.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserLogin">Login</label>
+                                <input type="text" id="newUserLogin" placeholder="Login de acesso" required minlength="3">
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserPassword">Senha</label>
+                                <input type="password" id="newUserPassword" placeholder="Mínimo 6 caracteres" required minlength="6">
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fa-solid fa-check"></i> Cadastrar
+                            </button>
+                        </form>
                     </div>
                 </div>
 
