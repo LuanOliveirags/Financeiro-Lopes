@@ -104,13 +104,15 @@
 .ie-card {
   background: var(--bg-card);
   border-radius: var(--r-lg);
-  padding: 18px;
+  padding: 14px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   box-shadow: var(--shadow-sm);
   border: 1.5px solid var(--border);
   transition: all var(--ease);
+  overflow: hidden;
+  min-width: 0;
 }
 .ie-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .ie-circle {
@@ -130,10 +132,17 @@
   margin-bottom: 3px;
   font-weight: var(--fw-medium);
 }
+.ie-info {
+  min-width: 0;
+  flex: 1;
+}
 .ie-value {
   font-size: 1rem;
   font-weight: var(--fw-bold);
   letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .income-value { color: var(--income-dark); }
 .expense-value { color: var(--expense); }
