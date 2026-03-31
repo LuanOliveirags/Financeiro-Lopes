@@ -973,6 +973,7 @@ function addDebt(e) {
   const totalAmount = parseFloat(document.getElementById('debtAmount').value);
   const installments = parseInt(document.getElementById('debtInstallments').value) || 1;
   const paidInstallments = parseInt(document.getElementById('debtPaidInstallments').value) || 0;
+  const manualInstValue = parseFloat(document.getElementById('debtInstallmentValue').value) || (totalAmount / installments);
 
   const debt = {
     id: generateId(),
@@ -985,7 +986,7 @@ function addDebt(e) {
     debtType: debtType,
     installments: debtType === 'parcelada' ? installments : 1,
     paidInstallments: debtType === 'parcelada' ? paidInstallments : 0,
-    installmentValue: debtType === 'parcelada' ? (totalAmount / installments) : totalAmount,
+    installmentValue: debtType === 'parcelada' ? manualInstValue : totalAmount,
     status: 'active',
     paidAt: null,
     createdAt: new Date().toISOString()
@@ -1031,20 +1032,30 @@ function setupDebtTypeListeners() {
   const amountInput = document.getElementById('debtAmount');
   const installmentsInput = document.getElementById('debtInstallments');
   const paidInput = document.getElementById('debtPaidInstallments');
+  const instValueInput = document.getElementById('debtInstallmentValue');
 
+  // Quando valor total ou nº parcelas mudam, sugere o valor da parcela
   function updateInstallmentCalc() {
     const total = parseFloat(amountInput.value) || 0;
     const inst = parseInt(installmentsInput.value) || 1;
-    const paid = parseInt(paidInput.value) || 0;
     const instValue = total / inst;
+    instValueInput.value = instValue.toFixed(2);
+    updateRemainingCalc();
+  }
+
+  // Recalcula o restante com base no valor da parcela (editável)
+  function updateRemainingCalc() {
+    const paid = parseInt(paidInput.value) || 0;
+    const instValue = parseFloat(instValueInput.value) || 0;
+    const total = parseFloat(amountInput.value) || 0;
     const remaining = total - (instValue * paid);
-    document.getElementById('debtInstallmentValue').value = instValue.toFixed(2);
     document.getElementById('debtRemainingValue').value = remaining.toFixed(2);
   }
 
   if (amountInput) amountInput.addEventListener('input', updateInstallmentCalc);
   if (installmentsInput) installmentsInput.addEventListener('input', updateInstallmentCalc);
-  if (paidInput) paidInput.addEventListener('input', updateInstallmentCalc);
+  if (instValueInput) instValueInput.addEventListener('input', updateRemainingCalc);
+  if (paidInput) paidInput.addEventListener('input', updateRemainingCalc);
 }
 
 // ===== ADICIONAR SALÁRIO =====
