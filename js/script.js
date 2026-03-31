@@ -1048,21 +1048,25 @@ function setupDebtTypeListeners() {
 }
 
 // ===== ADICIONAR SALÁRIO =====
-// Variável temporária para descontos do modal
+// Variáveis temporárias para descontos e acréscimos do modal
 let tempDeductions = [];
+let tempAdditions = [];
 
 function addSalary(e) {
   e.preventDefault();
   
   const grossAmount = parseFloat(document.getElementById('salaryAmount').value);
+  const totalAdditionsVal = tempAdditions.reduce((sum, a) => sum + a.value, 0);
   const totalDeductionsVal = tempDeductions.reduce((sum, d) => sum + d.value, 0);
-  const netAmount = grossAmount - totalDeductionsVal;
+  const netAmount = grossAmount + totalAdditionsVal - totalDeductionsVal;
 
   const salary = {
     id: generateId(),
     person: document.getElementById('salaryPerson').value,
     amount: netAmount,
     grossAmount: grossAmount,
+    additions: tempAdditions.length > 0 ? [...tempAdditions] : [],
+    totalAdditions: totalAdditionsVal,
     deductions: tempDeductions.length > 0 ? [...tempDeductions] : [],
     totalDeductions: totalDeductionsVal,
     date: document.getElementById('salaryDate').value,
@@ -1084,7 +1088,9 @@ function addSalary(e) {
   // Reset and close modal
   e.target.reset();
   tempDeductions = [];
+  tempAdditions = [];
   updateDeductionsUI();
+  updateAdditionsUI();
   document.getElementById('salaryModal').classList.remove('active');
   
   // Update displays
@@ -1092,8 +1098,25 @@ function addSalary(e) {
   updateDashboard();
 }
 
-// ===== DESCONTOS DO SALÁRIO =====
+// ===== ACRÉSCIMOS E DESCONTOS DO SALÁRIO =====
 function setupDeductionListeners() {
+  // Toggle Acréscimos
+  const toggleAddBtn = document.getElementById('toggleAdditionsBtn');
+  const addBody = document.getElementById('additionsBody');
+  if (toggleAddBtn && addBody) {
+    toggleAddBtn.addEventListener('click', () => {
+      const isOpen = addBody.classList.toggle('open');
+      const chevron = toggleAddBtn.querySelector('.deductions-chevron');
+      if (chevron) chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0)';
+    });
+  }
+
+  const addAddBtn = document.getElementById('addAdditionBtn');
+  if (addAddBtn) {
+    addAddBtn.addEventListener('click', addAddition);
+  }
+
+  // Toggle Descontos
   const toggleBtn = document.getElementById('toggleDeductionsBtn');
   const body = document.getElementById('deductionsBody');
   if (toggleBtn && body) {
@@ -1104,9 +1127,9 @@ function setupDeductionListeners() {
     });
   }
 
-  const addBtn = document.getElementById('addDeductionBtn');
-  if (addBtn) {
-    addBtn.addEventListener('click', addDeduction);
+  const addDeductBtn = document.getElementById('addDeductionBtn');
+  if (addDeductBtn) {
+    addDeductBtn.addEventListener('click', addDeduction);
   }
 
   // Atualizar preview do salário líquido quando bruto mudar
@@ -1116,6 +1139,51 @@ function setupDeductionListeners() {
   }
 }
 
+// --- Acréscimos ---
+function addAddition() {
+  const nameInput = document.getElementById('additionName');
+  const valueInput = document.getElementById('additionValue');
+  const name = nameInput.value.trim();
+  const value = parseFloat(valueInput.value);
+
+  if (!name || !value || value <= 0) {
+    showAlert('Preencha nome e valor do acréscimo.', 'warning');
+    return;
+  }
+
+  tempAdditions.push({ id: generateId(), name, value });
+  nameInput.value = '';
+  valueInput.value = '';
+  updateAdditionsUI();
+}
+
+function removeAddition(id) {
+  tempAdditions = tempAdditions.filter(a => a.id !== id);
+  updateAdditionsUI();
+}
+
+function updateAdditionsUI() {
+  const container = document.getElementById('additionsList');
+  if (!container) return;
+
+  container.innerHTML = tempAdditions.map(a => `
+    <div class="deduction-item addition-item">
+      <span class="deduction-name">${esc(a.name)}</span>
+      <span class="addition-value-tag">+ ${formatCurrency(a.value)}</span>
+      <button type="button" class="btn-remove-deduction" onclick="removeAddition('${a.id}')">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  `).join('');
+
+  const total = tempAdditions.reduce((sum, a) => sum + a.value, 0);
+  const totalEl = document.getElementById('totalAdditions');
+  if (totalEl) totalEl.textContent = formatCurrency(total);
+
+  updateNetSalaryPreview();
+}
+
+// --- Descontos ---
 function addDeduction() {
   const nameInput = document.getElementById('deductionName');
   const valueInput = document.getElementById('deductionValue');
@@ -1159,10 +1227,12 @@ function updateDeductionsUI() {
   updateNetSalaryPreview();
 }
 
+// --- Preview líquido ---
 function updateNetSalaryPreview() {
   const gross = parseFloat(document.getElementById('salaryAmount').value) || 0;
+  const totalAdd = tempAdditions.reduce((sum, a) => sum + a.value, 0);
   const totalDed = tempDeductions.reduce((sum, d) => sum + d.value, 0);
-  const net = gross - totalDed;
+  const net = gross + totalAdd - totalDed;
   const netEl = document.getElementById('netSalaryPreview');
   if (netEl) netEl.textContent = formatCurrency(net);
 }
@@ -1648,8 +1718,14 @@ function updateSalaryHistory() {
   const personIcon = { Luan: '👔', Bianca: '💼' };
   
   container.innerHTML = sorted.map(s => {
+    const hasAdditions = s.additions && s.additions.length > 0;
     const hasDeductions = s.deductions && s.deductions.length > 0;
-    const grossLabel = hasDeductions ? `Bruto: ${formatCurrency(s.grossAmount || s.amount)}` : '';
+    const hasExtras = hasAdditions || hasDeductions;
+    const grossLabel = hasExtras ? `Bruto: ${formatCurrency(s.grossAmount || s.amount)}` : '';
+    const additionsHtml = hasAdditions ? `
+      <div class="salary-deductions-detail">
+        ${s.additions.map(a => `<span class="addition-tag">↑ ${esc(a.name)}: ${formatCurrency(a.value)}</span>`).join('')}
+      </div>` : '';
     const deductionsHtml = hasDeductions ? `
       <div class="salary-deductions-detail">
         ${s.deductions.map(d => `<span class="deduction-tag">↓ ${esc(d.name)}: ${formatCurrency(d.value)}</span>`).join('')}
@@ -1666,6 +1742,7 @@ function updateSalaryHistory() {
           <span>${esc(s.person)}</span>
           ${grossLabel ? `<span>·</span><span>${grossLabel}</span>` : ''}
         </div>
+        ${additionsHtml}
         ${deductionsHtml}
       </div>
       <div style="display:flex;align-items:center;gap:8px">

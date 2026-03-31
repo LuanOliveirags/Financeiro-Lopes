@@ -554,6 +554,32 @@
                                 <input type="text" id="salaryDescription" placeholder="Ex: Salário mês de março">
                             </div>
 
+                            <!-- Acréscimos do Salário -->
+                            <div class="deductions-section additions-section">
+                                <div class="deductions-header additions-header" id="toggleAdditionsBtn">
+                                    <span><i class="fa-solid fa-plus-circle"></i> Acréscimos</span>
+                                    <i class="fa-solid fa-chevron-down deductions-chevron"></i>
+                                </div>
+                                <div class="deductions-body" id="additionsBody">
+                                    <div id="additionsList"></div>
+                                    <div class="form-row deduction-add-row">
+                                        <div class="form-group" style="flex:2">
+                                            <input type="text" id="additionName" placeholder="Ex: Auxílio creche, HE...">
+                                        </div>
+                                        <div class="form-group" style="flex:1">
+                                            <input type="number" id="additionValue" placeholder="0,00" step="0.01">
+                                        </div>
+                                        <button type="button" class="btn-add-deduction btn-add-addition" id="addAdditionBtn" title="Adicionar acréscimo">
+                                            <i class="fa-solid fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div class="deduction-total-row">
+                                        <span>Total Acréscimos:</span>
+                                        <span id="totalAdditions" class="addition-total-value">R$ 0,00</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Descontos do Salário -->
                             <div class="deductions-section">
                                 <div class="deductions-header" id="toggleDeductionsBtn">
@@ -577,10 +603,14 @@
                                         <span>Total Descontos:</span>
                                         <span id="totalDeductions" class="deduction-total-value">R$ 0,00</span>
                                     </div>
-                                    <div class="deduction-total-row net-salary-row">
-                                        <span><strong>Salário Líquido:</strong></span>
-                                        <span id="netSalaryPreview" class="net-salary-value">R$ 0,00</span>
-                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resumo Líquido -->
+                            <div class="salary-net-summary">
+                                <div class="deduction-total-row net-salary-row">
+                                    <span><strong>Salário Líquido:</strong></span>
+                                    <span id="netSalaryPreview" class="net-salary-value">R$ 0,00</span>
                                 </div>
                             </div>
 
