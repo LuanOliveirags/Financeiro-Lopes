@@ -228,12 +228,19 @@ async function createDefaultAdmin() {
 async function loginUser(login, password) {
   const hash = await hashPassword(password);
   if (firebaseReady) {
-    const snap = await db.collection('users').where('login', '==', login).get();
-    if (!snap.empty) {
-      const userData = snap.docs[0].data();
-      if (userData.passwordHash === hash) return userData;
+    try {
+      const snap = await db.collection('users').where('login', '==', login).get();
+      if (!snap.empty) {
+        const userData = snap.docs[0].data();
+        if (userData.passwordHash === hash) return userData;
+      }
+      return null;
+    } catch (error) {
+      if (error.code === 'permission-denied') {
+        throw new Error('Sem permissão no Firestore. Configure as regras no Firebase Console.');
+      }
+      throw new Error('Erro ao conectar com o servidor.');
     }
-    return null;
   }
   throw new Error('Firebase não disponível. Verifique sua conexão.');
 }
