@@ -80,7 +80,7 @@
             <div class="header-content">
                 <div class="header-left">
                     <div class="header-avatar-wrap">
-                        <img src="img/perfil.png" alt="Avatar" class="profile-logo-small" onerror="this.style.display='none'">
+                        <img id="headerAvatar" src="img/perfil.png" alt="Avatar" class="profile-logo-small" onerror="this.style.display='none'">
                         <div class="avatar-icon-sm"><i class="fa-solid fa-user"></i></div>
                     </div>
                     <div class="header-text">
@@ -510,10 +510,12 @@
             <!-- ====== SETTINGS TAB ====== --> <!-- Aba de configurações -->
             <section id="settings" class="tab-content">
                 <div class="settings-profile-card">
-                    <div class="spc-avatar-wrap">
-                        <img src="img/perfil.png" alt="" onerror="this.style.display='none'">
+                    <div class="spc-avatar-wrap" id="avatarUploadBtn" title="Alterar foto" style="cursor:pointer">
+                        <img id="settingsAvatar" src="img/perfil.png" alt="" onerror="this.style.display='none'">
                         <div class="spc-avatar-fallback"><i class="fa-solid fa-user"></i></div>
+                        <div class="spc-avatar-overlay"><i class="fa-solid fa-camera"></i></div>
                     </div>
+                    <input type="file" id="avatarFileInput" accept="image/*" style="display:none">
                     <div class="spc-text">
                         <h3 id="settingsUserName">Usuário</h3>
                         <p id="settingsUserEmail">—</p>
@@ -680,6 +682,7 @@
     <!-- Firebase SDK --> <!-- Conexão com banco de dados Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
     <!-- Main Script --> <!-- Script principal da aplicação -->
     <script src="js/script.js"></script>

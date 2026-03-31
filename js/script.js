@@ -18,6 +18,7 @@ const firebaseConfig = {
 };
 
 let db = null;
+let storage = null;
 let firebaseReady = false;
 
 function initFirebase() {
@@ -27,6 +28,13 @@ function initFirebase() {
       db = firebase.firestore();
       firebaseReady = true;
       console.log('Firebase Firestore conectado!');
+      // Storage é opcional — não bloqueia o app se falhar
+      try {
+        storage = firebase.storage();
+        console.log('Firebase Storage conectado!');
+      } catch (e) {
+        console.warn('Firebase Storage indisponível:', e);
+      }
     } else {
       console.warn('Firebase não configurado. Usando localStorage apenas.');
     }
@@ -303,8 +311,76 @@ function applyUserToUI() {
     profileRole.className = user.role === 'admin' ? 'status-pill connected' : 'status-pill';
   }
 
+  // Aplicar foto de perfil
+  applyAvatar(user.photoURL);
+
+  // Mostrar seção admin apenas para administradores
   const adminSection = document.getElementById('adminSection');
   if (adminSection) adminSection.style.display = user.role === 'admin' ? 'block' : 'none';
+}
+
+function applyAvatar(photoURL) {
+  const headerImg = document.getElementById('headerAvatar');
+  const settingsImg = document.getElementById('settingsAvatar');
+  if (photoURL) {
+    if (headerImg) { headerImg.src = photoURL; headerImg.style.display = 'block'; }
+    if (settingsImg) { settingsImg.src = photoURL; settingsImg.style.display = 'block'; }
+  } else {
+    if (headerImg) headerImg.style.display = 'none';
+    if (settingsImg) settingsImg.style.display = 'none';
+  }
+}
+
+function resizeImage(file, maxSize) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else { w = Math.round(w * maxSize / h); h = maxSize; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadAvatar(file) {
+  const dataURL = await resizeImage(file, 256);
+  let photoURL = dataURL;
+
+  // Upload para Firebase Storage
+  if (firebaseReady && storage && state.currentUser) {
+    try {
+      const ref = storage.ref(`avatars/${state.currentUser.id}.jpg`);
+      // Converter dataURL em blob para upload
+      const res = await fetch(dataURL);
+      const blob = await res.blob();
+      await ref.put(blob, { contentType: 'image/jpeg' });
+      photoURL = await ref.getDownloadURL();
+      // Salvar URL no Firestore
+      await db.collection('users').doc(state.currentUser.id).update({ photoURL });
+    } catch (error) {
+      console.error('Erro no upload da foto:', error);
+      // Fallback: salva base64 no Firestore
+      await db.collection('users').doc(state.currentUser.id).update({ photoURL: dataURL });
+    }
+  }
+
+  // Atualizar estado local
+  state.currentUser.photoURL = photoURL;
+  localStorage.setItem('user', JSON.stringify(state.currentUser));
+  applyAvatar(photoURL);
+  showAlert('Foto atualizada com sucesso!', 'success');
 }
 
 // ===== AUTENTICAÇÃO =====
@@ -389,6 +465,31 @@ function checkLoginStatus() {
 
 // ===== NAVEGAÇÃO ENTRE ABAS =====
 function setupEventListeners() {
+  // Avatar upload
+  const avatarBtn = document.getElementById('avatarUploadBtn');
+  const avatarInput = document.getElementById('avatarFileInput');
+  if (avatarBtn && avatarInput) {
+    avatarBtn.addEventListener('click', () => avatarInput.click());
+    avatarInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showAlert('Selecione um arquivo de imagem.', 'danger');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        showAlert('A imagem deve ter no máximo 5 MB.', 'danger');
+        return;
+      }
+      try {
+        await uploadAvatar(file);
+      } catch (err) {
+        showAlert('Erro ao salvar foto.', 'danger');
+      }
+      e.target.value = '';
+    });
+  }
+
   // Bottom Navigation
   document.querySelectorAll('.bottom-nav-item').forEach(tab => {
     tab.addEventListener('click', function() {
