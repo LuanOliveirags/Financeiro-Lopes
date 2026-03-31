@@ -1531,6 +1531,7 @@ function updateCharts(transactions, debts) {
   state.charts.category   = createCategoryChart(transactions);
   state.charts.responsible = createResponsibleChart(transactions);
   state.charts.incomes    = createIncomesChart(state.salaries);
+  state.charts.debtType   = createDebtTypeChart(debts);
 }
 
 // ===== SPARKLINE — BALANCE MENSAL =====
@@ -1705,6 +1706,63 @@ function createIncomesChart(salaries) {
   });
 }
 
+// ===== GRÁFICO POR TIPO DE DÍVIDA =====
+function createDebtTypeChart(debts) {
+  const ctx = document.getElementById('debtTypeChart');
+  if (!ctx) return null;
+
+  const typeMap = {
+    unica: { label: 'Únicas', color: '#9CA3AF' },
+    fixa: { label: 'Fixas', color: '#FF9F43' },
+    cartao: { label: 'Cartão', color: '#8B5CF6' },
+    financiamento: { label: 'Financiamento', color: '#4361EE' },
+    parcelada: { label: 'Financiamento', color: '#4361EE' }
+  };
+
+  const totals = {};
+  debts.forEach(d => {
+    const key = (d.debtType === 'parcelada') ? 'financiamento' : (d.debtType || 'unica');
+    const val = (key === 'financiamento' || (key === 'cartao' && d.cartaoMode === 'parcelado'))
+      ? (d.installmentValue || d.amount)
+      : d.amount;
+    if (!totals[key]) totals[key] = 0;
+    totals[key] += val;
+  });
+
+  const keys = Object.keys(totals);
+  if (keys.length === 0) return null;
+
+  return new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: keys.map(k => typeMap[k]?.label || k),
+      datasets: [{
+        data: keys.map(k => totals[k]),
+        backgroundColor: keys.map(k => typeMap[k]?.color || '#9CA3AF'),
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
+              return `${ctx.label}: ${formatCurrency(ctx.raw)} (${pct}%)`;
+            }
+          }
+        }
+      },
+      cutout: '60%',
+      animation: { duration: 800 }
+    }
+  });
+}
+
 // ===== ATUALIZAR TRANSAÇÕES RECENTES =====
 function updateRecentTransactions(transactions) {
   const container = document.getElementById('recentTransactionsList');
@@ -1842,6 +1900,27 @@ function updateDebtsList() {
   if (financingCountEl) financingCountEl.textContent = `${financingDebts.length} dívida${financingDebts.length !== 1 ? 's' : ''}`;
   const financingRemEl = document.getElementById('financingRemaining');
   if (financingRemEl) financingRemEl.textContent = `Restante: ${formatCurrency(totalFinancingRemaining)}`;
+
+  // Cartão por pessoa
+  const cardDebts = activeDebts.filter(d => d.debtType === 'cartao');
+  const cardLuan = cardDebts.filter(d => d.responsible === 'Luan');
+  const cardBianca = cardDebts.filter(d => d.responsible === 'Bianca');
+  const cardAmbosByPerson = cardDebts.filter(d => d.responsible === 'Ambos');
+  const cardLuanTotal = cardLuan.reduce((s, d) => s + (d.installmentValue || d.amount), 0)
+    + cardAmbosByPerson.reduce((s, d) => s + (d.installmentValue || d.amount) / 2, 0);
+  const cardBiancaTotal = cardBianca.reduce((s, d) => s + (d.installmentValue || d.amount), 0)
+    + cardAmbosByPerson.reduce((s, d) => s + (d.installmentValue || d.amount) / 2, 0);
+  const cardLuanCount = cardLuan.length + cardAmbosByPerson.length;
+  const cardBiancaCount = cardBianca.length + cardAmbosByPerson.length;
+
+  const cardLuanEl = document.getElementById('cardLuanTotal');
+  if (cardLuanEl) cardLuanEl.textContent = formatCurrency(cardLuanTotal);
+  const cardLuanCountEl = document.getElementById('cardLuanCount');
+  if (cardLuanCountEl) cardLuanCountEl.textContent = `${cardLuanCount} dívida${cardLuanCount !== 1 ? 's' : ''}`;
+  const cardBiancaEl = document.getElementById('cardBiancaTotal');
+  if (cardBiancaEl) cardBiancaEl.textContent = formatCurrency(cardBiancaTotal);
+  const cardBiancaCountEl = document.getElementById('cardBiancaCount');
+  if (cardBiancaCountEl) cardBiancaCountEl.textContent = `${cardBiancaCount} dívida${cardBiancaCount !== 1 ? 's' : ''}`;
   
   if (state.debts.length === 0) {
     container.innerHTML = emptyState('Nenhuma dívida registrada ✅');

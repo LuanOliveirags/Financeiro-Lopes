@@ -288,6 +288,13 @@
                         </div>
                         <canvas id="incomesChart"></canvas>
                     </div>
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <i class="fa-solid fa-scale-balanced chart-icon"></i>
+                            <h3>Gastos por Tipo de Dívida</h3>
+                        </div>
+                        <canvas id="debtTypeChart"></canvas>
+                    </div>
                 </div>
 
                 <!-- Recent Transactions --> <!-- Lista de transações recentes -->
@@ -579,6 +586,28 @@
                             <span class="debt-ov-count" id="financingDebtCount">0 dívidas</span>
                             <span class="debt-ov-remaining" id="financingRemaining">Restante: R$ 0,00</span>
                         </div>
+                    </div>
+                </div>
+                <div class="debt-overview-panel">
+                    <div class="debt-overview-card debt-ov-cartao">
+                        <div class="debt-ov-header">
+                            <div class="debt-ov-icon" style="background:rgba(139,92,246,0.15)"><i class="fa-solid fa-credit-card" style="color:#8B5CF6"></i></div>
+                            <div>
+                                <p class="debt-ov-title">Cartão Luan</p>
+                                <p class="debt-ov-subtitle" id="cardLuanCount">0 dívidas</p>
+                            </div>
+                        </div>
+                        <p class="debt-ov-amount" id="cardLuanTotal">R$ 0,00</p>
+                    </div>
+                    <div class="debt-overview-card debt-ov-cartao">
+                        <div class="debt-ov-header">
+                            <div class="debt-ov-icon" style="background:rgba(139,92,246,0.15)"><i class="fa-solid fa-credit-card" style="color:#8B5CF6"></i></div>
+                            <div>
+                                <p class="debt-ov-title">Cartão Bianca</p>
+                                <p class="debt-ov-subtitle" id="cardBiancaCount">0 dívidas</p>
+                            </div>
+                        </div>
+                        <p class="debt-ov-amount" id="cardBiancaTotal">R$ 0,00</p>
                     </div>
                 </div>
                 <div class="summary-cards-row">

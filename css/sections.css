@@ -521,6 +521,7 @@
 }
 .debt-ov-monthly { border-left: 3px solid #FF9F43; }
 .debt-ov-financing { border-left: 3px solid #4361EE; }
+.debt-ov-cartao { border-left: 3px solid #8B5CF6; }
 .debt-ov-header {
   display: flex;
   align-items: center;
