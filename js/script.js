@@ -982,7 +982,9 @@ function addDebt(e) {
 
   const isFinanciamento = debtType === 'financiamento';
 
-  const creditor = document.getElementById('debtCreditor').value;
+  const creditor = debtType === 'cartao'
+    ? document.getElementById('debtCardIssuer').value
+    : document.getElementById('debtCreditor').value;
   const dueDate = document.getElementById('debtDueDate').value;
   const responsible = document.getElementById('debtResponsible').value;
   const category = document.getElementById('debtCategory').value || '';
@@ -1070,6 +1072,9 @@ function resetDebtModal() {
   document.getElementById('installmentFields').style.display = 'none';
   document.getElementById('cartaoOptions').style.display = 'none';
   document.getElementById('cartaoMode').value = 'unica';
+  document.getElementById('creditorTextGroup').style.display = 'block';
+  document.getElementById('creditorCardGroup').style.display = 'none';
+  document.getElementById('debtCreditor').setAttribute('required', '');
   document.querySelectorAll('.debt-type-toggle').forEach(b => b.classList.remove('active'));
   document.querySelector('.debt-type-toggle[data-value="unica"]').classList.add('active');
   document.querySelectorAll('.cartao-mode-toggle').forEach(b => b.classList.remove('active'));
@@ -1086,7 +1091,6 @@ function editDebt(id) {
 
   // Preencher modal com dados da dívida
   document.getElementById('editDebtId').value = debt.id;
-  document.getElementById('debtCreditor').value = debt.creditor;
   document.getElementById('debtAmount').value = debt.amount;
   document.getElementById('debtDueDate').value = debt.dueDate;
   document.getElementById('debtResponsible').value = debt.responsible;
@@ -1098,6 +1102,19 @@ function editDebt(id) {
   document.getElementById('debtType').value = debtType;
   document.querySelectorAll('.debt-type-toggle').forEach(b => b.classList.remove('active'));
   const activeBtn = document.querySelector(`.debt-type-toggle[data-value="${debtType}"]`);
+
+  // Credor: cartão usa select, outros usam text input
+  if (debtType === 'cartao') {
+    document.getElementById('creditorTextGroup').style.display = 'none';
+    document.getElementById('creditorCardGroup').style.display = 'block';
+    document.getElementById('debtCreditor').removeAttribute('required');
+    document.getElementById('debtCardIssuer').value = debt.creditor;
+  } else {
+    document.getElementById('creditorTextGroup').style.display = 'block';
+    document.getElementById('creditorCardGroup').style.display = 'none';
+    document.getElementById('debtCreditor').setAttribute('required', '');
+    document.getElementById('debtCreditor').value = debt.creditor;
+  }
   if (activeBtn) activeBtn.classList.add('active');
 
   // Mostrar/esconder campos de parcelas e sub-opções do cartão
@@ -1149,10 +1166,16 @@ function setupDebtTypeListeners() {
       const installFields = document.getElementById('installmentFields');
       if (val === 'cartao') {
         cartaoOpts.style.display = 'block';
+        document.getElementById('creditorTextGroup').style.display = 'none';
+        document.getElementById('creditorCardGroup').style.display = 'block';
+        document.getElementById('debtCreditor').removeAttribute('required');
         const mode = document.getElementById('cartaoMode').value;
         installFields.style.display = mode === 'parcelado' ? 'block' : 'none';
       } else {
         cartaoOpts.style.display = 'none';
+        document.getElementById('creditorTextGroup').style.display = 'block';
+        document.getElementById('creditorCardGroup').style.display = 'none';
+        document.getElementById('debtCreditor').setAttribute('required', '');
         installFields.style.display = val === 'financiamento' ? 'block' : 'none';
       }
       // Atualizar label do valor conforme tipo
