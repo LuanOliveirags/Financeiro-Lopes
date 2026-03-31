@@ -1687,17 +1687,25 @@ function updateSalaryDisplay() {
   const biancaTotal = biancaSalaries.reduce((sum, s) => sum + s.amount, 0);
   const combined = luanTotal + biancaTotal;
   
-  // Get last salary of each
-  const luanLast = luanSalaries.length > 0 ? luanSalaries[luanSalaries.length - 1].amount : 0;
-  const biancaLast = biancaSalaries.length > 0 ? biancaSalaries[biancaSalaries.length - 1].amount : 0;
+  // Soma do mês atual (salário + adiantamento/vale)
+  const now = new Date();
+  const curMonth = now.getMonth();
+  const curYear = now.getFullYear();
+
+  const luanMonth = luanSalaries
+    .filter(s => { const d = new Date(s.date + 'T12:00:00'); return d.getMonth() === curMonth && d.getFullYear() === curYear; })
+    .reduce((sum, s) => sum + s.amount, 0);
+  const biancaMonth = biancaSalaries
+    .filter(s => { const d = new Date(s.date + 'T12:00:00'); return d.getMonth() === curMonth && d.getFullYear() === curYear; })
+    .reduce((sum, s) => sum + s.amount, 0);
   
-  document.getElementById('luanSalary').textContent = formatCurrency(luanLast);
+  document.getElementById('luanSalary').textContent = formatCurrency(luanMonth);
   document.getElementById('luanAnnual').textContent = `Anual: ${formatCurrency(luanTotal)}`;
   
-  document.getElementById('biancaSalary').textContent = formatCurrency(biancaLast);
+  document.getElementById('biancaSalary').textContent = formatCurrency(biancaMonth);
   document.getElementById('biancaAnnual').textContent = `Anual: ${formatCurrency(biancaTotal)}`;
   
-  document.getElementById('combinedSalary').textContent = formatCurrency(luanLast + biancaLast);
+  document.getElementById('combinedSalary').textContent = formatCurrency(luanMonth + biancaMonth);
   document.getElementById('combinedAnnual').textContent = `Anual: ${formatCurrency(combined)}`;
   
   // Update history
