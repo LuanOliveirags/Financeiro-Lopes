@@ -294,6 +294,159 @@ async function changeUserPassword(userId, oldPassword, newPassword) {
   return true;
 }
 
+// ===== ADMIN: GERENCIAMENTO DE USUÁRIOS =====
+async function loadUsersList() {
+  if (!firebaseReady) { showAlert('Firebase não disponível.', 'danger'); return; }
+  if (!state.currentUser || state.currentUser.role !== 'admin') return;
+
+  const container = document.getElementById('usersListContainer');
+  container.innerHTML = '<div class="users-list-loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando usuários...</div>';
+
+  try {
+    const snapshot = await db.collection('users').get();
+    if (snapshot.empty) {
+      container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Nenhum usuário encontrado.</p>';
+      return;
+    }
+
+    let html = '<div class="users-list">';
+    snapshot.forEach(doc => {
+      const u = doc.data();
+      const isCurrentUser = u.id === state.currentUser.id;
+      const roleLabel = u.role === 'admin' ? 'Admin' : 'Usuário';
+      const roleClass = u.role === 'admin' ? 'connected' : '';
+      html += `
+        <div class="user-card" data-user-id="${esc(u.id)}">
+          <div class="user-card-info">
+            <div class="user-card-name">${esc(u.fullName)}</div>
+            <div class="user-card-detail">${esc(u.login)} · ${esc(u.email)}</div>
+            <span class="status-pill ${roleClass}">${esc(roleLabel)}</span>
+          </div>
+          <div class="user-card-actions">
+            <button class="user-action-btn edit-user-btn" data-id="${esc(u.id)}" title="Editar">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            ${isCurrentUser ? '' : `<button class="user-action-btn delete-user-btn danger" data-id="${esc(u.id)}" data-name="${esc(u.fullName)}" title="Excluir">
+              <i class="fa-solid fa-trash"></i>
+            </button>`}
+          </div>
+        </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+
+    // Vincular eventos dos botões
+    container.querySelectorAll('.edit-user-btn').forEach(btn => {
+      btn.addEventListener('click', () => openEditUser(btn.dataset.id));
+    });
+    container.querySelectorAll('.delete-user-btn').forEach(btn => {
+      btn.addEventListener('click', () => confirmDeleteUser(btn.dataset.id, btn.dataset.name));
+    });
+  } catch (err) {
+    container.innerHTML = '<p style="text-align:center;color:var(--danger);padding:20px;">Erro ao carregar usuários.</p>';
+    console.error('loadUsersList:', err);
+  }
+}
+
+async function openEditUser(userId) {
+  if (!firebaseReady) return;
+  try {
+    const doc = await db.collection('users').doc(userId).get();
+    if (!doc.exists) { showAlert('Usuário não encontrado.', 'danger'); return; }
+    const u = doc.data();
+    document.getElementById('editUserId').value = u.id;
+    document.getElementById('editUserFullName').value = u.fullName || '';
+    document.getElementById('editUserEmail').value = u.email || '';
+    document.getElementById('editUserLogin').value = u.login || '';
+    document.getElementById('editUserRole').value = u.role || 'user';
+    document.getElementById('editUserNewPassword').value = '';
+    document.getElementById('editUserModal').classList.add('active');
+  } catch (err) {
+    showAlert('Erro ao carregar dados do usuário.', 'danger');
+    console.error('openEditUser:', err);
+  }
+}
+
+async function saveUserEdit(e) {
+  e.preventDefault();
+  if (!state.currentUser || state.currentUser.role !== 'admin') return;
+
+  const userId = document.getElementById('editUserId').value;
+  const fullName = document.getElementById('editUserFullName').value.trim();
+  const email = document.getElementById('editUserEmail').value.trim();
+  const login = document.getElementById('editUserLogin').value.trim().toLowerCase();
+  const role = document.getElementById('editUserRole').value;
+  const newPassword = document.getElementById('editUserNewPassword').value;
+
+  if (!fullName || !email || !login) {
+    showAlert('Preencha todos os campos obrigatórios.', 'danger');
+    return;
+  }
+  if (newPassword && newPassword.length < 6) {
+    showAlert('A senha deve ter pelo menos 6 caracteres.', 'danger');
+    return;
+  }
+
+  const btn = document.querySelector('#editUserForm button[type="submit"]');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+
+  try {
+    // Verificar duplicata de login (exceto o próprio)
+    const loginCheck = await db.collection('users').where('login', '==', login).get();
+    const duplicate = loginCheck.docs.find(d => d.data().id !== userId);
+    if (duplicate) { showAlert('Esse login já está em uso por outro usuário.', 'danger'); return; }
+
+    // Verificar duplicata de email (exceto o próprio)
+    const emailCheck = await db.collection('users').where('email', '==', email).get();
+    const dupEmail = emailCheck.docs.find(d => d.data().id !== userId);
+    if (dupEmail) { showAlert('Esse e-mail já está cadastrado por outro usuário.', 'danger'); return; }
+
+    const updates = { fullName, email, login, role };
+    if (newPassword) {
+      updates.passwordHash = await hashPassword(newPassword);
+    }
+
+    await db.collection('users').doc(userId).update(updates);
+    showAlert('Usuário atualizado com sucesso!', 'success');
+    document.getElementById('editUserModal').classList.remove('active');
+
+    // Atualizar sessão local se editou a si mesmo
+    if (state.currentUser.id === userId) {
+      Object.assign(state.currentUser, updates);
+      localStorage.setItem('user', JSON.stringify(state.currentUser));
+      applyUserToUI();
+    }
+
+    // Recarregar lista
+    loadUsersList();
+  } catch (err) {
+    showAlert(err.message || 'Erro ao atualizar usuário.', 'danger');
+    console.error('saveUserEdit:', err);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Salvar Alterações';
+  }
+}
+
+async function confirmDeleteUser(userId, userName) {
+  if (!state.currentUser || state.currentUser.role !== 'admin') return;
+  if (userId === state.currentUser.id) {
+    showAlert('Você não pode excluir sua própria conta.', 'danger');
+    return;
+  }
+  if (!confirm(`Tem certeza que deseja excluir o usuário "${userName}"?\nEssa ação não pode ser desfeita.`)) return;
+
+  try {
+    await db.collection('users').doc(userId).delete();
+    showAlert(`Usuário "${userName}" excluído com sucesso.`, 'success');
+    loadUsersList();
+  } catch (err) {
+    showAlert('Erro ao excluir usuário.', 'danger');
+    console.error('confirmDeleteUser:', err);
+  }
+}
+
 function applyUserToUI() {
   const user = state.currentUser;
   if (!user) return;
@@ -620,6 +773,19 @@ function setupEventListeners() {
     createUserBtn.addEventListener('click', () => {
       document.getElementById('createUserModal').classList.add('active');
     });
+  }
+
+  const manageUsersBtn = document.getElementById('manageUsersBtn');
+  if (manageUsersBtn) {
+    manageUsersBtn.addEventListener('click', () => {
+      document.getElementById('manageUsersModal').classList.add('active');
+      loadUsersList();
+    });
+  }
+
+  const editUserForm = document.getElementById('editUserForm');
+  if (editUserForm) {
+    editUserForm.addEventListener('submit', saveUserEdit);
   }
 
   const changePassForm = document.getElementById('changePasswordForm');

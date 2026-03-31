@@ -675,3 +675,75 @@
   padding: 16px;
   margin-bottom: 8px;
 }
+
+/* ─── USER MANAGEMENT (Admin) ─── */
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.users-list-loading {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 24px;
+  font-size: 0.9375rem;
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-card-alt);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+}
+.user-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.user-card-name {
+  font-size: 0.9375rem;
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-card-detail {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 2px 0 6px;
+}
+.user-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.user-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  border: 1px solid var(--border);
+  transition: all var(--ease);
+  cursor: pointer;
+}
+.user-action-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.08);
+}
+.user-action-btn.danger:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}

@@ -560,6 +560,11 @@
                                 <span class="sr-text">Cadastrar usuário</span>
                                 <i class="fa-solid fa-chevron-right sr-arrow"></i>
                             </button>
+                            <button id="manageUsersBtn" class="settings-row">
+                                <div class="sr-icon"><i class="fa-solid fa-users-gear"></i></div>
+                                <span class="sr-text">Gerenciar usuários</span>
+                                <i class="fa-solid fa-chevron-right sr-arrow"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -654,6 +659,60 @@
                             </div>
                             <button type="submit" class="btn-primary">
                                 <i class="fa-solid fa-check"></i> Cadastrar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Modal: Gerenciar Usuários (admin) -->
+                <div id="manageUsersModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="fa-solid fa-users-gear"></i> Gerenciar Usuários</h3>
+                            <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div id="usersListContainer">
+                            <div class="users-list-loading">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Carregando usuários...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal: Editar Usuário (admin) -->
+                <div id="editUserModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="fa-solid fa-user-pen"></i> Editar Usuário</h3>
+                            <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form id="editUserForm">
+                            <input type="hidden" id="editUserId">
+                            <div class="form-group">
+                                <label for="editUserFullName">Nome completo</label>
+                                <input type="text" id="editUserFullName" placeholder="Nome completo" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editUserEmail">E-mail</label>
+                                <input type="email" id="editUserEmail" placeholder="email@exemplo.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editUserLogin">Login</label>
+                                <input type="text" id="editUserLogin" placeholder="Login de acesso" required minlength="3">
+                            </div>
+                            <div class="form-group">
+                                <label for="editUserRole">Função</label>
+                                <select id="editUserRole" class="filter-chip" style="width:100%;padding-right:16px;">
+                                    <option value="user">Usuário</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="editUserNewPassword">Nova senha (deixe vazio para manter)</label>
+                                <input type="password" id="editUserNewPassword" placeholder="Mínimo 6 caracteres" minlength="6">
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fa-solid fa-check"></i> Salvar Alterações
                             </button>
                         </form>
                     </div>
