@@ -129,6 +129,7 @@ function selectMonth(monthIndex, year) {
     btn.classList.toggle('active', i === monthIndex);
   });
   updateDashboard();
+  updateSalaryDisplay();
 }
 
 // ===== WEEK SCROLLER =====
@@ -874,6 +875,12 @@ function setupEventListeners() {
 
   // Setup debt filter click on overview cards
   setupDebtFilterListeners();
+
+  // Salary month filter
+  const salaryMonthFilter = document.getElementById('salaryMonthFilter');
+  if (salaryMonthFilter) {
+    salaryMonthFilter.addEventListener('change', () => updateSalaryHistory());
+  }
 }
 
 // ===== TROCA DE ABAS =====
@@ -2212,10 +2219,18 @@ function updateSalaryDisplay() {
   const biancaTotal = biancaSalaries.reduce((sum, s) => sum + s.amount, 0);
   const combined = luanTotal + biancaTotal;
   
-  // Soma do mês atual (salário + adiantamento/vale)
-  const now = new Date();
-  const curMonth = now.getMonth();
-  const curYear = now.getFullYear();
+  // Mês selecionado no filtro do dashboard (ou mês atual)
+  const monthVal = document.getElementById('monthFilter').value;
+  let curMonth, curYear;
+  if (monthVal) {
+    const parts = monthVal.split('-');
+    curYear = parseInt(parts[0]);
+    curMonth = parseInt(parts[1]) - 1;
+  } else {
+    const now = new Date();
+    curMonth = now.getMonth();
+    curYear = now.getFullYear();
+  }
 
   const luanMonth = luanSalaries
     .filter(s => { const d = new Date(s.date + 'T12:00:00'); return d.getMonth() === curMonth && d.getFullYear() === curYear; })
@@ -2233,8 +2248,45 @@ function updateSalaryDisplay() {
   document.getElementById('combinedSalary').textContent = formatCurrency(luanMonth + biancaMonth);
   document.getElementById('combinedAnnual').textContent = `Anual: ${formatCurrency(combined)}`;
   
-  // Update history
+  // Update month filter and history
+  populateSalaryMonthFilter();
   updateSalaryHistory();
+}
+
+// ===== POPULAR FILTRO DE MÊS DO SALÁRIO =====
+function populateSalaryMonthFilter() {
+  const select = document.getElementById('salaryMonthFilter');
+  if (!select) return;
+  
+  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  
+  // Coletar meses que têm entradas
+  const monthsSet = new Set();
+  state.salaries.forEach(s => {
+    const d = new Date(s.date + 'T12:00:00');
+    monthsSet.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  });
+  
+  // Adicionar mês atual se não tiver
+  const now = new Date();
+  const curKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  monthsSet.add(curKey);
+  
+  const sortedMonths = Array.from(monthsSet).sort().reverse();
+  
+  const prevValue = select.value;
+  select.innerHTML = sortedMonths.map(key => {
+    const [y, m] = key.split('-');
+    const label = `${months[parseInt(m) - 1]} ${y}`;
+    return `<option value="${key}">${label}</option>`;
+  }).join('');
+  
+  // Manter seleção anterior ou selecionar mês atual
+  if (prevValue && sortedMonths.includes(prevValue)) {
+    select.value = prevValue;
+  } else {
+    select.value = curKey;
+  }
 }
 
 // ===== ATUALIZAR HISTÓRICO DE SALÁRIOS =====
@@ -2242,12 +2294,20 @@ function updateSalaryHistory() {
   const container = document.getElementById('salaryHistoryList');
   if (!container) return;
   
-  if (state.salaries.length === 0) {
-    container.innerHTML = emptyState('Nenhuma entrada de salário registrada');
+  // Filtrar pelo mês selecionado
+  const filterVal = document.getElementById('salaryMonthFilter')?.value;
+  let filtered = state.salaries;
+  
+  if (filterVal) {
+    filtered = state.salaries.filter(s => s.date.startsWith(filterVal));
+  }
+  
+  if (filtered.length === 0) {
+    container.innerHTML = emptyState('Nenhuma entrada neste mês');
     return;
   }
   
-  const sorted = state.salaries.slice().reverse();
+  const sorted = filtered.slice().sort((a, b) => b.date.localeCompare(a.date));
   const personIcon = { Luan: '👔', Bianca: '💼' };
   
   container.innerHTML = sorted.map(s => {
