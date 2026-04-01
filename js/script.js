@@ -871,6 +871,9 @@ function setupEventListeners() {
 
   // Setup debt type toggle & installment field listeners
   setupDebtTypeListeners();
+
+  // Setup debt filter click on overview cards
+  setupDebtFilterListeners();
 }
 
 // ===== TROCA DE ABAS =====
@@ -1569,6 +1572,14 @@ function createBalanceSparkline(transactions) {
   const cumData = dailyNet.map(v => { cum += v; return cum; });
   const labels  = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
+  // Se não há movimentação, não renderizar sparkline
+  const hasData = cumData.some(v => v !== 0);
+  if (!hasData) {
+    ctx.style.display = 'none';
+    return null;
+  }
+  ctx.style.display = '';
+
   return new Chart(ctx, {
     type: 'line',
     data: {
@@ -1987,7 +1998,7 @@ function updateDebtsList() {
     else if (isFixa) payBtnLabel = 'Pagar mês';
 
     return `
-      <div class="debt-item ${d.status === 'paid' ? 'debt-paid' : ''} ${isFinanciamento ? 'debt-financing' : ''} ${isCartao ? 'debt-cartao' : ''} ${isFixa && !isCartao ? 'debt-fixed' : ''}">
+      <div class="debt-item ${d.status === 'paid' ? 'debt-paid' : ''} ${isFinanciamento ? 'debt-financing' : ''} ${isCartao ? 'debt-cartao' : ''} ${isFixa && !isCartao ? 'debt-fixed' : ''}" data-debt-id="${d.id}">
         <div class="debt-item-top">
           <span class="debt-creditor">${esc(d.creditor)}</span>
           <span class="debt-amount-badge">${isFinanciamento ? formatCurrency(instValue) : formatCurrency(d.amount)}</span>
@@ -2011,12 +2022,17 @@ function updateDebtsList() {
 
   // Atualizar alertas de vencimento
   updateDebtAlerts();
+
+  // Reaplicar filtro ativo (se houver)
+  if (currentDebtFilter) applyDebtFilter();
 }
 
 // ===== ALERTAS DE VENCIMENTO =====
 function updateDebtAlerts() {
   const container = document.getElementById('debtAlerts');
-  if (!container) return;
+  const bellBtn = document.getElementById('debtAlertsBell');
+  const badgeEl = document.getElementById('debtAlertsBadge');
+  if (!container || !bellBtn || !badgeEl) return;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -2058,7 +2074,19 @@ function updateDebtAlerts() {
 
   if (alerts.length === 0) {
     container.innerHTML = '';
+    bellBtn.style.display = 'none';
     return;
+  }
+
+  bellBtn.style.display = 'flex';
+  badgeEl.textContent = alerts.length;
+  
+  // Set bell color based on severity
+  bellBtn.classList.remove('has-alerts', 'has-overdue');
+  if (alerts.some(a => a.type === 'overdue')) {
+    bellBtn.classList.add('has-overdue');
+  } else {
+    bellBtn.classList.add('has-alerts');
   }
 
   container.innerHTML = alerts.map(a => `
@@ -2067,6 +2095,114 @@ function updateDebtAlerts() {
       <span>${a.label}</span>
     </div>
   `).join('');
+}
+
+// ===== BELL TOGGLE =====
+document.addEventListener('click', (e) => {
+  const bellBtn = document.getElementById('debtAlertsBell');
+  const dropdown = document.getElementById('debtAlertsDropdown');
+  if (!bellBtn || !dropdown) return;
+  
+  if (bellBtn.contains(e.target)) {
+    dropdown.classList.toggle('open');
+  } else if (!dropdown.contains(e.target)) {
+    dropdown.classList.remove('open');
+  }
+});
+
+// ===== DEBT FILTER BY OVERVIEW CARD =====
+let currentDebtFilter = null;
+
+function setupDebtFilterListeners() {
+  document.querySelectorAll('.debt-overview-card[data-filter], .summary-mini[data-filter]').forEach(card => {
+    card.addEventListener('click', () => {
+      const filter = card.dataset.filter;
+      
+      // Toggle: click same card again to clear
+      if (currentDebtFilter === filter) {
+        clearDebtFilter();
+        return;
+      }
+      
+      currentDebtFilter = filter;
+      
+      // Update active states
+      document.querySelectorAll('.debt-overview-card[data-filter], .summary-mini[data-filter]').forEach(c => c.classList.remove('filter-active'));
+      card.classList.add('filter-active');
+      
+      // Show filter bar
+      const filterBar = document.getElementById('debtFilterBar');
+      const filterLabel = document.getElementById('debtFilterLabel');
+      const labels = {
+        'monthly': 'Mensais (Fixas + Únicas)',
+        'financing': 'Financiamentos',
+        'cartao-luan': 'Cartão Luan',
+        'cartao-bianca': 'Cartão Bianca',
+        'all': 'Todas Ativas',
+        'paid': 'Pagas'
+      };
+      filterLabel.innerHTML = `<i class="fa-solid fa-filter"></i> ${labels[filter] || filter}`;
+      filterBar.classList.add('show');
+      
+      applyDebtFilter();
+    });
+  });
+}
+
+function clearDebtFilter() {
+  currentDebtFilter = null;
+  document.querySelectorAll('.debt-overview-card[data-filter], .summary-mini[data-filter]').forEach(c => c.classList.remove('filter-active'));
+  document.getElementById('debtFilterBar').classList.remove('show');
+  
+  // Show all debt items
+  document.querySelectorAll('#debtsList .debt-item').forEach(el => {
+    el.style.display = '';
+  });
+}
+
+function applyDebtFilter() {
+  if (!currentDebtFilter) return;
+  
+  const items = document.querySelectorAll('#debtsList .debt-item');
+  
+  items.forEach(el => {
+    const debtId = el.dataset.debtId;
+    
+    if (!debtId) { el.style.display = ''; return; }
+    
+    const debt = state.debts.find(d => d.id === debtId);
+    if (!debt) { el.style.display = ''; return; }
+    
+    let show = false;
+    const cartaoMode = debt.cartaoMode || 'unica';
+    const isInstType = (debt.debtType === 'financiamento' || debt.debtType === 'parcelada') || (debt.debtType === 'cartao' && cartaoMode === 'parcelado');
+    
+    switch (currentDebtFilter) {
+      case 'monthly':
+        // Mensais = fixas + únicas (não-financiamento, não-cartão parcelado)
+        show = debt.status === 'active' && !isInstType;
+        break;
+      case 'financing':
+        show = debt.status === 'active' && isInstType;
+        break;
+      case 'cartao-luan':
+        show = debt.status === 'active' && debt.debtType === 'cartao' && (debt.responsible === 'Luan' || debt.responsible === 'Ambos');
+        break;
+      case 'cartao-bianca':
+        show = debt.status === 'active' && debt.debtType === 'cartao' && (debt.responsible === 'Bianca' || debt.responsible === 'Ambos');
+        break;
+      case 'all':
+        show = debt.status === 'active';
+        break;
+      case 'paid':
+        show = debt.status === 'paid';
+        break;
+      default:
+        show = true;
+    }
+    
+    el.style.display = show ? '' : 'none';
+  });
 }
 function updateSalaryDisplay() {
   const luanSalaries = state.salaries.filter(s => s.person === 'Luan');
