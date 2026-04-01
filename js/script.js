@@ -2006,23 +2006,36 @@ function updateDebtsList() {
 
     return `
       <div class="debt-item ${d.status === 'paid' ? 'debt-paid' : ''} ${isFinanciamento ? 'debt-financing' : ''} ${isCartao ? 'debt-cartao' : ''} ${isFixa && !isCartao ? 'debt-fixed' : ''}" data-debt-id="${d.id}">
-        <div class="debt-item-top">
-          <span class="debt-creditor">${esc(d.creditor)}</span>
-          <span class="debt-amount-badge">${isFinanciamento ? formatCurrency(instValue) : formatCurrency(d.amount)}</span>
+        <div class="debt-item-header">
+          <div class="debt-type-icon ${isCartao ? 'type-cartao' : isFinanciamento ? 'type-financing' : isFixa ? 'type-fixed' : 'type-unica'}">
+            ${typeIcon || '<i class="fa-solid fa-receipt"></i>'}
+          </div>
+          <div class="debt-header-info">
+            <span class="debt-creditor">${esc(d.creditor)}</span>
+            <span class="debt-type-label">${typeBadge || 'Única'}</span>
+          </div>
+          <div class="debt-header-right">
+            <span class="debt-amount-badge">${isFinanciamento ? formatCurrency(instValue) : formatCurrency(d.amount)}</span>
+            <span class="debt-status-badge ${statusBadge}">${statusLabel}</span>
+          </div>
         </div>
         ${installmentHtml}
-        <div class="debt-item-meta">
-          <span class="debt-meta-tag"><i class="fa-solid fa-user"></i> ${esc(d.responsible)}</span>
-          <span class="debt-meta-tag"><i class="fa-solid fa-calendar"></i> ${formatDate(d.dueDate)}</span>
-          ${catInfo ? `<span class="debt-meta-tag">${catInfo.icon} ${catInfo.label}</span>` : ''}
-          ${d.description ? `<span class="debt-meta-tag">${esc(d.description)}</span>` : ''}
-          ${typeBadge ? `<span class="debt-meta-tag">${typeIcon} ${typeBadge}</span>` : ''}
-          <span class="debt-status-badge ${statusBadge}">${statusLabel}</span>
+        <div class="debt-details-grid">
+          <div class="debt-detail-item">
+            <i class="fa-solid fa-user"></i>
+            <span>${esc(d.responsible)}</span>
+          </div>
+          <div class="debt-detail-item">
+            <i class="fa-solid fa-calendar"></i>
+            <span>${formatDate(d.dueDate)}</span>
+          </div>
+          ${catInfo ? `<div class="debt-detail-item"><span class="debt-detail-cat-icon">${catInfo.icon}</span><span>${catInfo.label}</span></div>` : ''}
+          ${d.description ? `<div class="debt-detail-item debt-detail-full"><i class="fa-solid fa-comment"></i><span>${esc(d.description)}</span></div>` : ''}
         </div>
         <div class="debt-item-actions">
-          ${d.status !== 'paid' ? `<button onclick="editDebt('${d.id}')" class="btn-edit"><i class="fa-solid fa-pen"></i> Editar</button>` : ''}
-          ${d.status !== 'paid' ? `<button onclick="payDebt('${d.id}')" class="btn-pay"><i class="fa-solid fa-check"></i> ${payBtnLabel}</button>` : ''}
-          <button onclick="deleteDebt('${d.id}')" class="btn-delete"><i class="fa-solid fa-trash"></i> Excluir</button>
+          ${d.status !== 'paid' ? `<button onclick="editDebt('${d.id}')" class="debt-action-btn debt-btn-edit" title="Editar"><i class="fa-solid fa-pen"></i></button>` : ''}
+          ${d.status !== 'paid' ? `<button onclick="payDebt('${d.id}')" class="debt-action-btn debt-btn-pay"><i class="fa-solid fa-circle-check"></i> ${payBtnLabel}</button>` : ''}
+          <button onclick="deleteDebt('${d.id}')" class="debt-action-btn debt-btn-delete" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
         </div>
       </div>`;
   }).join('');

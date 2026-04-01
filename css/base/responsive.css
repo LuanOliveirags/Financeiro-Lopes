@@ -50,24 +50,16 @@
   .chart-card-header h3 { font-size: 0.875rem; }
 
   /* Debt items */
-  .debt-item { padding: 14px; }
+  .debt-item { padding: 16px; }
   .debt-item-header { gap: 10px; }
-  .debt-amount-badge { font-size: 0.8125rem; padding: 5px 10px; }
+  .debt-type-icon { width: 38px; height: 38px; font-size: 0.9rem; }
+  .debt-amount-badge { font-size: 1rem; }
+  .debt-detail-item { font-size: 0.75rem; }
 
-  /* Debt actions: wrap if needed */
-  .debt-item-actions {
-    flex-wrap: wrap;
-  }
-  .debt-item-actions button {
-    font-size: 0.7rem;
-    padding: 5px 10px;
-  }
-
-  /* Debt meta tags */
-  .debt-item-meta .debt-meta-tag {
-    font-size: 0.65rem;
-    padding: 2px 7px;
-  }
+  /* Debt actions */
+  .debt-btn-edit,
+  .debt-btn-delete { width: 38px; height: 38px; font-size: 0.8rem; }
+  .debt-btn-pay { height: 38px; font-size: 0.8125rem; }
 
   /* Debt overview cards */
   .debt-overview-card { padding: 14px; }
@@ -158,21 +150,16 @@
   }
 
   /* Debt items */
-  .debt-item { padding: 12px; }
-  .debt-amount-badge { font-size: 0.75rem; padding: 4px 8px; }
+  .debt-item { padding: 14px; }
+  .debt-type-icon { width: 36px; height: 36px; font-size: 0.85rem; }
+  .debt-creditor { font-size: 0.9rem; }
+  .debt-amount-badge { font-size: 0.9375rem; }
 
-  /* Debt actions: stack vertically */
-  .debt-item-actions {
-    flex-direction: column;
-    gap: 6px;
-    width: 100%;
-  }
-  .debt-item-actions button {
-    width: 100%;
-    justify-content: center;
-    padding: 8px 10px;
-    font-size: 0.7rem;
-  }
+  /* Debt actions: row with full-width pay */
+  .debt-item-actions { gap: 8px; }
+  .debt-btn-edit,
+  .debt-btn-delete { width: 36px; height: 36px; font-size: 0.8rem; }
+  .debt-btn-pay { height: 36px; font-size: 0.8rem; }
 
   /* Person cards (salary) */
   .person-cards-grid {
@@ -272,8 +259,9 @@
   .trans-amount { font-size: 0.8125rem; }
 
   /* Debt items further size reduction */
-  .debt-item-meta .debt-meta-tag { font-size: 0.6rem; }
-  .debt-amount-badge { font-size: 0.7rem; }
+  .debt-detail-item { font-size: 0.7rem; }
+  .debt-amount-badge { font-size: 0.85rem; }
+  .debt-type-icon { width: 32px; height: 32px; font-size: 0.8rem; }
 
   /* Salary cards */
   .person-income-card { padding: 12px; }
@@ -295,7 +283,7 @@
 
 /* ─── Touch-friendly tap targets ─── */
 @media (pointer: coarse) {
-  .debt-item-actions button { min-height: 36px; }
+  .debt-action-btn { min-height: 40px; }
   .btn-remove-deduction { min-height: 32px; min-width: 32px; }
   .modal-close-btn { width: 36px; height: 36px; }
   .ph-icon-btn { width: 40px; height: 40px; }
