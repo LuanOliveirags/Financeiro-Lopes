@@ -380,6 +380,7 @@
                                         <option value="pets">🐾 Pets</option>
                                         <option value="assinaturas">📺 Assinaturas</option>
                                         <option value="investimentos">📈 Investimentos</option>
+                                        <option value="academia">🏋️ Academia</option>
                                         <option value="outros">📁 Outros</option>
                                     </select>
                                 </div>
@@ -437,13 +438,25 @@
                             <div class="form-group" id="creditorCardGroup" style="display:none">
                                 <label for="debtCardIssuer">Banco / Cartão</label>
                                 <select id="debtCardIssuer">
-                                    <option value="Nubank">🟪 Nubank</option>
-                                    <option value="Itaú">🟧 Itaú</option>
-                                    <option value="Santander">🔴 Santander</option>
-                                    <option value="Banco do Brasil">🟡 Banco do Brasil</option>
-                                    <option value="Mercado Pago">🟦 Mercado Pago</option>
-                                    <option value="Caixa">🟦 Caixa</option>
-                                    <option value="Porto Seguro">🔵 Porto Seguro</option>
+                                    <option value="Nubank">Nubank</option>
+                                    <option value="Itaú">Itaú</option>
+                                    <option value="Porto Seguro">Porto Seguro</option>
+                                    <option value="Caixa">Caixa</option>
+                                    <option value="Mercado Pago">Mercado Pago</option>
+                                    <option value="Banco do Brasil">Banco do Brasil</option>
+                                    <option value="Santander">Santander</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="creditorBankGroup" style="display:none">
+                                <label for="debtBankIssuer">Banco</label>
+                                <select id="debtBankIssuer">
+                                    <option value="Nubank">Nubank</option>
+                                    <option value="Itaú">Itaú</option>
+                                    <option value="Porto Seguro">Porto Seguro</option>
+                                    <option value="Caixa">Caixa</option>
+                                    <option value="Mercado Pago">Mercado Pago</option>
+                                    <option value="Banco do Brasil">Banco do Brasil</option>
+                                    <option value="Santander">Santander</option>
                                 </select>
                             </div>
 
@@ -459,6 +472,9 @@
                                     </button>
                                     <button type="button" class="type-toggle-btn debt-type-toggle" data-value="cartao">
                                         <i class="fa-solid fa-credit-card"></i> Cartão
+                                    </button>
+                                    <button type="button" class="type-toggle-btn debt-type-toggle" data-value="emprestimo">
+                                        <i class="fa-solid fa-hand-holding-dollar"></i> Emprést.
                                     </button>
                                     <button type="button" class="type-toggle-btn debt-type-toggle" data-value="financiamento">
                                         <i class="fa-solid fa-building-columns"></i> Financ.
@@ -540,6 +556,7 @@
                                     <option value="pets">🐾 Pets</option>
                                     <option value="assinaturas">📺 Assinaturas</option>
                                     <option value="investimentos">📈 Investimentos</option>
+                                    <option value="academia">🏋️ Academia</option>
                                     <option value="outros">📁 Outros</option>
                                 </select>
                             </div>

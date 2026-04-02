@@ -645,6 +645,7 @@
   border-radius: 4px 0 0 4px;
 }
 .debt-financing::before { background: #4361EE; }
+.debt-emprestimo::before { background: #06D6A0; }
 .debt-cartao::before { background: #8B5CF6; }
 .debt-fixed::before { background: #F8961E; }
 .debt-item:hover { box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1)); }
@@ -669,7 +670,14 @@
 .type-cartao   { background: rgba(139,92,246,0.12); color: #8B5CF6; }
 .type-financing { background: rgba(67,97,238,0.12); color: #4361EE; }
 .type-fixed    { background: rgba(248,150,30,0.12); color: #F8961E; }
+.type-emprestimo { background: rgba(6,214,160,0.12); color: #06D6A0; }
 .type-unica    { background: var(--bg-card-alt); color: var(--text-secondary); }
+.debt-bank-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
+}
 .debt-header-info {
   flex: 1;
   min-width: 0;
@@ -1213,10 +1221,11 @@
 .cat-pets         { background: rgba(255,165,0,0.15);   color: #FFA500; }
 .cat-assinaturas  { background: rgba(138,43,226,0.15);  color: #8A2BE2; }
 .cat-investimentos{ background: rgba(0,128,0,0.15);     color: #008000; }
+.cat-academia     { background: rgba(255,87,34,0.15);   color: #FF5722; }
 
 /* Debt type toggle with 3 options */
-.debt-type-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.debt-type-group .type-toggle-btn { font-size: 0.72rem; padding: 8px 4px; white-space: nowrap; }
+.debt-type-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.debt-type-group .type-toggle-btn { font-size: 0.68rem; padding: 8px 2px; white-space: nowrap; }
 .cartao-mode-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .cartao-mode-group .type-toggle-btn { font-size: 0.72rem; padding: 7px 4px; white-space: nowrap; }
 

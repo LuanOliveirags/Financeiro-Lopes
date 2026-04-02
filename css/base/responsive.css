@@ -25,9 +25,9 @@
 
 /* ─── Mobile ≤ 480px ─── */
 @media (max-width: 480px) {
-  /* Debt type toggle: 4 columns → 2×2 */
+  /* Debt type toggle: 5 columns → 3+2 on small */
   .debt-type-group {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
   .debt-type-group .type-toggle-btn {
     font-size: 0.7rem;
