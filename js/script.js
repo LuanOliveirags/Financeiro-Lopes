@@ -114,10 +114,15 @@ function initMonthScroller() {
     return `<button class="month-btn ${isActive ? 'active' : ''}" data-month="${i}" onclick="selectMonth(${i}, ${currentYear})">${m}</button>`;
   }).join('');
 
-  // Scroll to current
+  // Scroll to current (sem scrollIntoView para não propagar scroll horizontal ao pai)
   requestAnimationFrame(() => {
     const active = scroller.querySelector('.month-btn.active');
-    if (active) active.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+    if (active) {
+      const scrollerRect = scroller.getBoundingClientRect();
+      const activeRect = active.getBoundingClientRect();
+      const offset = activeRect.left - scrollerRect.left - (scrollerRect.width / 2) + (activeRect.width / 2);
+      scroller.scrollLeft += offset;
+    }
   });
 }
 
@@ -159,10 +164,15 @@ function initWeekScroller() {
   scroller.innerHTML = html.join('');
   // Default selected day = today
   state.selectedDay = todayStr;
-  // Scroll to today
+  // Scroll to today (sem scrollIntoView para não propagar scroll horizontal ao pai)
   requestAnimationFrame(() => {
     const active = scroller.querySelector('.week-day-btn.active');
-    if (active) active.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+    if (active) {
+      const scrollerRect = scroller.getBoundingClientRect();
+      const activeRect = active.getBoundingClientRect();
+      const offset = activeRect.left - scrollerRect.left - (scrollerRect.width / 2) + (activeRect.width / 2);
+      scroller.scrollLeft += offset;
+    }
   });
 }
 
@@ -888,6 +898,12 @@ function switchTab(tabName) {
   // Remove active de todas as abas e botões
   document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(btn => btn.classList.remove('active'));
+
+  // Reset horizontal scroll para evitar deslocamento no mobile
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) mainContent.scrollLeft = 0;
+  document.documentElement.scrollLeft = 0;
+  document.body.scrollLeft = 0;
 
   // Adiciona active na aba e botão corretos, se existirem
   const tabSection = document.getElementById(tabName);

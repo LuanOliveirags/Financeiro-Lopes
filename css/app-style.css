@@ -262,11 +262,12 @@
 .main-content {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: clip;
   padding: 64px 0 96px 0;
   scroll-behavior: smooth;
   background: var(--grad-bg);
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: none;
 }
 .main-content > .alert {
   margin: 16px 20px 0;
@@ -277,7 +278,9 @@
   display: none;
   padding: 0;
   animation: fadeIn 250ms ease;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
+  max-width: 100%;
 }
 .tab-content.active { display: block; }
 
