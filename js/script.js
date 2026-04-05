@@ -322,6 +322,11 @@ document.addEventListener('DOMContentLoaded', () => {
   createDefaultAdmin();
   initializeApp();
   setupEventListeners();
+  initResetPasswordUI();
+  // Inicializar EmailJS
+  if (typeof emailjs !== 'undefined' && EMAILJS_CONFIG.publicKey !== 'YOUR_PUBLIC_KEY') {
+    emailjs.init(EMAILJS_CONFIG.publicKey);
+  }
   checkLoginStatus();
   if (typeof setupOnlineOfflineListeners === 'function') setupOnlineOfflineListeners();
   if (typeof initMonthScroller === 'function') initMonthScroller();
@@ -1049,6 +1054,223 @@ function checkLoginStatus() {
       // Formato antigo ou corrompido
     }
     localStorage.removeItem('user');
+  }
+}
+
+// ===== RECUPERAÇÃO DE SENHA POR E-MAIL =====
+const EMAILJS_CONFIG = {
+  serviceId: 'YOUR_SERVICE_ID',       // Substitua pelo seu Service ID do EmailJS
+  templateId: 'YOUR_TEMPLATE_ID',     // Substitua pelo seu Template ID do EmailJS
+  publicKey: 'YOUR_PUBLIC_KEY'        // Substitua pela sua Public Key do EmailJS
+};
+
+let _resetState = { email: '', userId: '', code: '', expiresAt: null };
+
+function initResetPasswordUI() {
+  const modal = document.getElementById('resetPasswordModal');
+  const openBtn = document.getElementById('forgotPasswordBtn');
+  const closeBtn = document.getElementById('resetModalClose');
+
+  if (!modal || !openBtn) return;
+
+  openBtn.addEventListener('click', () => {
+    _resetState = { email: '', userId: '', code: '', expiresAt: null };
+    showResetStep(1);
+    modal.classList.add('active');
+    document.getElementById('resetEmail').value = '';
+    document.getElementById('resetStep1Error').textContent = '';
+  });
+
+  closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+
+  document.getElementById('sendResetCode').addEventListener('click', handleSendResetCode);
+  document.getElementById('verifyResetCode').addEventListener('click', handleVerifyResetCode);
+  document.getElementById('resendResetCode').addEventListener('click', handleSendResetCode);
+  document.getElementById('saveNewPassword').addEventListener('click', handleSaveNewPassword);
+
+  // Auto-focus e auto-advance nos inputs do código
+  document.querySelectorAll('.reset-code-digit').forEach(input => {
+    input.addEventListener('input', (e) => {
+      const val = e.target.value.replace(/\D/g, '');
+      e.target.value = val;
+      if (val && e.target.dataset.index < 5) {
+        const next = document.querySelector(`.reset-code-digit[data-index="${parseInt(e.target.dataset.index) + 1}"]`);
+        if (next) next.focus();
+      }
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !e.target.value && e.target.dataset.index > 0) {
+        const prev = document.querySelector(`.reset-code-digit[data-index="${parseInt(e.target.dataset.index) - 1}"]`);
+        if (prev) { prev.value = ''; prev.focus(); }
+      }
+    });
+    input.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+      document.querySelectorAll('.reset-code-digit').forEach((inp, i) => { inp.value = paste[i] || ''; });
+      const lastFilled = document.querySelector(`.reset-code-digit[data-index="${Math.min(paste.length, 5)}"]`);
+      if (lastFilled) lastFilled.focus();
+    });
+  });
+}
+
+function showResetStep(step) {
+  document.querySelectorAll('.reset-step').forEach(s => s.classList.remove('active'));
+  const stepEl = document.getElementById(`resetStep${step}`);
+  if (stepEl) stepEl.classList.add('active');
+
+  const titles = { 1: 'Recuperar Senha', 2: 'Verificar Código', 3: 'Nova Senha' };
+  const icons = { 1: 'fa-envelope-open-text', 2: 'fa-shield-halved', 3: 'fa-lock-open' };
+  const titleEl = document.querySelector('.reset-modal-title');
+  const iconEl = document.querySelector('.reset-modal-icon i');
+  if (titleEl) titleEl.textContent = titles[step];
+  if (iconEl) iconEl.className = `fa-solid ${icons[step]}`;
+}
+
+function generateResetCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function handleSendResetCode() {
+  const emailInput = document.getElementById('resetEmail');
+  const errorDiv = document.getElementById('resetStep1Error');
+  const btn = document.getElementById('sendResetCode');
+  const email = emailInput.value.trim().toLowerCase();
+
+  errorDiv.textContent = '';
+  if (!email) { errorDiv.textContent = 'Informe seu e-mail.'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+
+  try {
+    if (!firebaseReady) throw new Error('Firebase não disponível.');
+
+    // Buscar usuário pelo e-mail
+    const snap = await db.collection('users').where('email', '==', email).get();
+    if (snap.empty) {
+      errorDiv.textContent = 'Nenhuma conta encontrada com este e-mail.';
+      return;
+    }
+
+    const userData = snap.docs[0].data();
+    const code = generateResetCode();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+
+    // Salvar código no Firestore
+    await db.collection('passwordResets').doc(userData.id).set({
+      userId: userData.id,
+      code: code,
+      email: email,
+      expiresAt: expiresAt.toISOString(),
+      used: false,
+      createdAt: new Date().toISOString()
+    });
+
+    // Enviar e-mail via EmailJS
+    await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+      to_email: email,
+      to_name: userData.fullName || userData.login,
+      reset_code: code,
+      app_name: 'Lopes Finanças'
+    }, EMAILJS_CONFIG.publicKey);
+
+    _resetState.email = email;
+    _resetState.userId = userData.id;
+
+    document.getElementById('resetEmailDisplay').textContent = email;
+    document.querySelectorAll('.reset-code-digit').forEach(i => i.value = '');
+    document.getElementById('resetStep2Error').textContent = '';
+    showResetStep(2);
+    document.querySelector('.reset-code-digit[data-index="0"]').focus();
+
+  } catch (err) {
+    console.error('Erro ao enviar código:', err);
+    errorDiv.textContent = err.message || 'Erro ao enviar código. Tente novamente.';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>Enviar código</span><i class="fa-solid fa-paper-plane"></i>';
+  }
+}
+
+async function handleVerifyResetCode() {
+  const errorDiv = document.getElementById('resetStep2Error');
+  const btn = document.getElementById('verifyResetCode');
+  errorDiv.textContent = '';
+
+  const digits = document.querySelectorAll('.reset-code-digit');
+  const code = Array.from(digits).map(i => i.value).join('');
+
+  if (code.length !== 6) { errorDiv.textContent = 'Digite o código completo de 6 dígitos.'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
+
+  try {
+    const doc = await db.collection('passwordResets').doc(_resetState.userId).get();
+    if (!doc.exists) { errorDiv.textContent = 'Código não encontrado. Solicite um novo.'; return; }
+
+    const data = doc.data();
+    if (data.used) { errorDiv.textContent = 'Este código já foi utilizado.'; return; }
+    if (new Date(data.expiresAt) < new Date()) { errorDiv.textContent = 'Código expirado. Solicite um novo.'; return; }
+    if (data.code !== code) { errorDiv.textContent = 'Código incorreto.'; return; }
+
+    _resetState.code = code;
+    document.getElementById('resetNewPassword').value = '';
+    document.getElementById('resetConfirmPassword').value = '';
+    document.getElementById('resetStep3Error').textContent = '';
+    showResetStep(3);
+    document.getElementById('resetNewPassword').focus();
+
+  } catch (err) {
+    console.error('Erro ao verificar código:', err);
+    errorDiv.textContent = 'Erro ao verificar. Tente novamente.';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>Verificar código</span><i class="fa-solid fa-shield-check"></i>';
+  }
+}
+
+async function handleSaveNewPassword() {
+  const errorDiv = document.getElementById('resetStep3Error');
+  const btn = document.getElementById('saveNewPassword');
+  const newPass = document.getElementById('resetNewPassword').value;
+  const confirmPass = document.getElementById('resetConfirmPassword').value;
+
+  errorDiv.textContent = '';
+  if (!newPass || newPass.length < 4) { errorDiv.textContent = 'A senha deve ter pelo menos 4 caracteres.'; return; }
+  if (newPass !== confirmPass) { errorDiv.textContent = 'As senhas não coincidem.'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+
+  try {
+    const newHash = await hashPassword(newPass);
+
+    // Atualizar senha no Firestore
+    await db.collection('users').doc(_resetState.userId).update({ passwordHash: newHash });
+
+    // Marcar código como usado
+    await db.collection('passwordResets').doc(_resetState.userId).update({ used: true });
+
+    // Fechar modal e mostrar sucesso
+    document.getElementById('resetPasswordModal').classList.remove('active');
+    _resetState = { email: '', userId: '', code: '', expiresAt: null };
+
+    // Mostrar mensagem no login
+    const errorEl = document.getElementById('loginError');
+    errorEl.textContent = 'Senha alterada com sucesso! Faça login.';
+    errorEl.classList.add('show');
+    errorEl.style.color = '#06D6A0';
+    setTimeout(() => { errorEl.classList.remove('show'); errorEl.style.color = ''; }, 5000);
+
+  } catch (err) {
+    console.error('Erro ao salvar senha:', err);
+    errorDiv.textContent = 'Erro ao salvar. Tente novamente.';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>Salvar nova senha</span><i class="fa-solid fa-check"></i>';
   }
 }
 
