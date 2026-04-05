@@ -4,7 +4,7 @@ Financeiro Lopes Backend
 """
 
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
@@ -29,6 +29,21 @@ db = SQLAlchemy(app)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # ===== MODELOS =====
+class Family(db.Model):
+    __tablename__ = 'families'
+    
+    id = db.Column(db.String(100), primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'createdAt': self.created_at.isoformat()
+        }
+
+
 class Transaction(db.Model):
     __tablename__ = 'transactions'
     
@@ -39,6 +54,7 @@ class Transaction(db.Model):
     responsible = db.Column(db.String(50), nullable=False)
     description = db.Column(db.String(255))
     date = db.Column(db.Date, nullable=False)
+    family_id = db.Column(db.String(100), db.ForeignKey('families.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -51,6 +67,7 @@ class Transaction(db.Model):
             'responsible': self.responsible,
             'description': self.description,
             'date': self.date.isoformat(),
+            'familyId': self.family_id,
             'createdAt': self.created_at.isoformat(),
             'updatedAt': self.updated_at.isoformat()
         }
@@ -66,6 +83,7 @@ class Debt(db.Model):
     responsible = db.Column(db.String(50), nullable=False)
     description = db.Column(db.String(255))
     status = db.Column(db.String(50), default='active')  # active, paid, overdue
+    family_id = db.Column(db.String(100), db.ForeignKey('families.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -78,6 +96,7 @@ class Debt(db.Model):
             'responsible': self.responsible,
             'description': self.description,
             'status': self.status,
+            'familyId': self.family_id,
             'createdAt': self.created_at.isoformat(),
             'updatedAt': self.updated_at.isoformat()
         }
@@ -91,6 +110,7 @@ class Salary(db.Model):
     amount = db.Column(db.Float, nullable=False)
     date = db.Column(db.Date, nullable=False)
     description = db.Column(db.String(255))
+    family_id = db.Column(db.String(100), db.ForeignKey('families.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -101,9 +121,42 @@ class Salary(db.Model):
             'amount': self.amount,
             'date': self.date.isoformat(),
             'description': self.description,
+            'familyId': self.family_id,
             'createdAt': self.created_at.isoformat(),
             'updatedAt': self.updated_at.isoformat()
         }
+
+
+# ===== ROTAS FAMÍLIAS =====
+@app.route('/api/families', methods=['GET'])
+def get_families():
+    """Listar todas as famílias"""
+    families = Family.query.all()
+    return jsonify([f.to_dict() for f in families])
+
+
+@app.route('/api/families', methods=['POST'])
+def create_family_route():
+    """Criar nova família"""
+    data = request.get_json()
+    family = Family(
+        id=data.get('id'),
+        name=data.get('name')
+    )
+    db.session.add(family)
+    db.session.commit()
+    return jsonify(family.to_dict()), 201
+
+
+@app.route('/api/families/<family_id>', methods=['DELETE'])
+def delete_family_route(family_id):
+    """Deletar família (apenas se sem membros)"""
+    family = Family.query.get(family_id)
+    if not family:
+        return jsonify({'error': 'Família não encontrada'}), 404
+    db.session.delete(family)
+    db.session.commit()
+    return jsonify({'message': 'Família deletada com sucesso'})
 
 
 # ===== ROTAS UTILITÁRIAS =====
@@ -124,16 +177,18 @@ def health():
 # ===== ROTAS TRANSAÇÕES =====
 @app.route('/api/transactions', methods=['GET'])
 def get_transactions():
-    """Listar todas as transações"""
-    transactions = Transaction.query.all()
+    """Listar todas as transações (filtradas por família)"""
+    family_id = request.args.get('familyId')
+    query = Transaction.query
+    if family_id:
+        query = query.filter_by(family_id=family_id)
+    transactions = query.all()
     return jsonify([t.to_dict() for t in transactions])
 
 
 @app.route('/api/transactions', methods=['POST'])
 def create_transaction():
     """Criar nova transação"""
-    from flask import request
-    
     data = request.get_json()
     
     transaction = Transaction(
@@ -143,7 +198,8 @@ def create_transaction():
         category=data.get('category'),
         responsible=data.get('responsible'),
         description=data.get('description'),
-        date=datetime.fromisoformat(data.get('date')).date()
+        date=datetime.fromisoformat(data.get('date')).date(),
+        family_id=data.get('familyId')
     )
     
     db.session.add(transaction)
@@ -155,8 +211,6 @@ def create_transaction():
 @app.route('/api/transactions/<transaction_id>', methods=['PUT'])
 def update_transaction(transaction_id):
     """Atualizar transação"""
-    from flask import request
-    
     transaction = Transaction.query.get(transaction_id)
     if not transaction:
         return jsonify({'error': 'Transação não encontrada'}), 404
@@ -193,16 +247,18 @@ def delete_transaction(transaction_id):
 # ===== ROTAS DÍVIDAS =====
 @app.route('/api/debts', methods=['GET'])
 def get_debts():
-    """Listar todas as dívidas"""
-    debts = Debt.query.all()
+    """Listar todas as dívidas (filtradas por família)"""
+    family_id = request.args.get('familyId')
+    query = Debt.query
+    if family_id:
+        query = query.filter_by(family_id=family_id)
+    debts = query.all()
     return jsonify([d.to_dict() for d in debts])
 
 
 @app.route('/api/debts', methods=['POST'])
 def create_debt():
     """Criar nova dívida"""
-    from flask import request
-    
     data = request.get_json()
     
     debt = Debt(
@@ -212,7 +268,8 @@ def create_debt():
         due_date=datetime.fromisoformat(data.get('dueDate')).date(),
         responsible=data.get('responsible'),
         description=data.get('description'),
-        status=data.get('status', 'active')
+        status=data.get('status', 'active'),
+        family_id=data.get('familyId')
     )
     
     db.session.add(debt)
@@ -224,8 +281,6 @@ def create_debt():
 @app.route('/api/debts/<debt_id>', methods=['PUT'])
 def update_debt(debt_id):
     """Atualizar dívida"""
-    from flask import request
-    
     debt = Debt.query.get(debt_id)
     if not debt:
         return jsonify({'error': 'Dívida não encontrada'}), 404
@@ -262,16 +317,18 @@ def delete_debt(debt_id):
 # ===== ROTAS SALÁRIOS =====
 @app.route('/api/salaries', methods=['GET'])
 def get_salaries():
-    """Listar todos os salários"""
-    salaries = Salary.query.all()
+    """Listar todos os salários (filtrados por família)"""
+    family_id = request.args.get('familyId')
+    query = Salary.query
+    if family_id:
+        query = query.filter_by(family_id=family_id)
+    salaries = query.all()
     return jsonify([s.to_dict() for s in salaries])
 
 
 @app.route('/api/salaries', methods=['POST'])
 def create_salary():
     """Registrar novo salário"""
-    from flask import request
-    
     data = request.get_json()
     
     salary = Salary(
@@ -279,7 +336,8 @@ def create_salary():
         person=data.get('person'),
         amount=data.get('amount'),
         date=datetime.fromisoformat(data.get('date')).date(),
-        description=data.get('description')
+        description=data.get('description'),
+        family_id=data.get('familyId')
     )
     
     db.session.add(salary)
@@ -304,18 +362,36 @@ def delete_salary(salary_id):
 # ===== ROTAS ESTATÍSTICAS =====
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
-    """Obter estatísticas gerais"""
-    total_transactions = Transaction.query.count()
-    total_debts = Debt.query.count()
-    total_salaries = Salary.query.count()
+    """Obter estatísticas gerais (filtradas por família)"""
+    family_id = request.args.get('familyId')
+    
+    trans_query = Transaction.query
+    debt_query = Debt.query
+    salary_query = Salary.query
+    
+    if family_id:
+        trans_query = trans_query.filter_by(family_id=family_id)
+        debt_query = debt_query.filter_by(family_id=family_id)
+        salary_query = salary_query.filter_by(family_id=family_id)
+    
+    total_transactions = trans_query.count()
+    total_debts = debt_query.count()
+    total_salaries = salary_query.count()
     
     total_expenses = db.session.query(db.func.sum(Transaction.amount)) \
-        .filter(Transaction.type == 'saida').scalar() or 0
-    
+        .filter(Transaction.type == 'saida')
     total_income = db.session.query(db.func.sum(Transaction.amount)) \
-        .filter(Transaction.type == 'entrada').scalar() or 0
+        .filter(Transaction.type == 'entrada')
+    total_debt_amount = db.session.query(db.func.sum(Debt.amount))
     
-    total_debt_amount = db.session.query(db.func.sum(Debt.amount)).scalar() or 0
+    if family_id:
+        total_expenses = total_expenses.filter(Transaction.family_id == family_id)
+        total_income = total_income.filter(Transaction.family_id == family_id)
+        total_debt_amount = total_debt_amount.filter(Debt.family_id == family_id)
+    
+    total_expenses = total_expenses.scalar() or 0
+    total_income = total_income.scalar() or 0
+    total_debt_amount = total_debt_amount.scalar() or 0
     
     return jsonify({
         'totalTransactions': total_transactions,

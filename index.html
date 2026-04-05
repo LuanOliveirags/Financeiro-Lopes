@@ -818,6 +818,7 @@
                         <h3 id="settingsUserName">Usuário</h3>
                         <p id="settingsUserEmail">—</p>
                         <span id="settingsUserRole" class="status-pill connected">Usuário</span>
+                        <span class="status-pill" style="margin-left:6px;"><i class="fa-solid fa-people-roof" style="margin-right:4px;"></i><span id="settingsFamilyName">—</span></span>
                     </div>
                 </div>
 
@@ -861,6 +862,11 @@
                             <button id="manageUsersBtn" class="settings-row">
                                 <div class="sr-icon"><i class="fa-solid fa-users-gear"></i></div>
                                 <span class="sr-text">Gerenciar usuários</span>
+                                <i class="fa-solid fa-chevron-right sr-arrow"></i>
+                            </button>
+                            <button id="manageFamiliesBtn" class="settings-row">
+                                <div class="sr-icon"><i class="fa-solid fa-people-roof"></i></div>
+                                <span class="sr-text">Gerenciar famílias</span>
                                 <i class="fa-solid fa-chevron-right sr-arrow"></i>
                             </button>
                         </div>
@@ -955,6 +961,12 @@
                                 <label for="newUserPassword">Senha</label>
                                 <input type="password" id="newUserPassword" placeholder="Mínimo 6 caracteres" required minlength="6">
                             </div>
+                            <div class="form-group" id="newUserFamilyGroup">
+                                <label for="newUserFamily">Família</label>
+                                <select id="newUserFamily" class="filter-chip" style="width:100%;padding-right:16px;">
+                                    <option value="">Selecione uma família...</option>
+                                </select>
+                            </div>
                             <button type="submit" class="btn-primary">
                                 <i class="fa-solid fa-check"></i> Cadastrar
                             </button>
@@ -998,11 +1010,18 @@
                                 <label for="editUserLogin">Login</label>
                                 <input type="text" id="editUserLogin" placeholder="Login de acesso" required minlength="3">
                             </div>
-                            <div class="form-group">
+                            <div class="form-group" id="editUserRoleGroup">
                                 <label for="editUserRole">Função</label>
                                 <select id="editUserRole" class="filter-chip" style="width:100%;padding-right:16px;">
                                     <option value="user">Usuário</option>
-                                    <option value="admin">Administrador</option>
+                                    <option value="admin">Admin da Família</option>
+                                    <option value="superadmin">Super Admin</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="editUserFamilyGroup">
+                                <label for="editUserFamily">Família</label>
+                                <select id="editUserFamily" class="filter-chip" style="width:100%;padding-right:16px;">
+                                    <option value="">Selecione uma família...</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1013,6 +1032,27 @@
                                 <i class="fa-solid fa-check"></i> Salvar Alterações
                             </button>
                         </form>
+                    </div>
+                </div>
+
+                <!-- Modal: Gerenciar Famílias (admin) -->
+                <div id="manageFamiliesModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="fa-solid fa-people-roof"></i> Gerenciar Famílias</h3>
+                            <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="form-group" style="display:flex;gap:8px;margin-bottom:16px;">
+                            <input type="text" id="newFamilyName" placeholder="Nome da nova família" style="flex:1">
+                            <button id="addFamilyBtn" class="btn-primary" style="white-space:nowrap;">
+                                <i class="fa-solid fa-plus"></i> Criar
+                            </button>
+                        </div>
+                        <div id="familiesListContainer">
+                            <div class="users-list-loading">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Carregando famílias...
+                            </div>
+                        </div>
                     </div>
                 </div>
 

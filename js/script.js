@@ -48,6 +48,7 @@ const state = {
   isLoggedIn: false,
   user: null,
   currentUser: null,
+  currentFamily: null,
   currentMonth: new Date(),
   transactions: [],
   debts: [],
@@ -56,6 +57,138 @@ const state = {
   charts: {},
   selectedDay: null
 };
+
+// ===== TENANT / FAMÍLIA =====
+function isSuperAdmin() {
+  return state.currentUser && state.currentUser.role === 'superadmin';
+}
+
+function isAdmin() {
+  return state.currentUser && (state.currentUser.role === 'admin' || state.currentUser.role === 'superadmin');
+}
+
+function getFamilyId() {
+  return state.currentUser && state.currentUser.familyId ? state.currentUser.familyId : null;
+}
+
+function getFamilyStorageKey() {
+  const fid = getFamilyId();
+  return fid ? `financeiro_data_${fid}` : 'financeiro_data';
+}
+
+async function loadFamily() {
+  if (!firebaseReady || !state.currentUser || !state.currentUser.familyId) {
+    state.currentFamily = null;
+    return;
+  }
+  try {
+    const doc = await db.collection('families').doc(state.currentUser.familyId).get();
+    if (doc.exists) {
+      state.currentFamily = doc.data();
+    }
+  } catch (e) {
+    console.error('Erro ao carregar família:', e);
+  }
+}
+
+async function createFamily(name) {
+  if (!firebaseReady) throw new Error('Firebase não disponível.');
+  const id = `family-${Date.now()}`;
+  const family = { id, name, createdAt: new Date().toISOString() };
+  await db.collection('families').doc(id).set(family);
+  return family;
+}
+
+async function loadFamiliesList() {
+  if (!firebaseReady) return [];
+  try {
+    const snap = await db.collection('families').get();
+    return snap.docs.map(d => d.data());
+  } catch (e) {
+    console.error('Erro ao carregar famílias:', e);
+    return [];
+  }
+}
+
+async function deleteFamily(familyId) {
+  if (!firebaseReady) throw new Error('Firebase não disponível.');
+  // Impedir deletar se há usuários associados
+  const usersSnap = await db.collection('users').where('familyId', '==', familyId).get();
+  if (!usersSnap.empty) throw new Error('Não é possível excluir uma família que ainda possui usuários.');
+  await db.collection('families').doc(familyId).delete();
+}
+
+async function populateFamilySelects() {
+  const families = await loadFamiliesList();
+  const selects = [document.getElementById('newUserFamily'), document.getElementById('editUserFamily')];
+  selects.forEach(sel => {
+    if (!sel) return;
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">Selecione uma família...</option>';
+    families.forEach(f => {
+      sel.innerHTML += `<option value="${esc(f.id)}">${esc(f.name)}</option>`;
+    });
+    if (currentVal) sel.value = currentVal;
+  });
+}
+
+async function loadFamiliesListUI() {
+  const container = document.getElementById('familiesListContainer');
+  if (!container) return;
+  container.innerHTML = '<div class="users-list-loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando famílias...</div>';
+  try {
+    const families = await loadFamiliesList();
+    if (families.length === 0) {
+      container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Nenhuma família cadastrada.</p>';
+      return;
+    }
+
+    // Contar membros por família
+    const usersSnap = await db.collection('users').get();
+    const memberCount = {};
+    usersSnap.forEach(doc => {
+      const fid = doc.data().familyId;
+      if (fid) memberCount[fid] = (memberCount[fid] || 0) + 1;
+    });
+
+    let html = '<div class="users-list">';
+    families.forEach(f => {
+      const count = memberCount[f.id] || 0;
+      html += `
+        <div class="user-card">
+          <div class="user-card-info">
+            <div class="user-card-name"><i class="fa-solid fa-people-roof" style="margin-right:6px;"></i>${esc(f.name)}</div>
+            <div class="user-card-detail">${count} membro${count !== 1 ? 's' : ''}</div>
+          </div>
+          <div class="user-card-actions">
+            <button class="user-action-btn delete-family-btn danger" data-id="${esc(f.id)}" data-name="${esc(f.name)}" title="Excluir">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+
+    container.querySelectorAll('.delete-family-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const fid = btn.dataset.id;
+        const fname = btn.dataset.name;
+        if (!confirm(`Excluir a família "${fname}"? (só é possível se não houver membros)`)) return;
+        try {
+          await deleteFamily(fid);
+          showAlert(`Família "${fname}" excluída.`, 'success');
+          loadFamiliesListUI();
+        } catch (err) {
+          showAlert(err.message, 'danger');
+        }
+      });
+    });
+  } catch (err) {
+    container.innerHTML = '<p style="text-align:center;color:var(--danger);padding:20px;">Erro ao carregar famílias.</p>';
+    console.error('loadFamiliesListUI:', err);
+  }
+}
 
 // ===== MAPEAMENTO DE CATEGORIAS =====
 const CATEGORY_MAP = {
@@ -80,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
   createDefaultAdmin();
   initializeApp();
   setupEventListeners();
-  loadDataFromStorage();
   checkLoginStatus();
   if (typeof setupOnlineOfflineListeners === 'function') setupOnlineOfflineListeners();
   if (typeof initMonthScroller === 'function') initMonthScroller();
@@ -230,6 +362,17 @@ async function hashPassword(password) {
 async function createDefaultAdmin() {
   if (!firebaseReady) return;
   try {
+    // Criar família padrão "Lopes" se não existir
+    const familySnap = await db.collection('families').doc('family-lopes').get();
+    if (!familySnap.exists) {
+      await db.collection('families').doc('family-lopes').set({
+        id: 'family-lopes',
+        name: 'Lopes',
+        createdAt: new Date().toISOString()
+      });
+      console.log('Família padrão "Lopes" criada com sucesso!');
+    }
+
     const snap = await db.collection('users').where('login', '==', 'luangs').get();
     if (snap.empty) {
       const hash = await hashPassword('Space@10');
@@ -239,10 +382,22 @@ async function createDefaultAdmin() {
         email: 'luanoliveirags@gmail.com',
         login: 'luangs',
         passwordHash: hash,
-        role: 'admin',
+        role: 'superadmin',
+        familyId: 'family-lopes',
         createdAt: new Date().toISOString()
       });
       console.log('Usuário admin padrão criado com sucesso!');
+    } else {
+      // Atualizar admin existente com familyId e role superadmin se necessário
+      const adminDoc = snap.docs[0];
+      const adminData = adminDoc.data();
+      const updates = {};
+      if (!adminData.familyId) updates.familyId = 'family-lopes';
+      if (adminData.role !== 'superadmin') updates.role = 'superadmin';
+      if (Object.keys(updates).length > 0) {
+        await db.collection('users').doc(adminDoc.id).update(updates);
+        console.log('Admin atualizado:', updates);
+      }
     }
   } catch (error) {
     console.error('Erro ao criar admin padrão:', error);
@@ -269,8 +424,9 @@ async function loginUser(login, password) {
   throw new Error('Firebase não disponível. Verifique sua conexão.');
 }
 
-async function registerUser(fullName, email, login, password) {
+async function registerUser(fullName, email, login, password, familyId) {
   if (!firebaseReady) throw new Error('Firebase não disponível.');
+  if (!familyId) throw new Error('É necessário selecionar uma família.');
   const existing = await db.collection('users').where('login', '==', login).get();
   if (!existing.empty) throw new Error('Esse login já está em uso.');
   const emailCheck = await db.collection('users').where('email', '==', email).get();
@@ -285,6 +441,7 @@ async function registerUser(fullName, email, login, password) {
     login,
     passwordHash: hash,
     role: 'user',
+    familyId,
     createdAt: new Date().toISOString()
   };
   await db.collection('users').doc(id).set(user);
@@ -313,29 +470,48 @@ async function changeUserPassword(userId, oldPassword, newPassword) {
 // ===== ADMIN: GERENCIAMENTO DE USUÁRIOS =====
 async function loadUsersList() {
   if (!firebaseReady) { showAlert('Firebase não disponível.', 'danger'); return; }
-  if (!state.currentUser || state.currentUser.role !== 'admin') return;
+  if (!isAdmin()) return;
 
   const container = document.getElementById('usersListContainer');
   container.innerHTML = '<div class="users-list-loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando usuários...</div>';
 
   try {
-    const snapshot = await db.collection('users').get();
+    const familyId = getFamilyId();
+    let snapshot;
+    if (isSuperAdmin()) {
+      // Superadmin vê todos os usuários
+      snapshot = await db.collection('users').get();
+    } else if (familyId) {
+      snapshot = await db.collection('users').where('familyId', '==', familyId).get();
+    } else {
+      // Sem família definida e não é superadmin: não mostra nada
+      container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Nenhuma família associada.</p>';
+      return;
+    }
     if (snapshot.empty) {
       container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Nenhum usuário encontrado.</p>';
       return;
     }
 
     let html = '<div class="users-list">';
+    // Carregar nomes das famílias para exibir
+    const familiesMap = {};
+    if (isSuperAdmin()) {
+      const famSnap = await db.collection('families').get();
+      famSnap.forEach(d => { familiesMap[d.data().id] = d.data().name; });
+    }
+
     snapshot.forEach(doc => {
       const u = doc.data();
       const isCurrentUser = u.id === state.currentUser.id;
-      const roleLabel = u.role === 'admin' ? 'Admin' : 'Usuário';
-      const roleClass = u.role === 'admin' ? 'connected' : '';
+      const roleLabel = u.role === 'superadmin' ? 'Super Admin' : u.role === 'admin' ? 'Admin' : 'Usuário';
+      const roleClass = (u.role === 'admin' || u.role === 'superadmin') ? 'connected' : '';
+      const familyName = isSuperAdmin() && u.familyId && familiesMap[u.familyId] ? ` · ${esc(familiesMap[u.familyId])}` : '';
       html += `
         <div class="user-card" data-user-id="${esc(u.id)}">
           <div class="user-card-info">
             <div class="user-card-name">${esc(u.fullName)}</div>
-            <div class="user-card-detail">${esc(u.login)} · ${esc(u.email)}</div>
+            <div class="user-card-detail">${esc(u.login)} · ${esc(u.email)}${familyName}</div>
             <span class="status-pill ${roleClass}">${esc(roleLabel)}</span>
           </div>
           <div class="user-card-actions">
@@ -370,12 +546,47 @@ async function openEditUser(userId) {
     const doc = await db.collection('users').doc(userId).get();
     if (!doc.exists) { showAlert('Usuário não encontrado.', 'danger'); return; }
     const u = doc.data();
+
+    // Family admin não pode editar superadmins
+    if (!isSuperAdmin() && u.role === 'superadmin') {
+      showAlert('Você não tem permissão para editar este usuário.', 'danger');
+      return;
+    }
+
+    // Family admin só pode editar usuários da própria família
+    if (!isSuperAdmin() && u.familyId !== getFamilyId()) {
+      showAlert('Você não tem permissão para editar usuários de outra família.', 'danger');
+      return;
+    }
+
     document.getElementById('editUserId').value = u.id;
     document.getElementById('editUserFullName').value = u.fullName || '';
     document.getElementById('editUserEmail').value = u.email || '';
     document.getElementById('editUserLogin').value = u.login || '';
     document.getElementById('editUserRole').value = u.role || 'user';
     document.getElementById('editUserNewPassword').value = '';
+
+    // Superadmin: mostra todos os campos
+    // Family admin: mostra seletor de função (admin/user) mas esconde família
+    const roleGroup = document.getElementById('editUserRoleGroup');
+    const familyGroup = document.getElementById('editUserFamilyGroup');
+    const roleSelect = document.getElementById('editUserRole');
+    const superadminOpt = roleSelect ? roleSelect.querySelector('option[value="superadmin"]') : null;
+
+    if (isSuperAdmin()) {
+      if (roleGroup) roleGroup.style.display = '';
+      if (familyGroup) familyGroup.style.display = '';
+      if (superadminOpt) superadminOpt.style.display = '';
+      await populateFamilySelects();
+      const editFamilySel = document.getElementById('editUserFamily');
+      if (editFamilySel) editFamilySel.value = u.familyId || '';
+    } else {
+      // Family admin: pode alterar role (admin/user) mas não superadmin, não pode trocar família
+      if (roleGroup) roleGroup.style.display = '';
+      if (superadminOpt) superadminOpt.style.display = 'none';
+      if (familyGroup) familyGroup.style.display = 'none';
+    }
+
     document.getElementById('editUserModal').classList.add('active');
   } catch (err) {
     showAlert('Erro ao carregar dados do usuário.', 'danger');
@@ -385,13 +596,12 @@ async function openEditUser(userId) {
 
 async function saveUserEdit(e) {
   e.preventDefault();
-  if (!state.currentUser || state.currentUser.role !== 'admin') return;
+  if (!isAdmin()) return;
 
   const userId = document.getElementById('editUserId').value;
   const fullName = document.getElementById('editUserFullName').value.trim();
   const email = document.getElementById('editUserEmail').value.trim();
   const login = document.getElementById('editUserLogin').value.trim().toLowerCase();
-  const role = document.getElementById('editUserRole').value;
   const newPassword = document.getElementById('editUserNewPassword').value;
 
   if (!fullName || !email || !login) {
@@ -408,6 +618,25 @@ async function saveUserEdit(e) {
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
 
   try {
+    // Family admin: validar que o usuário pertence à mesma família
+    if (!isSuperAdmin()) {
+      const targetDoc = await db.collection('users').doc(userId).get();
+      if (targetDoc.exists) {
+        const targetData = targetDoc.data();
+        if (targetData.familyId !== getFamilyId()) {
+          showAlert('Você não tem permissão para editar usuários de outra família.', 'danger');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-check"></i> Salvar Alterações';
+          return;
+        }
+        if (targetData.role === 'superadmin') {
+          showAlert('Você não tem permissão para editar este usuário.', 'danger');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-check"></i> Salvar Alterações';
+          return;
+        }
+      }
+    }
     // Verificar duplicata de login (exceto o próprio)
     const loginCheck = await db.collection('users').where('login', '==', login).get();
     const duplicate = loginCheck.docs.find(d => d.data().id !== userId);
@@ -418,7 +647,19 @@ async function saveUserEdit(e) {
     const dupEmail = emailCheck.docs.find(d => d.data().id !== userId);
     if (dupEmail) { showAlert('Esse e-mail já está cadastrado por outro usuário.', 'danger'); return; }
 
-    const updates = { fullName, email, login, role };
+    const updates = { fullName, email, login };
+    if (isSuperAdmin()) {
+      updates.role = document.getElementById('editUserRole').value;
+      const familyId = document.getElementById('editUserFamily') ? document.getElementById('editUserFamily').value : '';
+      if (!familyId) { showAlert('Selecione uma família para o usuário.', 'danger'); return; }
+      updates.familyId = familyId;
+    } else {
+      // Family admin pode trocar entre admin e user (nunca superadmin)
+      const selectedRole = document.getElementById('editUserRole').value;
+      if (selectedRole === 'admin' || selectedRole === 'user') {
+        updates.role = selectedRole;
+      }
+    }
     if (newPassword) {
       updates.passwordHash = await hashPassword(newPassword);
     }
@@ -431,7 +672,10 @@ async function saveUserEdit(e) {
     if (state.currentUser.id === userId) {
       Object.assign(state.currentUser, updates);
       localStorage.setItem('user', JSON.stringify(state.currentUser));
+      await loadFamily();
       applyUserToUI();
+      // Recarregar dados da nova família
+      loadDataFromStorage();
     }
 
     // Recarregar lista
@@ -446,11 +690,30 @@ async function saveUserEdit(e) {
 }
 
 async function confirmDeleteUser(userId, userName) {
-  if (!state.currentUser || state.currentUser.role !== 'admin') return;
+  if (!isAdmin()) return;
   if (userId === state.currentUser.id) {
     showAlert('Você não pode excluir sua própria conta.', 'danger');
     return;
   }
+
+  // Family admin não pode excluir superadmins nem usuários de outra família
+  if (!isSuperAdmin()) {
+    try {
+      const targetDoc = await db.collection('users').doc(userId).get();
+      if (targetDoc.exists) {
+        const targetData = targetDoc.data();
+        if (targetData.role === 'superadmin') {
+          showAlert('Você não tem permissão para excluir este usuário.', 'danger');
+          return;
+        }
+        if (targetData.familyId !== getFamilyId()) {
+          showAlert('Você não tem permissão para excluir usuários de outra família.', 'danger');
+          return;
+        }
+      }
+    } catch (e) { /* continua */ }
+  }
+
   if (!confirm(`Tem certeza que deseja excluir o usuário "${userName}"?\nEssa ação não pode ser desfeita.`)) return;
 
   try {
@@ -476,16 +739,27 @@ function applyUserToUI() {
   if (profileEmail) profileEmail.textContent = user.email;
   const profileRole = document.getElementById('settingsUserRole');
   if (profileRole) {
-    profileRole.textContent = user.role === 'admin' ? 'Administrador' : 'Usuário';
-    profileRole.className = user.role === 'admin' ? 'status-pill connected' : 'status-pill';
+    const roleText = user.role === 'superadmin' ? 'Super Admin' : user.role === 'admin' ? 'Administrador' : 'Usuário';
+    profileRole.textContent = roleText;
+    profileRole.className = (user.role === 'admin' || user.role === 'superadmin') ? 'status-pill connected' : 'status-pill';
+  }
+
+  // Mostrar nome da família
+  const familyLabel = document.getElementById('settingsFamilyName');
+  if (familyLabel) {
+    familyLabel.textContent = state.currentFamily ? state.currentFamily.name : 'Sem família';
   }
 
   // Aplicar foto de perfil
   applyAvatar(user.photoURL);
 
-  // Mostrar seção admin apenas para administradores
+  // Mostrar seção admin para admin e superadmin
   const adminSection = document.getElementById('adminSection');
-  if (adminSection) adminSection.style.display = user.role === 'admin' ? 'block' : 'none';
+  if (adminSection) adminSection.style.display = isAdmin() ? 'block' : 'none';
+
+  // Gerenciar famílias é exclusivo do superadmin
+  const manageFamiliesBtn = document.getElementById('manageFamiliesBtn');
+  if (manageFamiliesBtn) manageFamiliesBtn.style.display = isSuperAdmin() ? '' : 'none';
 }
 
 function applyAvatar(photoURL) {
@@ -573,6 +847,9 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('loginTime', new Date().toISOString());
 
+      // Carregar dados da família
+      await loadFamily();
+
       document.getElementById('loginContainer').classList.remove('active');
       document.getElementById('appContainer').classList.add('active');
 
@@ -596,9 +873,17 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 // ===== LOGOUT =====
 document.getElementById('logoutBtn').addEventListener('click', () => {
   if (confirm('Tem certeza que deseja sair?')) {
+    // Limpar listeners do Firebase
+    _fbListeners.forEach(unsub => unsub());
+    _fbListeners = [];
+
     state.isLoggedIn = false;
     state.user = null;
     state.currentUser = null;
+    state.currentFamily = null;
+    state.transactions = [];
+    state.debts = [];
+    state.salaries = [];
     localStorage.removeItem('user');
 
     document.getElementById('appContainer').classList.remove('active');
@@ -621,8 +906,23 @@ function checkLoginStatus() {
         document.getElementById('loginContainer').classList.remove('active');
         document.getElementById('appContainer').classList.add('active');
         applyUserToUI();
-        loadDataFromStorage();
-        updateDashboard();
+
+        // Revalidar dados do usuário no Firestore (familyId pode ter mudado)
+        const refreshUser = firebaseReady
+          ? db.collection('users').doc(user.id).get().then(doc => {
+              if (doc.exists) {
+                const freshData = doc.data();
+                state.currentUser = freshData;
+                localStorage.setItem('user', JSON.stringify(freshData));
+              }
+            }).catch(() => {})
+          : Promise.resolve();
+
+        refreshUser.then(() => loadFamily()).then(() => {
+          loadDataFromStorage();
+          updateDashboard();
+          applyUserToUI();
+        });
         return;
       }
     } catch (e) {
@@ -788,18 +1088,57 @@ function setupEventListeners() {
     });
   }
 
-  const createUserBtn = document.getElementById('createUserBtn');
-  if (createUserBtn) {
-    createUserBtn.addEventListener('click', () => {
-      document.getElementById('createUserModal').classList.add('active');
-    });
-  }
-
   const manageUsersBtn = document.getElementById('manageUsersBtn');
   if (manageUsersBtn) {
     manageUsersBtn.addEventListener('click', () => {
       document.getElementById('manageUsersModal').classList.add('active');
       loadUsersList();
+    });
+  }
+
+  // Gerenciar Famílias
+  const manageFamiliesBtn = document.getElementById('manageFamiliesBtn');
+  if (manageFamiliesBtn) {
+    manageFamiliesBtn.addEventListener('click', () => {
+      document.getElementById('manageFamiliesModal').classList.add('active');
+      loadFamiliesListUI();
+    });
+  }
+
+  const addFamilyBtn = document.getElementById('addFamilyBtn');
+  if (addFamilyBtn) {
+    addFamilyBtn.addEventListener('click', async () => {
+      const nameInput = document.getElementById('newFamilyName');
+      const name = nameInput.value.trim();
+      if (!name) { showAlert('Digite o nome da família.', 'danger'); return; }
+      try {
+        addFamilyBtn.disabled = true;
+        await createFamily(name);
+        nameInput.value = '';
+        showAlert(`Família "${name}" criada com sucesso!`, 'success');
+        loadFamiliesListUI();
+      } catch (err) {
+        showAlert(err.message || 'Erro ao criar família.', 'danger');
+      } finally {
+        addFamilyBtn.disabled = false;
+      }
+    });
+  }
+
+  // Carregar famílias no select ao abrir modal de criar usuário
+  const createUserBtn = document.getElementById('createUserBtn');
+  if (createUserBtn) {
+    createUserBtn.addEventListener('click', async () => {
+      document.getElementById('createUserModal').classList.add('active');
+      const familyGroup = document.getElementById('newUserFamilyGroup');
+      if (isSuperAdmin()) {
+        // Superadmin pode escolher qualquer família
+        if (familyGroup) familyGroup.style.display = '';
+        await populateFamilySelects();
+      } else {
+        // Family admin: esconde seletor, usa família atual
+        if (familyGroup) familyGroup.style.display = 'none';
+      }
     });
   }
 
@@ -851,9 +1190,16 @@ function setupEventListeners() {
       const email = document.getElementById('newUserEmail').value.trim();
       const login = document.getElementById('newUserLogin').value.trim().toLowerCase();
       const password = document.getElementById('newUserPassword').value;
+      const familyId = isSuperAdmin()
+        ? (document.getElementById('newUserFamily') ? document.getElementById('newUserFamily').value : getFamilyId())
+        : getFamilyId();
 
       if (password.length < 6) {
         showAlert('A senha deve ter pelo menos 6 caracteres.', 'danger');
+        return;
+      }
+      if (!familyId) {
+        showAlert('Selecione uma família para o usuário.', 'danger');
         return;
       }
 
@@ -862,7 +1208,7 @@ function setupEventListeners() {
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cadastrando...';
 
       try {
-        await registerUser(fullName, email, login, password);
+        await registerUser(fullName, email, login, password, familyId);
         showAlert(`Usuário "${login}" cadastrado com sucesso!`, 'success');
         this.reset();
         document.getElementById('createUserModal').classList.remove('active');
@@ -2577,12 +2923,17 @@ function saveDataToStorage() {
     salaries: state.salaries,
     lastSaved: new Date().toISOString()
   };
-  localStorage.setItem('financeiro_data', JSON.stringify(data));
+  localStorage.setItem(getFamilyStorageKey(), JSON.stringify(data));
 }
 
 function loadDataFromStorage() {
+  // Limpa estado para evitar dados de outra família
+  state.transactions = [];
+  state.debts = [];
+  state.salaries = [];
+
   // Carrega do localStorage primeiro (rápido)
-  const data = localStorage.getItem('financeiro_data');
+  const data = localStorage.getItem(getFamilyStorageKey());
   if (data) {
     try {
       const parsed = JSON.parse(data);
@@ -2605,7 +2956,13 @@ function loadDataFromStorage() {
 async function saveToFirebase(collection, item) {
   if (!firebaseReady) return;
   try {
-    await db.collection(collection).doc(item.id).set(item);
+    const familyId = getFamilyId();
+    if (!familyId) {
+      console.warn(`Sem familyId — item ${item.id} não será salvo no Firebase.`);
+      return;
+    }
+    const itemWithFamily = { ...item, familyId };
+    await db.collection(collection).doc(item.id).set(itemWithFamily);
     console.log(`Salvo no Firebase: ${collection}/${item.id}`);
   } catch (error) {
     console.error(`Erro ao salvar no Firebase (${collection}):`, error);
@@ -2634,24 +2991,26 @@ async function updateInFirebase(collection, id, data) {
 
 async function loadDataFromFirebase() {
   if (!firebaseReady) return;
+  const familyId = getFamilyId();
+  if (!familyId) {
+    console.warn('Sem familyId — dados do Firebase não serão carregados.');
+    return;
+  }
   try {
-    // Carregar transações
-    const transSnap = await db.collection('transactions').orderBy('createdAt', 'desc').get();
-    if (!transSnap.empty) {
-      state.transactions = transSnap.docs.map(doc => doc.data());
-    }
+    // Carregar transações filtradas por família
+    const transSnap = await db.collection('transactions')
+      .where('familyId', '==', familyId).orderBy('createdAt', 'desc').get();
+    state.transactions = transSnap.docs.map(doc => doc.data());
 
-    // Carregar dívidas
-    const debtsSnap = await db.collection('debts').orderBy('createdAt', 'desc').get();
-    if (!debtsSnap.empty) {
-      state.debts = debtsSnap.docs.map(doc => doc.data());
-    }
+    // Carregar dívidas filtradas por família
+    const debtsSnap = await db.collection('debts')
+      .where('familyId', '==', familyId).orderBy('createdAt', 'desc').get();
+    state.debts = debtsSnap.docs.map(doc => doc.data());
 
-    // Carregar salários
-    const salSnap = await db.collection('salaries').orderBy('createdAt', 'desc').get();
-    if (!salSnap.empty) {
-      state.salaries = salSnap.docs.map(doc => doc.data());
-    }
+    // Carregar salários filtrados por família
+    const salSnap = await db.collection('salaries')
+      .where('familyId', '==', familyId).orderBy('createdAt', 'desc').get();
+    state.salaries = salSnap.docs.map(doc => doc.data());
 
     // Salva localmente também
     saveDataToStorage();
@@ -2670,31 +3029,50 @@ async function loadDataFromFirebase() {
 
 // Escutar mudanças em tempo real do Firestore (com debounce para evitar loop)
 let _fbSyncTimer = null;
+let _fbListeners = [];
 function listenFirebaseChanges() {
   if (!firebaseReady) return;
+
+  // Limpar listeners anteriores
+  _fbListeners.forEach(unsub => unsub());
+  _fbListeners = [];
+
+  const familyId = getFamilyId();
+  if (!familyId) {
+    console.warn('Sem familyId — listeners do Firebase não serão ativados.');
+    return;
+  }
 
   const debouncedLoad = () => {
     clearTimeout(_fbSyncTimer);
     _fbSyncTimer = setTimeout(() => loadDataFromFirebase(), 500);
   };
 
-  db.collection('transactions').onSnapshot(debouncedLoad);
-  db.collection('debts').onSnapshot(debouncedLoad);
-  db.collection('salaries').onSnapshot(debouncedLoad);
+  ['transactions', 'debts', 'salaries'].forEach(col => {
+    const unsub = db.collection(col)
+      .where('familyId', '==', familyId)
+      .onSnapshot(debouncedLoad);
+    _fbListeners.push(unsub);
+  });
 }
 
 // Sincronizar todos os dados locais para o Firebase
 async function syncAllToFirebase() {
   if (!firebaseReady) return;
+  const familyId = getFamilyId();
+  if (!familyId) {
+    console.warn('Sem familyId — sincronização cancelada.');
+    return;
+  }
   try {
     for (const t of state.transactions) {
-      await db.collection('transactions').doc(t.id).set(t);
+      await db.collection('transactions').doc(t.id).set({ ...t, familyId });
     }
     for (const d of state.debts) {
-      await db.collection('debts').doc(d.id).set(d);
+      await db.collection('debts').doc(d.id).set({ ...d, familyId });
     }
     for (const s of state.salaries) {
-      await db.collection('salaries').doc(s.id).set(s);
+      await db.collection('salaries').doc(s.id).set({ ...s, familyId });
     }
     console.log('Todos os dados sincronizados com Firebase!');
   } catch (error) {
