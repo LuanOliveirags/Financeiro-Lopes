@@ -49,6 +49,7 @@ const state = {
   user: null,
   currentUser: null,
   currentFamily: null,
+  familyMembers: [],
   currentMonth: new Date(),
   transactions: [],
   debts: [],
@@ -73,12 +74,14 @@ function getFamilyId() {
 
 function getFamilyStorageKey() {
   const fid = getFamilyId();
-  return fid ? `financeiro_data_${fid}` : 'financeiro_data';
+  if (!fid) return null;
+  return `financeiro_data_${fid}`;
 }
 
 async function loadFamily() {
   if (!firebaseReady || !state.currentUser || !state.currentUser.familyId) {
     state.currentFamily = null;
+    state.familyMembers = [];
     return;
   }
   try {
@@ -86,9 +89,112 @@ async function loadFamily() {
     if (doc.exists) {
       state.currentFamily = doc.data();
     }
+    // Carregar membros da família
+    await loadFamilyMembers();
   } catch (e) {
     console.error('Erro ao carregar família:', e);
   }
+}
+
+// Carrega os membros da família atual do Firestore e popula selects/cards
+async function loadFamilyMembers() {
+  state.familyMembers = [];
+  const familyId = getFamilyId();
+  if (!familyId || !firebaseReady) return;
+  try {
+    const snap = await db.collection('users').where('familyId', '==', familyId).get();
+    state.familyMembers = snap.docs.map(doc => {
+      const d = doc.data();
+      return { id: d.id, name: d.fullName || d.login, login: d.login };
+    });
+  } catch (e) {
+    console.error('Erro ao carregar membros da família:', e);
+  }
+  populateMemberSelects();
+  renderPersonIncomeCards();
+  renderCardDebtCards();
+}
+
+// Popula todos os selects de responsável/pessoa com os membros da família
+function populateMemberSelects() {
+  const members = state.familyMembers || [];
+  const selects = [
+    { el: document.getElementById('tranResponsible'), placeholder: 'Selecione...', addAmbos: true },
+    { el: document.getElementById('debtResponsible'), placeholder: null, addAmbos: true },
+    { el: document.getElementById('salaryPerson'), placeholder: null, addAmbos: false, prefix: 'Salário ' }
+  ];
+  selects.forEach(({ el, placeholder, addAmbos, prefix }) => {
+    if (!el) return;
+    const prev = el.value;
+    el.innerHTML = '';
+    if (placeholder) el.innerHTML += `<option value="">${placeholder}</option>`;
+    members.forEach(m => {
+      el.innerHTML += `<option value="${m.name}">${prefix || ''}${m.name}</option>`;
+    });
+    if (addAmbos) el.innerHTML += `<option value="Ambos">Ambos</option>`;
+    // Restaurar seleção anterior se ainda existir
+    if (prev && [...el.options].some(o => o.value === prev)) el.value = prev;
+  });
+}
+
+// Renderiza cards dinâmicos de salário por pessoa
+function renderPersonIncomeCards() {
+  const container = document.querySelector('.person-cards-grid');
+  if (!container) return;
+  const members = state.familyMembers || [];
+  const colors = ['#4361EE', '#F72585', '#06D6A0', '#FF6B35', '#8B5CF6', '#14B8A6'];
+  const icons = ['fa-user-tie', 'fa-user', 'fa-user-astronaut', 'fa-user-ninja', 'fa-user-secret', 'fa-user-graduate'];
+
+  let html = '';
+  members.forEach((m, i) => {
+    const slug = m.name.replace(/\s+/g, '_');
+    const color = colors[i % colors.length];
+    html += `
+      <div class="person-income-card" style="border-image: linear-gradient(135deg, ${color}, ${color}88) 1;">
+        <div class="pic-header">
+          <div class="pic-avatar" style="background:${color}22;color:${color}"><i class="fa-solid ${icons[i % icons.length]}"></i></div>
+          <span class="pic-name">${m.name}</span>
+        </div>
+        <p class="salary-current" id="salary_${slug}">R$ 0,00</p>
+        <p class="salary-annual" id="annual_${slug}">Anual: R$ 0,00</p>
+      </div>`;
+  });
+  // Card combinado
+  html += `
+    <div class="person-income-card combined-card">
+      <div class="pic-header">
+        <div class="pic-avatar combined-avatar"><i class="fa-solid fa-users"></i></div>
+        <span class="pic-name">Combinado</span>
+      </div>
+      <p class="salary-current" id="combinedSalary">R$ 0,00</p>
+      <p class="salary-annual" id="combinedAnnual">Anual: R$ 0,00</p>
+    </div>`;
+  container.innerHTML = html;
+}
+
+// Renderiza cards dinâmicos de cartão por pessoa na aba de dívidas
+function renderCardDebtCards() {
+  const container = document.getElementById('cardDebtCardsContainer');
+  if (!container) return;
+  const members = state.familyMembers || [];
+  let html = '';
+  members.forEach(m => {
+    const slug = m.name.replace(/\s+/g, '_');
+    html += `
+      <div class="debt-overview-card debt-ov-cartao" data-filter="cartao-${slug}" role="button" tabindex="0">
+        <div class="debt-ov-header">
+          <div class="debt-ov-icon" style="background:rgba(139,92,246,0.15)"><i class="fa-solid fa-credit-card" style="color:#8B5CF6"></i></div>
+          <div>
+            <p class="debt-ov-title">Cartão ${m.name}</p>
+            <p class="debt-ov-subtitle" id="cardCount_${slug}">0 dívidas</p>
+          </div>
+        </div>
+        <p class="debt-ov-amount" id="cardTotal_${slug}">R$ 0,00</p>
+      </div>`;
+  });
+  container.innerHTML = html;
+  // Re-aplicar listeners de filtro nos novos cards dinâmicos
+  setupDebtFilterListeners();
 }
 
 async function createFamily(name) {
@@ -209,6 +315,9 @@ const CATEGORY_MAP = {
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', () => {
+  // Limpa chave global legada (pré-tenant) para evitar vazamento entre famílias
+  localStorage.removeItem('financeiro_data');
+
   initFirebase();
   createDefaultAdmin();
   initializeApp();
@@ -913,9 +1022,20 @@ function checkLoginStatus() {
               if (doc.exists) {
                 const freshData = doc.data();
                 state.currentUser = freshData;
+                state.user = freshData.login;
                 localStorage.setItem('user', JSON.stringify(freshData));
+              } else {
+                // Usuário deletado do Firestore — deslogar
+                console.warn('Usuário não encontrado no Firestore. Deslogando.');
+                localStorage.removeItem('user');
+                state.isLoggedIn = false;
+                state.currentUser = null;
+                document.getElementById('appContainer').classList.remove('active');
+                document.getElementById('loginContainer').classList.add('active');
               }
-            }).catch(() => {})
+            }).catch(err => {
+              console.warn('Erro ao revalidar usuário:', err);
+            })
           : Promise.resolve();
 
         refreshUser.then(() => loadFamily()).then(() => {
@@ -1305,6 +1425,12 @@ function handleQuickAction(action) {
 function addTransaction(e) {
   e.preventDefault();
   
+  const familyId = getFamilyId();
+  if (!familyId) {
+    showAlert('Erro: família não identificada. Faça login novamente.', 'danger');
+    return;
+  }
+
   const transaction = {
     id: generateId(),
     type: document.getElementById('transType').value,
@@ -1313,6 +1439,7 @@ function addTransaction(e) {
     responsible: document.getElementById('tranResponsible').value,
     date: document.getElementById('tranDate').value,
     description: document.getElementById('tranDescription').value,
+    familyId: familyId,
     createdAt: new Date().toISOString()
   };
   
@@ -1345,6 +1472,12 @@ function addTransaction(e) {
 // ===== ADICIONAR DÍVIDA =====
 function addDebt(e) {
   e.preventDefault();
+
+  const familyId = getFamilyId();
+  if (!familyId) {
+    showAlert('Erro: família não identificada. Faça login novamente.', 'danger');
+    return;
+  }
   
   const editId = document.getElementById('editDebtId').value;
   const debtType = document.getElementById('debtType').value;
@@ -1424,6 +1557,7 @@ function addDebt(e) {
       installmentValue: usesInstallments ? manualInstValue : totalAmount,
       status: 'active',
       paidAt: null,
+      familyId: familyId,
       createdAt: new Date().toISOString()
     };
     
@@ -1643,6 +1777,12 @@ function addSalary(e) {
   const totalDeductionsVal = tempDeductions.reduce((sum, d) => sum + d.value, 0);
   const netAmount = grossAmount + totalAdditionsVal - totalDeductionsVal;
 
+  const familyId = getFamilyId();
+  if (!familyId) {
+    showAlert('Erro: família não identificada. Faça login novamente.', 'danger');
+    return;
+  }
+
   const salary = {
     id: generateId(),
     person: document.getElementById('salaryPerson').value,
@@ -1654,6 +1794,7 @@ function addSalary(e) {
     totalDeductions: totalDeductionsVal,
     date: document.getElementById('salaryDate').value,
     description: document.getElementById('salaryDescription').value,
+    familyId: familyId,
     createdAt: new Date().toISOString()
   };
   
@@ -2076,12 +2217,20 @@ function createIncomesChart(salaries) {
   const ctx = document.getElementById('incomesChart');
   if (!ctx) return null;
 
+  const members = state.familyMembers || [];
+  const chartColors = ['#4361EE', '#F72585', '#06D6A0', '#FF6B35', '#8B5CF6', '#14B8A6'];
+
   const incomesData = {};
   salaries.forEach(s => {
     const date = new Date(s.date + 'T12:00:00');
     const key  = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    if (!incomesData[key]) incomesData[key] = { Luan: 0, Bianca: 0 };
-    incomesData[key][s.person] += s.amount;
+    if (!incomesData[key]) {
+      incomesData[key] = {};
+      members.forEach(m => { incomesData[key][m.name] = 0; });
+    }
+    if (incomesData[key][s.person] !== undefined) {
+      incomesData[key][s.person] += s.amount;
+    }
   });
 
   const months = Object.keys(incomesData).sort();
@@ -2089,15 +2238,16 @@ function createIncomesChart(salaries) {
   // Se não houver dados, não renderizar gráfico
   if (months.length === 0) return null;
 
+  const datasets = members.map((m, i) => ({
+    label: m.name,
+    data: months.map(mo => incomesData[mo][m.name] || 0),
+    backgroundColor: chartColors[i % chartColors.length],
+    borderRadius: 6
+  }));
+
   return new Chart(ctx, {
     type: 'bar',
-    data: {
-      labels: months,
-      datasets: [
-        { label: 'Luan',   data: months.map(m => incomesData[m].Luan),   backgroundColor: '#4361EE', borderRadius: 6 },
-        { label: 'Bianca', data: months.map(m => incomesData[m].Bianca), backgroundColor: '#F72585', borderRadius: 6 }
-      ]
-    },
+    data: { labels: months, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: true,
@@ -2309,27 +2459,24 @@ function updateDebtsList() {
   const financingRemEl = document.getElementById('financingRemaining');
   if (financingRemEl) financingRemEl.textContent = `Restante: ${formatCurrency(totalFinancingRemaining)}`;
 
-  // Cartão por pessoa
+  // Cartão por pessoa (dinâmico por membros da família)
   const cardDebts = activeDebts.filter(d => d.debtType === 'cartao');
-  const cardLuan = cardDebts.filter(d => d.responsible === 'Luan');
-  const cardBianca = cardDebts.filter(d => d.responsible === 'Bianca');
   const cardAmbosByPerson = cardDebts.filter(d => d.responsible === 'Ambos');
-  const cardLuanTotal = cardLuan.reduce((s, d) => s + (d.installmentValue || d.amount), 0)
-    + cardAmbosByPerson.reduce((s, d) => s + (d.installmentValue || d.amount) / 2, 0);
-  const cardBiancaTotal = cardBianca.reduce((s, d) => s + (d.installmentValue || d.amount), 0)
-    + cardAmbosByPerson.reduce((s, d) => s + (d.installmentValue || d.amount) / 2, 0);
-  const cardLuanCount = cardLuan.length + cardAmbosByPerson.length;
-  const cardBiancaCount = cardBianca.length + cardAmbosByPerson.length;
+  const members = state.familyMembers || [];
+  const memberCount = members.length || 1;
 
-  const cardLuanEl = document.getElementById('cardLuanTotal');
-  if (cardLuanEl) cardLuanEl.textContent = formatCurrency(cardLuanTotal);
-  const cardLuanCountEl = document.getElementById('cardLuanCount');
-  if (cardLuanCountEl) cardLuanCountEl.textContent = `${cardLuanCount} dívida${cardLuanCount !== 1 ? 's' : ''}`;
-  const cardBiancaEl = document.getElementById('cardBiancaTotal');
-  if (cardBiancaEl) cardBiancaEl.textContent = formatCurrency(cardBiancaTotal);
-  const cardBiancaCountEl = document.getElementById('cardBiancaCount');
-  if (cardBiancaCountEl) cardBiancaCountEl.textContent = `${cardBiancaCount} dívida${cardBiancaCount !== 1 ? 's' : ''}`;
-  
+  members.forEach(m => {
+    const slug = m.name.replace(/\s+/g, '_');
+    const personal = cardDebts.filter(d => d.responsible === m.name);
+    const total = personal.reduce((s, d) => s + (d.installmentValue || d.amount), 0)
+      + cardAmbosByPerson.reduce((s, d) => s + (d.installmentValue || d.amount) / memberCount, 0);
+    const count = personal.length + cardAmbosByPerson.length;
+
+    const totalEl = document.getElementById(`cardTotal_${slug}`);
+    if (totalEl) totalEl.textContent = formatCurrency(total);
+    const countEl = document.getElementById(`cardCount_${slug}`);
+    if (countEl) countEl.textContent = `${count} dívida${count !== 1 ? 's' : ''}`;
+  });
   if (state.debts.length === 0) {
     container.innerHTML = emptyState('Nenhuma dívida registrada ✅');
     return;
@@ -2560,11 +2707,14 @@ function setupDebtFilterListeners() {
       const labels = {
         'monthly': 'Mensais (Fixas + Únicas)',
         'financing': 'Financiamentos',
-        'cartao-luan': 'Cartão Luan',
-        'cartao-bianca': 'Cartão Bianca',
         'all': 'Todas Ativas',
         'paid': 'Pagas'
       };
+      // Labels dinâmicos para cartões por membro
+      (state.familyMembers || []).forEach(m => {
+        const slug = m.name.replace(/\s+/g, '_');
+        labels[`cartao-${slug}`] = `Cartão ${m.name}`;
+      });
       filterLabel.innerHTML = `<i class="fa-solid fa-filter"></i> ${labels[filter] || filter}`;
       filterBar.classList.add('show');
       
@@ -2603,17 +2753,10 @@ function applyDebtFilter() {
     
     switch (currentDebtFilter) {
       case 'monthly':
-        // Mensais = fixas + únicas (não-financiamento, não-cartão parcelado)
         show = debt.status === 'active' && !isInstType;
         break;
       case 'financing':
         show = debt.status === 'active' && isInstType;
-        break;
-      case 'cartao-luan':
-        show = debt.status === 'active' && debt.debtType === 'cartao' && (debt.responsible === 'Luan' || debt.responsible === 'Ambos');
-        break;
-      case 'cartao-bianca':
-        show = debt.status === 'active' && debt.debtType === 'cartao' && (debt.responsible === 'Bianca' || debt.responsible === 'Ambos');
         break;
       case 'all':
         show = debt.status === 'active';
@@ -2622,19 +2765,25 @@ function applyDebtFilter() {
         show = debt.status === 'paid';
         break;
       default:
-        show = true;
+        // Filtros dinâmicos de cartão por membro: "cartao-NomeMembro"
+        if (currentDebtFilter.startsWith('cartao-')) {
+          const memberSlug = currentDebtFilter.replace('cartao-', '');
+          const memberName = (state.familyMembers || []).find(m => m.name.replace(/\s+/g, '_') === memberSlug)?.name;
+          if (memberName) {
+            show = debt.status === 'active' && debt.debtType === 'cartao' && (debt.responsible === memberName || debt.responsible === 'Ambos');
+          } else {
+            show = true;
+          }
+        } else {
+          show = true;
+        }
     }
     
     el.style.display = show ? '' : 'none';
   });
 }
 function updateSalaryDisplay() {
-  const luanSalaries = state.salaries.filter(s => s.person === 'Luan');
-  const biancaSalaries = state.salaries.filter(s => s.person === 'Bianca');
-  
-  const luanTotal = luanSalaries.reduce((sum, s) => sum + s.amount, 0);
-  const biancaTotal = biancaSalaries.reduce((sum, s) => sum + s.amount, 0);
-  const combined = luanTotal + biancaTotal;
+  const members = state.familyMembers || [];
   
   // Mês selecionado no filtro do dashboard (ou mês atual)
   const monthVal = document.getElementById('monthFilter').value;
@@ -2649,21 +2798,29 @@ function updateSalaryDisplay() {
     curYear = now.getFullYear();
   }
 
-  const luanMonth = luanSalaries
-    .filter(s => { const d = new Date(s.date + 'T12:00:00'); return d.getMonth() === curMonth && d.getFullYear() === curYear; })
-    .reduce((sum, s) => sum + s.amount, 0);
-  const biancaMonth = biancaSalaries
-    .filter(s => { const d = new Date(s.date + 'T12:00:00'); return d.getMonth() === curMonth && d.getFullYear() === curYear; })
-    .reduce((sum, s) => sum + s.amount, 0);
-  
-  document.getElementById('luanSalary').textContent = formatCurrency(luanMonth);
-  document.getElementById('luanAnnual').textContent = `Anual: ${formatCurrency(luanTotal)}`;
-  
-  document.getElementById('biancaSalary').textContent = formatCurrency(biancaMonth);
-  document.getElementById('biancaAnnual').textContent = `Anual: ${formatCurrency(biancaTotal)}`;
-  
-  document.getElementById('combinedSalary').textContent = formatCurrency(luanMonth + biancaMonth);
-  document.getElementById('combinedAnnual').textContent = `Anual: ${formatCurrency(combined)}`;
+  let combinedMonth = 0, combinedAnnual = 0;
+
+  members.forEach(m => {
+    const slug = m.name.replace(/\s+/g, '_');
+    const personSalaries = state.salaries.filter(s => s.person === m.name);
+    const annual = personSalaries.reduce((sum, s) => sum + s.amount, 0);
+    const monthly = personSalaries
+      .filter(s => { const d = new Date(s.date + 'T12:00:00'); return d.getMonth() === curMonth && d.getFullYear() === curYear; })
+      .reduce((sum, s) => sum + s.amount, 0);
+
+    combinedMonth += monthly;
+    combinedAnnual += annual;
+
+    const salEl = document.getElementById(`salary_${slug}`);
+    if (salEl) salEl.textContent = formatCurrency(monthly);
+    const annEl = document.getElementById(`annual_${slug}`);
+    if (annEl) annEl.textContent = `Anual: ${formatCurrency(annual)}`;
+  });
+
+  const combSalEl = document.getElementById('combinedSalary');
+  if (combSalEl) combSalEl.textContent = formatCurrency(combinedMonth);
+  const combAnnEl = document.getElementById('combinedAnnual');
+  if (combAnnEl) combAnnEl.textContent = `Anual: ${formatCurrency(combinedAnnual)}`;
   
   // Update month filter and history
   populateSalaryMonthFilter();
@@ -2725,7 +2882,9 @@ function updateSalaryHistory() {
   }
   
   const sorted = filtered.slice().sort((a, b) => b.date.localeCompare(a.date));
-  const personIcon = { Luan: '👔', Bianca: '💼' };
+  const defaultIcons = ['👔', '💼', '🧑‍💻', '👨‍🔧', '👩‍⚕️', '🧑‍🎓'];
+  const personIcon = {};
+  (state.familyMembers || []).forEach((m, i) => { personIcon[m.name] = defaultIcons[i % defaultIcons.length]; });
   
   container.innerHTML = sorted.map(s => {
     const hasAdditions = s.additions && s.additions.length > 0;
@@ -2916,14 +3075,18 @@ function deleteSalary(id) {
 
 // ===== ARMAZENAMENTO LOCAL + FIREBASE =====
 function saveDataToStorage() {
-  // Sempre salva no localStorage (funciona offline)
+  const key = getFamilyStorageKey();
+  if (!key) {
+    console.warn('Sem familyId — dados não serão salvos no localStorage.');
+    return;
+  }
   const data = {
     transactions: state.transactions,
     debts: state.debts,
     salaries: state.salaries,
     lastSaved: new Date().toISOString()
   };
-  localStorage.setItem(getFamilyStorageKey(), JSON.stringify(data));
+  localStorage.setItem(key, JSON.stringify(data));
 }
 
 function loadDataFromStorage() {
@@ -2932,8 +3095,15 @@ function loadDataFromStorage() {
   state.debts = [];
   state.salaries = [];
 
+  const key = getFamilyStorageKey();
+  if (!key) {
+    console.warn('Sem familyId — dados não serão carregados.');
+    updateDashboard();
+    return;
+  }
+
   // Carrega do localStorage primeiro (rápido)
-  const data = localStorage.getItem(getFamilyStorageKey());
+  const data = localStorage.getItem(key);
   if (data) {
     try {
       const parsed = JSON.parse(data);
@@ -3112,9 +3282,15 @@ function importData(e) {
       const data = JSON.parse(event.target.result);
       
       if (confirm('Substituir todos os dados pelos do arquivo?')) {
-        state.transactions = data.transactions || [];
-        state.debts = data.debts || [];
-        state.salaries = data.salaries || [];
+        const familyId = getFamilyId();
+        if (!familyId) {
+          showAlert('Erro: família não identificada. Faça login novamente.', 'danger');
+          return;
+        }
+        // Injeta familyId em todos os itens importados
+        state.transactions = (data.transactions || []).map(t => ({ ...t, familyId }));
+        state.debts = (data.debts || []).map(d => ({ ...d, familyId }));
+        state.salaries = (data.salaries || []).map(s => ({ ...s, familyId }));
         saveDataToStorage();
         
         // Sincronizar com Firebase

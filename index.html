@@ -388,9 +388,7 @@
                                     <label for="tranResponsible">Responsável</label>
                                     <select id="tranResponsible" required>
                                         <option value="">Selecione...</option>
-                                        <option value="Luan">Luan</option>
-                                        <option value="Bianca">Bianca</option>
-                                        <option value="Ambos">Ambos</option>
+                                        <!-- Populado dinamicamente por JS -->
                                     </select>
                                 </div>
                             </div>
@@ -536,9 +534,7 @@
                             <div class="form-group">
                                 <label for="debtResponsible">Responsável</label>
                                 <select id="debtResponsible" required>
-                                    <option value="Luan">Luan</option>
-                                    <option value="Bianca">Bianca</option>
-                                    <option value="Ambos">Ambos</option>
+                                    <!-- Populado dinamicamente por JS -->
                                 </select>
                             </div>
                             <div class="form-group">
@@ -613,27 +609,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="debt-overview-panel">
-                    <div class="debt-overview-card debt-ov-cartao" data-filter="cartao-luan" role="button" tabindex="0">
-                        <div class="debt-ov-header">
-                            <div class="debt-ov-icon" style="background:rgba(139,92,246,0.15)"><i class="fa-solid fa-credit-card" style="color:#8B5CF6"></i></div>
-                            <div>
-                                <p class="debt-ov-title">Cartão Luan</p>
-                                <p class="debt-ov-subtitle" id="cardLuanCount">0 dívidas</p>
-                            </div>
-                        </div>
-                        <p class="debt-ov-amount" id="cardLuanTotal">R$ 0,00</p>
-                    </div>
-                    <div class="debt-overview-card debt-ov-cartao" data-filter="cartao-bianca" role="button" tabindex="0">
-                        <div class="debt-ov-header">
-                            <div class="debt-ov-icon" style="background:rgba(139,92,246,0.15)"><i class="fa-solid fa-credit-card" style="color:#8B5CF6"></i></div>
-                            <div>
-                                <p class="debt-ov-title">Cartão Bianca</p>
-                                <p class="debt-ov-subtitle" id="cardBiancaCount">0 dívidas</p>
-                            </div>
-                        </div>
-                        <p class="debt-ov-amount" id="cardBiancaTotal">R$ 0,00</p>
-                    </div>
+                <div class="debt-overview-panel" id="cardDebtCardsContainer">
+                    <!-- Cartões de dívida por membro - Populado dinamicamente por JS -->
                 </div>
                 <div class="summary-cards-row">
                     <div class="summary-mini" data-filter="all" role="button" tabindex="0">
@@ -680,8 +657,7 @@
                             <div class="form-group">
                                 <label for="salaryPerson">Pessoa</label>
                                 <select id="salaryPerson" required>
-                                    <option value="Luan">Salário Luan</option>
-                                    <option value="Bianca">Salário Bianca</option>
+                                    <!-- Populado dinamicamente por JS -->
                                 </select>
                             </div>
                             <div class="form-group">
@@ -766,30 +742,7 @@
 
                 <!-- Person Income Cards --> <!-- Cartões de salário por pessoa -->
                 <div class="person-cards-grid">
-                    <div class="person-income-card luan-card">
-                        <div class="pic-header">
-                            <div class="pic-avatar luan-avatar"><i class="fa-solid fa-user-tie"></i></div>
-                            <span class="pic-name">Luan</span>
-                        </div>
-                        <p class="salary-current" id="luanSalary">R$ 0,00</p>
-                        <p class="salary-annual" id="luanAnnual">Anual: R$ 0,00</p>
-                    </div>
-                    <div class="person-income-card bianca-card">
-                        <div class="pic-header">
-                            <div class="pic-avatar bianca-avatar"><i class="fa-solid fa-user"></i></div>
-                            <span class="pic-name">Bianca</span>
-                        </div>
-                        <p class="salary-current" id="biancaSalary">R$ 0,00</p>
-                        <p class="salary-annual" id="biancaAnnual">Anual: R$ 0,00</p>
-                    </div>
-                    <div class="person-income-card combined-card">
-                        <div class="pic-header">
-                            <div class="pic-avatar combined-avatar"><i class="fa-solid fa-users"></i></div>
-                            <span class="pic-name">Combinado</span>
-                        </div>
-                        <p class="salary-current" id="combinedSalary">R$ 0,00</p>
-                        <p class="salary-annual" id="combinedAnnual">Anual: R$ 0,00</p>
-                    </div>
+                    <!-- Populado dinamicamente por JS (renderPersonIncomeCards) -->
                 </div>
 
                 <div class="list-section">
