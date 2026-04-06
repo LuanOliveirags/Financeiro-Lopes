@@ -290,6 +290,16 @@
                     </div>
                 </div>
                 <div class="kpi-mini-row">
+                    <div class="kpi-mini-card kpi-highlight-loan">
+                        <div class="kpi-mini-icon" style="background:rgba(255,107,53,0.15)">
+                            <i class="fa-solid fa-hand-holding-dollar" style="color:#FF6B35"></i>
+                        </div>
+                        <div class="kpi-mini-text">
+                            <p class="kpi-mini-label">Empréstimos</p>
+                            <p class="kpi-mini-val" id="dashLoanDebts">R$ 0,00</p>
+                            <p class="kpi-mini-sub" id="dashLoanRemaining">Restante: R$ 0,00</p>
+                        </div>
+                    </div>
                     <div class="kpi-mini-card">
                         <div class="kpi-mini-icon paid-kpi-icon" style="background:rgba(6,214,160,0.15)">
                             <i class="fa-solid fa-circle-check" style="color:#06D6A0"></i>
@@ -299,6 +309,8 @@
                             <p class="kpi-mini-val" id="totalPaidDebts">R$ 0,00</p>
                         </div>
                     </div>
+                </div>
+                <div class="kpi-mini-row">
                     <div class="kpi-mini-card">
                         <div class="kpi-mini-icon people-kpi-icon">
                             <i class="fa-solid fa-users"></i>
@@ -671,6 +683,22 @@
                         <div class="debt-ov-footer">
                             <span class="debt-ov-count" id="financingDebtCount">0 dívidas</span>
                             <span class="debt-ov-remaining" id="financingRemaining">Restante: R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="debt-overview-panel">
+                    <div class="debt-overview-card debt-ov-loan" data-filter="loan" role="button" tabindex="0">
+                        <div class="debt-ov-header">
+                            <div class="debt-ov-icon" style="background:rgba(255,107,53,0.15)"><i class="fa-solid fa-hand-holding-dollar" style="color:#FF6B35"></i></div>
+                            <div>
+                                <p class="debt-ov-title">Empréstimos</p>
+                                <p class="debt-ov-subtitle">Parcela mensal</p>
+                            </div>
+                        </div>
+                        <p class="debt-ov-amount" id="totalLoans">R$ 0,00</p>
+                        <div class="debt-ov-footer">
+                            <span class="debt-ov-count" id="loanDebtCount">0 dívidas</span>
+                            <span class="debt-ov-remaining" id="loanRemaining">Restante: R$ 0,00</span>
                         </div>
                     </div>
                 </div>

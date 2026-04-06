@@ -2228,13 +2228,20 @@ function updateDashboard() {
   const totalDebt = monthDebts.reduce((sum, d) => sum + d.amount, 0);
   const responsibleCount = new Set(monthTransactions.map(t => t.responsible)).size;
 
-  // Separar dívidas ativas: mensais vs financiamentos
-  const isInstallmentType = d => (d.debtType === 'financiamento' || d.debtType === 'parcelada') || (d.debtType === 'cartao' && d.cartaoMode === 'parcelado');
+  // Separar dívidas ativas: mensais vs financiamentos vs empréstimos
+  const isInstallmentType = d => (d.debtType === 'financiamento' || d.debtType === 'parcelada' || d.debtType === 'emprestimo') || (d.debtType === 'cartao' && d.cartaoMode === 'parcelado');
   const monthlyDebtsActive = monthDebts.filter(d => !isInstallmentType(d));
-  const financingDebtsActive = monthDebts.filter(d => isInstallmentType(d));
+  const financingDebtsOnly = monthDebts.filter(d => (d.debtType === 'financiamento' || d.debtType === 'parcelada') || (d.debtType === 'cartao' && d.cartaoMode === 'parcelado'));
+  const loanDebtsOnly = monthDebts.filter(d => d.debtType === 'emprestimo');
   const totalMonthlyDebts = monthlyDebtsActive.reduce((sum, d) => sum + d.amount, 0);
-  const totalFinancingInstallment = financingDebtsActive.reduce((sum, d) => sum + (d.installmentValue || d.amount), 0);
-  const totalFinancingRemaining = financingDebtsActive.reduce((sum, d) => {
+  const totalFinancingInstallment = financingDebtsOnly.reduce((sum, d) => sum + (d.installmentValue || d.amount), 0);
+  const totalFinancingRemaining = financingDebtsOnly.reduce((sum, d) => {
+    const instVal = d.installmentValue || (d.amount / (d.installments || 1));
+    const paid = d.paidInstallments || 0;
+    return sum + (d.amount - (instVal * paid));
+  }, 0);
+  const totalLoanInstallment = loanDebtsOnly.reduce((sum, d) => sum + (d.installmentValue || d.amount), 0);
+  const totalLoanRemaining = loanDebtsOnly.reduce((sum, d) => {
     const instVal = d.installmentValue || (d.amount / (d.installments || 1));
     const paid = d.paidInstallments || 0;
     return sum + (d.amount - (instVal * paid));
@@ -2266,6 +2273,11 @@ function updateDashboard() {
   if (dashFinancing) dashFinancing.textContent = formatCurrency(totalFinancingInstallment);
   const dashFinancingRem = document.getElementById('dashFinancingRemaining');
   if (dashFinancingRem) dashFinancingRem.textContent = `Restante: ${formatCurrency(totalFinancingRemaining)}`;
+  // Empréstimos no dashboard
+  const dashLoan = document.getElementById('dashLoanDebts');
+  if (dashLoan) dashLoan.textContent = formatCurrency(totalLoanInstallment);
+  const dashLoanRem = document.getElementById('dashLoanRemaining');
+  if (dashLoanRem) dashLoanRem.textContent = `Restante: ${formatCurrency(totalLoanRemaining)}`;
 
   const paidDebtsEl = document.getElementById('totalPaidDebts');
   if (paidDebtsEl) paidDebtsEl.textContent = formatCurrency(totalPaidDebts);
@@ -2644,10 +2656,11 @@ function updateDebtsList() {
   
   const activeDebts = state.debts.filter(d => d.status === 'active');
 
-  // Separar: mensal (fixa + única + cartão não-parcelado) vs financiamento/parcelado/empréstimo
+  // Separar: mensal vs financiamento vs empréstimo
   const isInstType = d => (d.debtType === 'financiamento' || d.debtType === 'parcelada' || d.debtType === 'emprestimo') || (d.debtType === 'cartao' && d.cartaoMode === 'parcelado');
   const monthlyDebts = activeDebts.filter(d => !isInstType(d));
-  const financingDebts = activeDebts.filter(d => isInstType(d));
+  const financingDebts = activeDebts.filter(d => (d.debtType === 'financiamento' || d.debtType === 'parcelada') || (d.debtType === 'cartao' && d.cartaoMode === 'parcelado'));
+  const loanDebts = activeDebts.filter(d => d.debtType === 'emprestimo');
 
   // Total mensal = soma dos amounts de únicas/fixas
   const totalMonthly = monthlyDebts.reduce((sum, d) => sum + d.amount, 0);
@@ -2655,6 +2668,14 @@ function updateDebtsList() {
   const totalFinancing = financingDebts.reduce((sum, d) => sum + (d.installmentValue || d.amount), 0);
   // Total restante dos financiamentos
   const totalFinancingRemaining = financingDebts.reduce((sum, d) => {
+    const instVal = d.installmentValue || (d.amount / (d.installments || 1));
+    const paid = d.paidInstallments || 0;
+    return sum + (d.amount - (instVal * paid));
+  }, 0);
+  // Total empréstimos = soma das parcelas mensais
+  const totalLoan = loanDebts.reduce((sum, d) => sum + (d.installmentValue || d.amount), 0);
+  // Total restante dos empréstimos
+  const totalLoanRemaining = loanDebts.reduce((sum, d) => {
     const instVal = d.installmentValue || (d.amount / (d.installments || 1));
     const paid = d.paidInstallments || 0;
     return sum + (d.amount - (instVal * paid));
@@ -2669,6 +2690,8 @@ function updateDebtsList() {
   document.getElementById('totalDebts').textContent = formatCurrency(totalMonthly);
   const financingEl = document.getElementById('totalFinancing');
   if (financingEl) financingEl.textContent = formatCurrency(totalFinancing);
+  const loansEl = document.getElementById('totalLoans');
+  if (loansEl) loansEl.textContent = formatCurrency(totalLoan);
   document.getElementById('activeDebts').textContent = activeCount;
   const paidTabEl = document.getElementById('totalPaidDebtsTab');
   if (paidTabEl) paidTabEl.textContent = formatCurrency(totalPaid);
@@ -2680,6 +2703,10 @@ function updateDebtsList() {
   if (financingCountEl) financingCountEl.textContent = `${financingDebts.length} dívida${financingDebts.length !== 1 ? 's' : ''}`;
   const financingRemEl = document.getElementById('financingRemaining');
   if (financingRemEl) financingRemEl.textContent = `Restante: ${formatCurrency(totalFinancingRemaining)}`;
+  const loanCountEl = document.getElementById('loanDebtCount');
+  if (loanCountEl) loanCountEl.textContent = `${loanDebts.length} dívida${loanDebts.length !== 1 ? 's' : ''}`;
+  const loanRemEl = document.getElementById('loanRemaining');
+  if (loanRemEl) loanRemEl.textContent = `Restante: ${formatCurrency(totalLoanRemaining)}`;
 
   // Cartão por pessoa (dinâmico por membros da família)
   const cardDebts = activeDebts.filter(d => d.debtType === 'cartao');
@@ -2905,43 +2932,50 @@ document.addEventListener('click', (e) => {
 
 // ===== DEBT FILTER BY OVERVIEW CARD =====
 let currentDebtFilter = null;
+let _debtFilterDelegated = false;
 
 function setupDebtFilterListeners() {
-  document.querySelectorAll('.debt-overview-card[data-filter], .summary-mini[data-filter]').forEach(card => {
-    card.addEventListener('click', () => {
-      const filter = card.dataset.filter;
-      
-      // Toggle: click same card again to clear
-      if (currentDebtFilter === filter) {
-        clearDebtFilter();
-        return;
-      }
-      
-      currentDebtFilter = filter;
-      
-      // Update active states
-      document.querySelectorAll('.debt-overview-card[data-filter], .summary-mini[data-filter]').forEach(c => c.classList.remove('filter-active'));
-      card.classList.add('filter-active');
-      
-      // Show filter bar
-      const filterBar = document.getElementById('debtFilterBar');
-      const filterLabel = document.getElementById('debtFilterLabel');
-      const labels = {
-        'monthly': 'Mensais (Fixas + Únicas)',
-        'financing': 'Financiamentos',
-        'all': 'Todas Ativas',
-        'paid': 'Pagas'
-      };
-      // Labels dinâmicos para cartões por membro
-      (state.familyMembers || []).forEach(m => {
-        const slug = m.name.replace(/\s+/g, '_');
-        labels[`cartao-${slug}`] = `Cartão ${m.name}`;
-      });
-      filterLabel.innerHTML = `<i class="fa-solid fa-filter"></i> ${labels[filter] || filter}`;
-      filterBar.classList.add('show');
-      
-      applyDebtFilter();
+  // Usa event delegation no document para capturar cliques em cards estáticos e dinâmicos
+  if (_debtFilterDelegated) return;
+  _debtFilterDelegated = true;
+
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.debt-overview-card[data-filter], .summary-mini[data-filter]');
+    if (!card) return;
+
+    const filter = card.dataset.filter;
+
+    // Toggle: click same card again to clear
+    if (currentDebtFilter === filter) {
+      clearDebtFilter();
+      return;
+    }
+
+    currentDebtFilter = filter;
+
+    // Update active states
+    document.querySelectorAll('.debt-overview-card[data-filter], .summary-mini[data-filter]').forEach(c => c.classList.remove('filter-active'));
+    card.classList.add('filter-active');
+
+    // Show filter bar
+    const filterBar = document.getElementById('debtFilterBar');
+    const filterLabel = document.getElementById('debtFilterLabel');
+    const labels = {
+      'monthly': 'Mensais (Fixas + Únicas)',
+      'financing': 'Financiamentos',
+      'loan': 'Empréstimos',
+      'all': 'Todas Ativas',
+      'paid': 'Pagas'
+    };
+    // Labels dinâmicos para cartões por membro
+    (state.familyMembers || []).forEach(m => {
+      const slug = m.name.replace(/\s+/g, '_');
+      labels[`cartao-${slug}`] = `Cartão ${m.name}`;
     });
+    filterLabel.innerHTML = `<i class="fa-solid fa-filter"></i> ${labels[filter] || filter}`;
+    filterBar.classList.add('show');
+
+    applyDebtFilter();
   });
 }
 
@@ -2971,14 +3005,19 @@ function applyDebtFilter() {
     
     let show = false;
     const cartaoMode = debt.cartaoMode || 'unica';
-    const isInstType = (debt.debtType === 'financiamento' || debt.debtType === 'parcelada' || debt.debtType === 'emprestimo') || (debt.debtType === 'cartao' && cartaoMode === 'parcelado');
+    const isFinancingType = (debt.debtType === 'financiamento' || debt.debtType === 'parcelada') || (debt.debtType === 'cartao' && cartaoMode === 'parcelado');
+    const isLoanType = debt.debtType === 'emprestimo';
+    const isInstType = isFinancingType || isLoanType;
     
     switch (currentDebtFilter) {
       case 'monthly':
         show = debt.status === 'active' && !isInstType;
         break;
       case 'financing':
-        show = debt.status === 'active' && isInstType;
+        show = debt.status === 'active' && isFinancingType;
+        break;
+      case 'loan':
+        show = debt.status === 'active' && isLoanType;
         break;
       case 'all':
         show = debt.status === 'active';
@@ -3389,20 +3428,23 @@ async function loadDataFromFirebase() {
     return;
   }
   try {
-    // Carregar transações filtradas por família
+    // Carregar transações filtradas por família (ordenação feita no JS para evitar exigir índice composto)
     const transSnap = await db.collection('transactions')
-      .where('familyId', '==', familyId).orderBy('createdAt', 'desc').get();
-    state.transactions = transSnap.docs.map(doc => doc.data());
+      .where('familyId', '==', familyId).get();
+    state.transactions = transSnap.docs.map(doc => doc.data())
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
     // Carregar dívidas filtradas por família
     const debtsSnap = await db.collection('debts')
-      .where('familyId', '==', familyId).orderBy('createdAt', 'desc').get();
-    state.debts = debtsSnap.docs.map(doc => doc.data());
+      .where('familyId', '==', familyId).get();
+    state.debts = debtsSnap.docs.map(doc => doc.data())
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
     // Carregar salários filtrados por família
     const salSnap = await db.collection('salaries')
-      .where('familyId', '==', familyId).orderBy('createdAt', 'desc').get();
-    state.salaries = salSnap.docs.map(doc => doc.data());
+      .where('familyId', '==', familyId).get();
+    state.salaries = salSnap.docs.map(doc => doc.data())
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
     // Salva localmente também
     saveDataToStorage();
@@ -3416,6 +3458,7 @@ async function loadDataFromFirebase() {
     console.log('Dados carregados do Firebase com sucesso!');
   } catch (error) {
     console.error('Erro ao carregar do Firebase:', error);
+    showAlert('Erro ao carregar dados do servidor. Usando dados locais.', 'warning');
   }
 }
 
@@ -3443,7 +3486,9 @@ function listenFirebaseChanges() {
   ['transactions', 'debts', 'salaries'].forEach(col => {
     const unsub = db.collection(col)
       .where('familyId', '==', familyId)
-      .onSnapshot(debouncedLoad);
+      .onSnapshot(debouncedLoad, err => {
+        console.error(`Erro no listener de ${col}:`, err);
+      });
     _fbListeners.push(unsub);
   });
 }
