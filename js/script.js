@@ -3801,13 +3801,13 @@ console.log('Aplicação Financeiro Lopes iniciada com sucesso! 💰');
 
 // ===== TAREFAS DA CASA (Família Lopes) =====
 const CHORES_DEFAULT = {
-  1: { luan: ['Fazer comida','Tirar o lixo','Levar o lixo'], bianca: ['Lavar louça','Limpar o fogão','Dobrar e Guardar roupas','Organizar as bagunças'] },
-  2: { luan: ['Fazer comida','Passar pano','Limpar o Microondas'], bianca: ['Limpar gordura do armário','Lavar louça','Limpar o fogão','Varrer','Organizar as bagunças'] },
-  3: { luan: ['Fazer comida','Lavar o banheiro','Tirar o lixo'], bianca: ['Levar o lixo','Lavar louça','Limpar o fogão','Lavar roupa','Organizar as bagunças'] },
-  4: { luan: ['Fazer comida','Passar pano','Lavar e lustrar marmore'], bianca: ['Lavar louça','Limpar o fogão','Varrer','Dobrar e Guardar roupas','Organizar as bagunças'] },
-  5: { luan: ['Fazer comida','Tirar o lixo','Levar o lixo'], bianca: ['Limpar o Microondas','Lavar louça','Limpar o fogão','Lavar o banheiro','Organizar as bagunças'] },
-  6: { luan: ['Fazer comida','Limpar os armários Fora','Limpar os armário Dentro'], bianca: ['Lavar e lustrar marmore','Limpar a geladeira','Limpar gordura do armário','Lavar louça','Limpar o fogão','Limpar o vidro da sacada','Limpar as janelas','Limpar portas de vidro','Organizar as bagunças'] },
-  0: { luan: ['Fazer comida (Marmitas S)','Passar pano','Passar Lustramóveis (Varanda)'], bianca: ['Reorganizar coisas (Varanda)','Lavar louça','Limpar o fogão','Varrer','Lavar roupa','Passar lustramóveis (Roupas)','Dobrar roupas e reorganizar','Organizar as bagunças'] }
+  1: { luan: ['Fazer comida','Tirar o lixo','Levar o lixo','Lavar louça'], bianca: ['Limpar o fogão','Dobrar e guardar roupas','Organizar bagunças'] },
+  2: { luan: ['Fazer comida','Passar pano','Limpar o microondas','Limpar gordura do armário'], bianca: ['Lavar louça','Limpar o fogão','Varrer','Organizar bagunças'] },
+  3: { luan: ['Fazer comida','Lavar o banheiro','Tirar o lixo','Levar o lixo'], bianca: ['Lavar louça','Limpar o fogão','Lavar roupa','Organizar bagunças'] },
+  4: { luan: ['Fazer comida','Passar pano','Lavar e lustrar mármore'], bianca: ['Lavar louça','Limpar o fogão','Varrer','Dobrar e guardar roupas','Organizar bagunças'] },
+  5: { luan: ['Fazer comida','Tirar o lixo','Levar o lixo','Limpar o microondas'], bianca: ['Lavar louça','Limpar o fogão','Lavar o banheiro','Organizar bagunças'] },
+  6: { luan: ['Fazer comida','Limpar armários (fora e dentro)','Lavar e lustrar mármore','Limpar geladeira','Limpar gordura do armário'], bianca: ['Lavar louça','Limpar o fogão','Limpar vidro da sacada','Limpar janelas','Limpar portas de vidro','Organizar bagunças'] },
+  0: { luan: ['Fazer comida (marmitas)','Passar pano','Passar lustra móveis (varanda)','Reorganizar coisas'], bianca: ['Lavar louça','Limpar o fogão','Varrer','Lavar roupa','Passar lustra móveis (roupas)','Dobrar roupas','Organizar bagunças'] }
 };
 
 let choresEditMode = false;
