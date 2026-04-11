@@ -875,9 +875,12 @@ function applyUserToUI() {
   const manageFamiliesBtn = document.getElementById('manageFamiliesBtn');
   if (manageFamiliesBtn) manageFamiliesBtn.style.display = isSuperAdmin() ? '' : 'none';
 
-  // Botão Tarefas só para família Lopes
+  // Botão Tarefas só para família Lopes, Config para outras famílias
+  const isLopes = getFamilyId() === 'family-lopes';
   const choresBtn = document.getElementById('choresNavBtn');
-  if (choresBtn) choresBtn.style.display = (getFamilyId() === 'family-lopes') ? '' : 'none';
+  const settingsNavBtn = document.getElementById('settingsNavBtn');
+  if (choresBtn) choresBtn.style.display = isLopes ? '' : 'none';
+  if (settingsNavBtn) settingsNavBtn.style.display = isLopes ? 'none' : '';
 }
 
 function applyAvatar(photoURL) {
