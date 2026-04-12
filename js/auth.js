@@ -166,18 +166,38 @@ export function renderPersonIncomeCards() {
           <div class="pic-avatar" style="background:${color}22;color:${color}"><i class="fa-solid ${icons[i % icons.length]}"></i></div>
           <span class="pic-name">${m.name}</span>
         </div>
-        <p class="salary-current" id="salary_${slug}">R$ 0,00</p>
+        <div class="pic-salaries">
+          <div class="pic-salary-row">
+            <span class="pic-salary-label"><i class="fa-solid fa-sack-dollar"></i> Salário</span>
+            <span class="pic-salary-val" id="salary_${slug}">R$ 0,00</span>
+          </div>
+          <div class="pic-salary-row pic-vr-row">
+            <span class="pic-salary-label"><i class="fa-solid fa-utensils"></i> VR/VA</span>
+            <span class="pic-salary-val pic-vr-val" id="vr_${slug}">R$ 0,00</span>
+          </div>
+        </div>
         <p class="salary-annual" id="annual_${slug}">Anual: R$ 0,00</p>
       </div>`;
   });
   html += `
-    <div class="person-income-card combined-card">
+    <div class="person-income-card combined-card" style="grid-column: 1 / -1;">
       <div class="pic-header">
         <div class="pic-avatar combined-avatar"><i class="fa-solid fa-users"></i></div>
         <span class="pic-name">Combinado</span>
       </div>
-      <p class="salary-current" id="combinedSalary">R$ 0,00</p>
-      <p class="salary-annual" id="combinedAnnual">Anual: R$ 0,00</p>
+      <div class="pic-combined-grid">
+        <div class="pic-combined-item">
+          <span class="pic-combined-label"><i class="fa-solid fa-sack-dollar"></i> Salários</span>
+          <span class="pic-combined-val" id="combinedSalary">R$ 0,00</span>
+          <span class="pic-combined-sub" id="combinedAnnual">Anual: R$ 0,00</span>
+        </div>
+        <div class="pic-combined-divider"></div>
+        <div class="pic-combined-item pic-combined-vr">
+          <span class="pic-combined-label"><i class="fa-solid fa-utensils"></i> VR/VA</span>
+          <span class="pic-combined-val pic-vr-val" id="combinedVR">R$ 0,00</span>
+          <span class="pic-combined-sub" id="combinedVRAnnual">Anual: R$ 0,00</span>
+        </div>
+      </div>
     </div>`;
   container.innerHTML = html;
 }

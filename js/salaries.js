@@ -197,17 +197,31 @@ export function updateSalaryDisplay() {
   }
 
   let combinedMonth = 0, combinedAnnual = 0;
+  let combinedVRMonth = 0, combinedVRAnnual = 0;
   members.forEach(m => {
     const slug = m.name.replace(/\s+/g, '_');
-    const personSalaries = state.salaries.filter(s => s.person === m.name);
+    const personSalaries = state.salaries.filter(s => s.person === m.name && s.salaryType !== 'vr');
+    const personVR = state.salaries.filter(s => s.person === m.name && s.salaryType === 'vr');
+
     const annual = personSalaries.reduce((sum, s) => sum + s.amount, 0);
     const monthly = personSalaries
       .filter(s => { const d = new Date(s.date + 'T12:00:00'); return d.getMonth() === curMonth && d.getFullYear() === curYear; })
       .reduce((sum, s) => sum + s.amount, 0);
+
+    const vrAnnual = personVR.reduce((sum, s) => sum + s.amount, 0);
+    const vrMonthly = personVR
+      .filter(s => { const d = new Date(s.date + 'T12:00:00'); return d.getMonth() === curMonth && d.getFullYear() === curYear; })
+      .reduce((sum, s) => sum + s.amount, 0);
+
     combinedMonth += monthly;
     combinedAnnual += annual;
+    combinedVRMonth += vrMonthly;
+    combinedVRAnnual += vrAnnual;
+
     const salEl = document.getElementById(`salary_${slug}`);
     if (salEl) salEl.textContent = formatCurrency(monthly);
+    const vrEl = document.getElementById(`vr_${slug}`);
+    if (vrEl) vrEl.textContent = formatCurrency(vrMonthly);
     const annEl = document.getElementById(`annual_${slug}`);
     if (annEl) annEl.textContent = `Anual: ${formatCurrency(annual)}`;
   });
@@ -215,6 +229,10 @@ export function updateSalaryDisplay() {
   if (combSalEl) combSalEl.textContent = formatCurrency(combinedMonth);
   const combAnnEl = document.getElementById('combinedAnnual');
   if (combAnnEl) combAnnEl.textContent = `Anual: ${formatCurrency(combinedAnnual)}`;
+  const combVREl = document.getElementById('combinedVR');
+  if (combVREl) combVREl.textContent = formatCurrency(combinedVRMonth);
+  const combVRAnnEl = document.getElementById('combinedVRAnnual');
+  if (combVRAnnEl) combVRAnnEl.textContent = `Anual: ${formatCurrency(combinedVRAnnual)}`;
 
   populateSalaryMonthFilter();
   updateSalaryHistory();
