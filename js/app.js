@@ -9,6 +9,7 @@ import { updateDashboard } from './dashboard.js';
 import { updateTransactionHistory } from './transactions.js';
 import { updateDebtsList } from './debts.js';
 import { updateSalaryDisplay } from './salaries.js';
+import './shopping.js';
 
 // Registra callback centralizado para refresh de UI após carregamento de dados
 setRefreshCallback(() => {

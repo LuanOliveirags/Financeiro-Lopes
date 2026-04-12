@@ -182,6 +182,10 @@
                     <i class="fa-solid fa-plus fab-plus"></i>
                 </button>
                 <div id="quickActionsMenu" class="quick-actions-menu">
+                    <button class="quick-action-item" data-action="shopping">
+                        <div class="qa-icon-wrap"><i class="fa-solid fa-cart-shopping"></i></div>
+                        <span class="action-label">Compras</span>
+                    </button>
                     <button class="quick-action-item" data-action="transaction">
                         <div class="qa-icon-wrap"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
                         <span class="action-label">Transação</span>
@@ -1219,6 +1223,120 @@
             </section>
 
         </main>
+
+        <!-- ====== SHOPPING PANEL (Full-screen overlay) ====== -->
+        <div id="shoppingPanel" class="shopping-panel">
+            <div class="shopping-panel-inner">
+
+                <!-- LISTS VIEW -->
+                <div id="shoppingListsView" class="shopping-view">
+                    <div class="shopping-header">
+                        <button class="shopping-back-btn" id="shoppingCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+                        <h2><i class="fa-solid fa-cart-shopping"></i> Compras da Casa</h2>
+                        <button class="shopping-action-btn" id="shopNewListBtn" title="Nova lista"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <div class="shopping-body" id="shoppingListsBody"></div>
+                </div>
+
+                <!-- DETAIL VIEW -->
+                <div id="shoppingDetailView" class="shopping-view" style="display:none">
+                    <div class="shopping-header">
+                        <button class="shopping-back-btn" id="shoppingBackBtn"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h2 id="shoppingDetailTitle">Lista</h2>
+                        <div class="shopping-header-actions">
+                            <button class="shopping-action-btn shopping-delete-btn" id="shoppingDeleteListBtn" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="shopping-body" id="shoppingDetailBody"></div>
+                    <!-- Floating Add Item Bar -->
+                    <div class="shopping-add-bar" id="shoppingAddBar">
+                        <div class="shopping-add-bar-inner">
+                            <i class="fa-solid fa-basket-shopping shop-add-icon"></i>
+                            <input type="text" id="shoppingItemInput" placeholder="Adicionar item..." autocomplete="off">
+                            <button id="shoppingAddItemBtn" class="shopping-add-item-btn"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <div id="shoppingAutocomplete" class="shopping-autocomplete"></div>
+                    </div>
+                </div>
+
+                <!-- NEW LIST MODAL -->
+                <div id="shoppingNewListModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="fa-solid fa-list"></i> Nova Lista</h3>
+                            <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="form-group">
+                            <label for="shoppingNewListName">Nome da lista</label>
+                            <input type="text" id="shoppingNewListName" placeholder="Ex: Compras da semana" maxlength="60">
+                        </div>
+                        <button class="btn-primary" id="shopConfirmNewListBtn">
+                            <i class="fa-solid fa-check"></i> Criar Lista
+                        </button>
+                    </div>
+                </div>
+
+                <!-- EDIT ITEM MODAL -->
+                <div id="shoppingEditItemModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="fa-solid fa-pen"></i> Editar Item</h3>
+                            <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <form id="editShopItemForm">
+                            <div class="form-group">
+                                <label for="editShopItemName">Nome</label>
+                                <input type="text" id="editShopItemName" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editShopItemQty">Qtd</label>
+                                    <input type="number" id="editShopItemQty" min="0.1" step="0.1" value="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="editShopItemUnit">Unidade</label>
+                                    <select id="editShopItemUnit">
+                                        <option value="un">Unidade</option>
+                                        <option value="kg">Kg</option>
+                                        <option value="g">Gramas</option>
+                                        <option value="L">Litro</option>
+                                        <option value="ml">ml</option>
+                                        <option value="dz">Dúzia</option>
+                                        <option value="pct">Pacote</option>
+                                        <option value="cx">Caixa</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="editShopItemPrice">Preço estimado (R$)</label>
+                                <input type="number" id="editShopItemPrice" step="0.01" min="0" placeholder="0,00">
+                            </div>
+                            <div class="form-group">
+                                <label for="editShopItemCategory">Categoria</label>
+                                <select id="editShopItemCategory">
+                                    <option value="frutas">🍎 Frutas & Verduras</option>
+                                    <option value="carnes">🍗 Carnes & Frios</option>
+                                    <option value="padaria">🍞 Padaria</option>
+                                    <option value="bebidas">🥤 Bebidas</option>
+                                    <option value="laticinios">🧀 Laticínios</option>
+                                    <option value="mercearia">🫙 Mercearia</option>
+                                    <option value="limpeza">🧹 Limpeza</option>
+                                    <option value="higiene">🧴 Higiene & Beleza</option>
+                                    <option value="casa">🏠 Casa & Utilidades</option>
+                                    <option value="pets">🐾 Pets</option>
+                                    <option value="outros">📦 Outros</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fa-solid fa-check"></i> Salvar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 
     <!-- Service Worker Registration --> <!-- Registro do Service Worker para PWA -->

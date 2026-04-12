@@ -11,6 +11,7 @@ import { addDebt, resetDebtModal, setupDebtTypeListeners, setupDebtFilterListene
 import { addSalary, setupDeductionListeners, updateSalaryDisplay, updateSalaryHistory } from './salaries.js';
 import { updateDashboard, updateCharts } from './dashboard.js';
 import { openChoresTab, setupChoresListeners } from './chores.js';
+import { openShoppingPanel, setupShoppingListeners } from './shopping.js';
 
 // ===== THEME =====
 function initializeTheme() {
@@ -179,6 +180,8 @@ function handleQuickAction(action) {
   } else if (action === 'salary') {
     switchTab('salaries');
     setTimeout(() => document.getElementById('salaryModal').classList.add('active'), 300);
+  } else if (action === 'shopping') {
+    openShoppingPanel();
   } else if (action === 'settings') {
     switchTab('settings');
   } else if (action === 'chores') {
@@ -411,6 +414,7 @@ export function setupEventListeners() {
   // Feature-specific setup
   setupDeductionListeners();
   setupDebtTypeListeners();
+  setupShoppingListeners();
   setupDebtFilterListeners();
   setupChoresListeners();
 
