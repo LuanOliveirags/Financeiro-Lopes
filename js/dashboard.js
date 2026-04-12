@@ -8,6 +8,38 @@ import { state } from './state.js';
 import { formatCurrency } from './utils.js';
 import { updateRecentTransactions } from './transactions.js';
 
+// ===== DASHBOARD MODE STATE =====
+let dashboardMode = 'geral'; // 'geral' | 'vr'
+
+export function setupDashboardToggle() {
+  const btnGeral = document.getElementById('btnModeGeral');
+  const btnVR = document.getElementById('btnModeVR');
+  const slider = document.getElementById('dashModeSlider');
+  if (!btnGeral || !btnVR) return;
+
+  const setMode = (mode) => {
+    dashboardMode = mode;
+    const dashboard = document.getElementById('dashboard');
+
+    // Toggle active button
+    btnGeral.classList.toggle('active', mode === 'geral');
+    btnVR.classList.toggle('active', mode === 'vr');
+    slider.classList.toggle('vr-active', mode === 'vr');
+
+    // Toggle VR mode class on dashboard section
+    dashboard.classList.toggle('dashboard-vr-mode', mode === 'vr');
+
+    // Toggle VR mode on balance card & IE cards
+    document.querySelector('.balance-card')?.classList.toggle('vr-mode', mode === 'vr');
+    document.querySelectorAll('.ie-card').forEach(c => c.classList.toggle('vr-mode', mode === 'vr'));
+
+    updateDashboard();
+  };
+
+  btnGeral.addEventListener('click', () => setMode('geral'));
+  btnVR.addEventListener('click', () => setMode('vr'));
+}
+
 // ===== ATUALIZAR DASHBOARD =====
 export function updateDashboard() {
   const monthVal = document.getElementById('monthFilter').value;
@@ -72,35 +104,66 @@ export function updateDashboard() {
   const totalPaidDebts = paidDebtsThisMonth.reduce((sum, t) => sum + t.amount, 0);
   const totalMonthDeductions = monthSalaries.reduce((sum, s) => sum + (s.totalDeductions || 0), 0);
 
-  // KPI Cards
-  document.getElementById('totalExpenses').textContent = formatCurrency(totalExpenses);
-  document.getElementById('totalBalance').textContent = formatCurrency(totalBalance);
-  document.getElementById('totalSpent').textContent = formatCurrency(totalDebt);
-  document.getElementById('totalResponsible').textContent = responsibleCount;
-
-  const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
-  el('dashMonthlyDebts', formatCurrency(totalMonthlyDebts));
-  el('dashMonthlyCount', `${monthlyDebtsActive.length} ativa${monthlyDebtsActive.length !== 1 ? 's' : ''}`);
-  el('dashFinancingDebts', formatCurrency(totalFinancingInstallment));
-  el('dashFinancingRemaining', `Restante: ${formatCurrency(totalFinancingRemaining)}`);
-  el('dashLoanDebts', formatCurrency(totalLoanInstallment));
-  el('dashLoanRemaining', `Restante: ${formatCurrency(totalLoanRemaining)}`);
-  el('totalPaidDebts', formatCurrency(totalPaidDebts));
-  el('totalDeductionsDash', formatCurrency(totalMonthDeductions));
-  el('totalIncomeDash', formatCurrency(totalIncome));
-
-  // VR/VA Dashboard
+  // VR/VA values (always computed)
   const vrIncomeTotal = vrSalaries.reduce((sum, s) => sum + s.amount, 0);
   const vrExpenseTotal = vrTransactions.filter(t => t.type === 'saida').reduce((sum, t) => sum + t.amount, 0);
   const vrBalanceVal = vrIncomeTotal - vrExpenseTotal;
-  el('vrIncome', formatCurrency(vrIncomeTotal));
-  el('vrExpense', formatCurrency(vrExpenseTotal));
-  el('vrBalance', formatCurrency(vrBalanceVal));
-  const vrCard = document.getElementById('vrDashboardCard');
-  if (vrCard) vrCard.style.display = (vrIncomeTotal > 0 || vrExpenseTotal > 0) ? '' : 'none';
 
-  updateCharts(generalTransactions, monthDebts);
-  updateRecentTransactions(monthTransactions);
+  const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+
+  if (dashboardMode === 'vr') {
+    // === VR MODE: Main cards show VR data ===
+    document.getElementById('totalBalance').textContent = formatCurrency(vrBalanceVal);
+    document.getElementById('totalExpenses').textContent = formatCurrency(vrExpenseTotal);
+    el('totalIncomeDash', formatCurrency(vrIncomeTotal));
+
+    // VR KPI Summary
+    const vrExpenses = vrTransactions.filter(t => t.type === 'saida');
+    const vrCount = vrExpenses.length;
+    const vrAvg = vrCount > 0 ? vrExpenseTotal / vrCount : 0;
+    const vrMax = vrCount > 0 ? Math.max(...vrExpenses.map(t => t.amount)) : 0;
+    const vrPct = vrIncomeTotal > 0 ? Math.min(100, (vrExpenseTotal / vrIncomeTotal) * 100) : 0;
+
+    el('vrPurchaseCount', String(vrCount));
+    el('vrAvgTicket', formatCurrency(vrAvg));
+    el('vrMaxExpense', formatCurrency(vrMax));
+    el('vrUsagePercent', `${vrPct.toFixed(0)}%`);
+
+    // Charts & recents use VR data only
+    updateCharts(vrTransactions, []);
+    updateRecentTransactions(vrTransactions);
+
+  } else {
+    // === GERAL MODE ===
+    document.getElementById('totalExpenses').textContent = formatCurrency(totalExpenses);
+    document.getElementById('totalBalance').textContent = formatCurrency(totalBalance);
+    document.getElementById('totalSpent').textContent = formatCurrency(totalDebt);
+    document.getElementById('totalResponsible').textContent = responsibleCount;
+
+    el('dashMonthlyDebts', formatCurrency(totalMonthlyDebts));
+    el('dashMonthlyCount', `${monthlyDebtsActive.length} ativa${monthlyDebtsActive.length !== 1 ? 's' : ''}`);
+    el('dashFinancingDebts', formatCurrency(totalFinancingInstallment));
+    el('dashFinancingRemaining', `Restante: ${formatCurrency(totalFinancingRemaining)}`);
+    el('dashLoanDebts', formatCurrency(totalLoanInstallment));
+    el('dashLoanRemaining', `Restante: ${formatCurrency(totalLoanRemaining)}`);
+    el('totalPaidDebts', formatCurrency(totalPaidDebts));
+    el('totalDeductionsDash', formatCurrency(totalMonthDeductions));
+    el('totalIncomeDash', formatCurrency(totalIncome));
+
+    // VR/VA small card (only in geral mode)
+    el('vrIncome', formatCurrency(vrIncomeTotal));
+    el('vrExpense', formatCurrency(vrExpenseTotal));
+    el('vrBalance', formatCurrency(vrBalanceVal));
+    const vrCard = document.getElementById('vrDashboardCard');
+    if (vrCard) vrCard.style.display = (vrIncomeTotal > 0 || vrExpenseTotal > 0) ? '' : 'none';
+
+    updateCharts(generalTransactions, monthDebts);
+    updateRecentTransactions(monthTransactions);
+  }
+
+  // Update balance label
+  const balanceLabel = document.querySelector('.balance-label');
+  if (balanceLabel) balanceLabel.textContent = dashboardMode === 'vr' ? 'Saldo VR / VA' : 'Saldo líquido';
 }
 
 // ===== ATUALIZAR GRÁFICOS =====

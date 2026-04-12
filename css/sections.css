@@ -47,6 +47,144 @@
   box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
 }
 
+/* Dashboard Mode Toggle (Geral ↔ VR/VA) */
+.dash-mode-toggle {
+  display: flex;
+  position: relative;
+  margin: 0 16px 16px;
+  background: var(--bg-card);
+  border-radius: var(--r-full);
+  padding: 4px;
+  box-shadow: var(--shadow-sm);
+  border: 1.5px solid var(--border);
+}
+.dash-mode-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  border-radius: var(--r-full);
+  background: var(--grad-primary);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.35);
+}
+.dash-mode-slider.vr-active {
+  transform: translateX(100%);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+}
+.dash-mode-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: var(--fw-semi);
+  color: var(--text-secondary);
+  cursor: pointer;
+  z-index: 1;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: var(--r-full);
+  -webkit-tap-highlight-color: transparent;
+}
+.dash-mode-btn.active { color: #fff; }
+.dash-mode-btn i { font-size: 0.8rem; }
+
+/* VR Mode — Balance Card */
+.balance-card.vr-mode {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 60%, #fcd34d 100%);
+  transition: background 0.5s ease;
+}
+[data-theme="dark"] .balance-card.vr-mode {
+  background: linear-gradient(135deg, #451a03 0%, #78350f 60%, #92400e 100%);
+}
+.balance-card.vr-mode::before {
+  background: rgba(245, 158, 11, 0.12);
+}
+.balance-card.vr-mode .balance-label { color: #92400e; }
+[data-theme="dark"] .balance-card.vr-mode .balance-label { color: #fde68a; }
+.balance-card.vr-mode .balance-amount { color: #78350f; }
+[data-theme="dark"] .balance-card.vr-mode .balance-amount { color: #fef3c7; }
+.balance-card.vr-mode .sparkline-x-labels span { color: #a16207; }
+[data-theme="dark"] .balance-card.vr-mode .sparkline-x-labels span { color: #fbbf24; }
+
+/* VR Mode — IE Cards */
+.ie-card.vr-mode {
+  border-color: rgba(245, 158, 11, 0.25);
+  transition: border-color 0.4s ease;
+}
+.ie-card.vr-mode .ie-circle {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #d97706 !important;
+}
+[data-theme="dark"] .ie-card.vr-mode .ie-circle {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fbbf24 !important;
+}
+.ie-card.vr-mode .ie-label { color: #a16207; }
+[data-theme="dark"] .ie-card.vr-mode .ie-label { color: #fbbf24; }
+
+/* VR Mode — Hide irrelevant KPI rows */
+.dashboard-vr-mode .kpi-mini-row { display: none; }
+.dashboard-vr-mode .vr-dashboard-card { display: none !important; }
+
+/* VR Mode — KPI Summary Row (replaces hidden KPIs) */
+.vr-kpi-summary {
+  display: none;
+  padding: 0 16px 16px;
+}
+.dashboard-vr-mode .vr-kpi-summary { display: block; }
+.vr-kpi-summary-card {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: var(--r-xl);
+  padding: 18px 20px;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12);
+}
+[data-theme="dark"] .vr-kpi-summary-card {
+  background: linear-gradient(135deg, #451a03 0%, #78350f 100%);
+}
+.vr-kpi-summary-title {
+  font-size: 0.78rem;
+  font-weight: var(--fw-semi);
+  color: #92400e;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+[data-theme="dark"] .vr-kpi-summary-title { color: #fde68a; }
+.vr-kpi-summary-title i { font-size: 0.85rem; }
+.vr-kpi-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.vr-kpi-item {
+  text-align: center;
+  padding: 10px 8px;
+  background: rgba(255,255,255,0.45);
+  border-radius: var(--r-md);
+}
+[data-theme="dark"] .vr-kpi-item { background: rgba(0,0,0,0.2); }
+.vr-kpi-item-label {
+  font-size: 0.7rem;
+  color: #92400e;
+  margin-bottom: 4px;
+  font-weight: var(--fw-medium);
+}
+[data-theme="dark"] .vr-kpi-item-label { color: #fde68a; }
+.vr-kpi-item-val {
+  font-size: 1rem;
+  font-weight: var(--fw-bold);
+  color: #78350f;
+}
+[data-theme="dark"] .vr-kpi-item-val { color: #fef3c7; }
+
 /* Balance Card */
 .balance-card {
   margin: 0 16px 16px;

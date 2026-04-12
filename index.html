@@ -234,6 +234,17 @@
                     </div>
                 </div>
 
+                <!-- Dashboard Mode Toggle --> <!-- Alternar entre Geral e VR/VA -->
+                <div class="dash-mode-toggle" id="dashModeToggle">
+                    <div class="dash-mode-slider" id="dashModeSlider"></div>
+                    <button class="dash-mode-btn active" data-mode="geral" id="btnModeGeral">
+                        <i class="fa-solid fa-wallet"></i> Geral
+                    </button>
+                    <button class="dash-mode-btn" data-mode="vr" id="btnModeVR">
+                        <i class="fa-solid fa-utensils"></i> VR / VA
+                    </button>
+                </div>
+
                 <!-- Balance Card --> <!-- Cartão de saldo líquido -->
                 <div class="balance-card">
                     <p class="balance-label">Saldo líquido</p>
@@ -366,6 +377,33 @@
                             <i class="fa-solid fa-arrow-up"></i>
                             <span class="vr-dash-item-label">Gasto</span>
                             <span class="vr-dash-item-val" id="vrExpense">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VR Mode KPI Summary (shown only in VR mode) -->
+                <div class="vr-kpi-summary" id="vrKpiSummary">
+                    <div class="vr-kpi-summary-card">
+                        <p class="vr-kpi-summary-title">
+                            <i class="fa-solid fa-chart-simple"></i> Resumo VR / VA
+                        </p>
+                        <div class="vr-kpi-summary-grid">
+                            <div class="vr-kpi-item">
+                                <p class="vr-kpi-item-label">Compras no mês</p>
+                                <p class="vr-kpi-item-val" id="vrPurchaseCount">0</p>
+                            </div>
+                            <div class="vr-kpi-item">
+                                <p class="vr-kpi-item-label">Ticket médio</p>
+                                <p class="vr-kpi-item-val" id="vrAvgTicket">R$ 0,00</p>
+                            </div>
+                            <div class="vr-kpi-item">
+                                <p class="vr-kpi-item-label">Maior gasto</p>
+                                <p class="vr-kpi-item-val" id="vrMaxExpense">R$ 0,00</p>
+                            </div>
+                            <div class="vr-kpi-item">
+                                <p class="vr-kpi-item-label">% do VR usado</p>
+                                <p class="vr-kpi-item-val" id="vrUsagePercent">0%</p>
+                            </div>
                         </div>
                     </div>
                 </div>
