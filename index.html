@@ -1247,6 +1247,7 @@
                             <button class="shopping-action-btn shopping-delete-btn" id="shoppingDeleteListBtn" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
+                    <div class="shop-detail-store-bar" id="shoppingDetailStoreBar" style="display:none"></div>
                     <div class="shopping-body" id="shoppingDetailBody"></div>
                     <!-- Floating Add Item Bar -->
                     <div class="shopping-add-bar" id="shoppingAddBar">
@@ -1263,9 +1264,11 @@
                 <div id="shoppingNewListModal" class="modal">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h3><i class="fa-solid fa-list"></i> Nova Lista</h3>
+                            <h3><i class="fa-solid fa-store"></i> Nova Lista</h3>
                             <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
                         </div>
+                        <label class="shop-modal-label">Onde vamos comprar?</label>
+                        <div class="shop-store-selector" id="shopStoreSelector"></div>
                         <div class="form-group">
                             <label for="shoppingNewListName">Nome da lista</label>
                             <input type="text" id="shoppingNewListName" placeholder="Ex: Compras da semana" maxlength="60">

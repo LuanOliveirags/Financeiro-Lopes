@@ -8,6 +8,13 @@ import { saveDataToStorage, saveToFirebase } from './data.js';
 import { updateDashboard } from './dashboard.js';
 import { updateTransactionHistory } from './transactions.js';
 
+// ===== MERCADOS =====
+const STORES = {
+  ayumi:  { name: 'Ayumi',  label: 'Ayumi Supermercados',  img: 'img/ayumi.png',  color: '#1a56db', bg: '#1a56db' },
+  assai:  { name: 'Assaí',  label: 'Assaí Atacadista',     img: 'img/Assai.png',  color: '#e63312', bg: '#f59e0b' },
+  outro:  { name: 'Outro',  label: 'Outro mercado',         img: null,             color: '#6B7280', bg: '#6B7280' }
+};
+
 // ===== CATEGORIAS DE COMPRAS =====
 const SHOPPING_CATEGORIES = {
   frutas:     { label: 'Frutas & Verduras', icon: 'fa-apple-whole',        color: '#06D6A0' },
@@ -142,12 +149,20 @@ function renderShoppingLists() {
       <div class="shop-empty">
         <div class="shop-empty-icon"><i class="fa-solid fa-cart-shopping"></i></div>
         <h3>Nenhuma lista ainda</h3>
-        <p>Crie sua primeira lista de compras!</p>
-        <button class="shop-empty-btn" id="shopEmptyNewBtn">
-          <i class="fa-solid fa-plus"></i> Nova Lista
-        </button>
+        <p>Onde vamos fazer compras hoje?</p>
+        <div class="shop-store-picker-inline">
+          ${Object.entries(STORES).map(([key, s]) => `
+            <button class="shop-store-pick" data-store="${key}">
+              ${s.img
+                ? `<img src="${s.img}" alt="${esc(s.name)}" class="shop-store-logo-pick">`
+                : `<div class="shop-store-icon-pick"><i class="fa-solid fa-store"></i></div>`}
+              <span>${esc(s.name)}</span>
+            </button>`).join('')}
+        </div>
       </div>`;
-    document.getElementById('shopEmptyNewBtn')?.addEventListener('click', createNewList);
+    body.querySelectorAll('.shop-store-pick').forEach(btn =>
+      btn.addEventListener('click', () => createNewList(btn.dataset.store))
+    );
     return;
   }
 
@@ -189,6 +204,7 @@ function renderListCard(list) {
   const isCompleted = list.status === 'completed';
   const date = new Date(list.createdAt);
   const dateStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+  const store = STORES[list.store] || STORES.outro;
 
   const categories = [...new Set(list.items.map(i => i.category))];
   const catIcons = categories.slice(0, 4).map(cat => {
@@ -199,9 +215,14 @@ function renderListCard(list) {
   const estimatedTotal = list.items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0);
   const displayTotal = isCompleted && list.totalSpent ? list.totalSpent : estimatedTotal;
 
+  const storeBadge = store.img
+    ? `<img src="${store.img}" alt="${esc(store.name)}" class="shop-card-store-logo">`
+    : `<span class="shop-card-store-icon"><i class="fa-solid fa-store"></i></span>`;
+
   return `
     <div class="shop-list-card ${isCompleted ? 'completed' : ''}" data-id="${list.id}">
       <div class="shop-card-top">
+        <div class="shop-card-store-badge">${storeBadge}</div>
         <div class="shop-card-info">
           <h4 class="shop-card-name">${esc(list.name)}</h4>
           <div class="shop-card-meta">
@@ -225,11 +246,35 @@ function renderListCard(list) {
     </div>`;
 }
 
-function createNewList() {
+function createNewList(preselectedStore) {
   const modal = document.getElementById('shoppingNewListModal');
   const input = document.getElementById('shoppingNewListName');
   if (modal && input) {
     input.value = '';
+    // Render store selector
+    const storeGrid = document.getElementById('shopStoreSelector');
+    if (storeGrid) {
+      storeGrid.innerHTML = Object.entries(STORES).map(([key, s]) => `
+        <button type="button" class="shop-store-option ${key === (preselectedStore || '') ? 'active' : ''}" data-store="${key}">
+          ${s.img
+            ? `<img src="${s.img}" alt="${esc(s.name)}" class="shop-store-opt-img">`
+            : `<div class="shop-store-opt-icon"><i class="fa-solid fa-store"></i></div>`}
+          <span class="shop-store-opt-name">${esc(s.name)}</span>
+        </button>
+      `).join('');
+      storeGrid.querySelectorAll('.shop-store-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          storeGrid.querySelectorAll('.shop-store-option').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+    }
+    // Auto-fill name based on store
+    if (preselectedStore && STORES[preselectedStore]) {
+      const today = new Date();
+      const monthNames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      input.value = `${STORES[preselectedStore].name} — ${monthNames[today.getMonth()]}/${today.getFullYear()}`;
+    }
     modal.classList.add('active');
     setTimeout(() => input.focus(), 200);
   }
@@ -240,9 +285,13 @@ function confirmNewList() {
   const name = input?.value.trim();
   if (!name) { showAlert('Digite um nome para a lista.', 'warning'); return; }
 
+  const selectedStore = document.querySelector('#shopStoreSelector .shop-store-option.active');
+  const storeKey = selectedStore?.dataset.store || 'outro';
+
   const newList = {
     id: generateId(),
     name,
+    store: storeKey,
     createdAt: new Date().toISOString(),
     items: [],
     status: 'active'
@@ -264,6 +313,7 @@ function reuseList(listId) {
   const newList = {
     id: generateId(),
     name: source.name + ' (cópia)',
+    store: source.store || 'outro',
     createdAt: new Date().toISOString(),
     items: source.items.map(item => ({
       ...item,
@@ -292,6 +342,17 @@ function renderListDetail() {
 
   const titleEl = document.getElementById('shoppingDetailTitle');
   if (titleEl) titleEl.textContent = list.name;
+
+  // Store header bar
+  const store = STORES[list.store] || STORES.outro;
+  const storeHeader = document.getElementById('shoppingDetailStoreBar');
+  if (storeHeader) {
+    storeHeader.style.display = 'flex';
+    storeHeader.innerHTML = store.img
+      ? `<img src="${store.img}" alt="${esc(store.name)}" class="shop-detail-store-logo"><span class="shop-detail-store-name">${esc(store.label)}</span>`
+      : `<i class="fa-solid fa-store shop-detail-store-icon"></i><span class="shop-detail-store-name">${esc(store.label)}</span>`;
+    storeHeader.style.setProperty('--store-accent', store.color);
+  }
 
   const body = document.getElementById('shoppingDetailBody');
   if (!body) return;
@@ -605,12 +666,18 @@ function completeList() {
   const estimatedTotal = list.items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0);
 
   // Build checkout summary
+  const store = STORES[list.store] || STORES.outro;
+  const storeBrand = store.img
+    ? `<div class="shop-checkout-store"><img src="${store.img}" alt="${esc(store.name)}" class="shop-checkout-store-logo"><span>${esc(store.label)}</span></div>`
+    : `<div class="shop-checkout-store"><i class="fa-solid fa-store"></i><span>${esc(store.label)}</span></div>`;
+
   const summaryEl = document.getElementById('shopCheckoutSummary');
   if (summaryEl) {
     summaryEl.innerHTML = `
+      ${storeBrand}
       <div class="shop-checkout-info">
         <div class="shop-checkout-info-row">
-          <span><i class="fa-solid fa-basket-shopping"></i> ${list.name}</span>
+          <span><i class="fa-solid fa-basket-shopping"></i> ${esc(list.name)}</span>
           <span class="shop-checkout-items">${checked}/${total} pegos</span>
         </div>
         ${estimatedTotal > 0 ? `<div class="shop-checkout-info-row">
@@ -667,6 +734,8 @@ function confirmCheckout() {
     const today = new Date();
     const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
+    const store = STORES[list.store] || STORES.outro;
+
     const transaction = {
       id: generateId(),
       type: 'saida',
@@ -674,7 +743,7 @@ function confirmCheckout() {
       category,
       responsible: responsible || 'Família',
       date: dateStr,
-      description: `🛒 ${description}`,
+      description: `🛒 ${description} — ${store.name}`,
       familyId,
       createdAt: new Date().toISOString()
     };

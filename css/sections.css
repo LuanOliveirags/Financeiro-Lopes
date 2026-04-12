@@ -2041,6 +2041,185 @@
   box-shadow: 0 10px 30px rgba(6,214,160,0.4);
 }
 
+/* ─── Store Selector (New List Modal) ─── */
+.shop-modal-label {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: var(--fw-semi);
+  margin-bottom: 10px;
+  display: block;
+}
+.shop-store-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.shop-store-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  border-radius: var(--r-lg);
+  border: 2px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.shop-store-option:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+.shop-store-option.active {
+  border-color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.06);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
+}
+.shop-store-opt-img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: var(--r-md);
+}
+.shop-store-opt-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-md);
+  background: var(--bg-card-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: var(--text-muted);
+}
+.shop-store-opt-name {
+  font-size: 0.78rem;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+}
+
+/* ─── Store Badge on List Cards ─── */
+.shop-card-store-badge {
+  flex-shrink: 0;
+}
+.shop-card-store-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  border-radius: var(--r-md);
+  background: var(--bg-card-alt);
+  padding: 3px;
+  box-shadow: var(--shadow-xs);
+}
+.shop-card-store-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--r-md);
+  background: var(--bg-card-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+
+/* ─── Store Bar (Detail Header) ─── */
+.shop-detail-store-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--store-accent, var(--primary)) 10%, transparent), transparent);
+  border-bottom: 2px solid color-mix(in srgb, var(--store-accent, var(--primary)) 25%, transparent);
+}
+.shop-detail-store-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: var(--r-sm);
+}
+.shop-detail-store-icon {
+  font-size: 1.1rem;
+  color: var(--store-accent, var(--text-muted));
+}
+.shop-detail-store-name {
+  font-size: 0.82rem;
+  font-weight: var(--fw-semi);
+  color: var(--store-accent, var(--text-secondary));
+}
+
+/* ─── Store Picker Inline (Empty State) ─── */
+.shop-store-picker-inline {
+  display: flex;
+  gap: 14px;
+  margin-top: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.shop-store-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-radius: var(--r-lg);
+  border: 2px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.shop-store-pick:hover {
+  border-color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+.shop-store-logo-pick {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: var(--r-md);
+}
+.shop-store-icon-pick {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-md);
+  background: var(--bg-card-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: var(--text-muted);
+}
+.shop-store-pick span {
+  font-size: 0.82rem;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+}
+
+/* ─── Store in Checkout Modal ─── */
+.shop-checkout-store {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: var(--bg-card-alt);
+  border-radius: var(--r-md);
+}
+.shop-checkout-store-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: var(--r-sm);
+}
+.shop-checkout-store span {
+  font-weight: var(--fw-semi);
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
 /* ─── Mobile: always show delete button (no hover on touch) ─── */
 @media (hover: none) {
   .shop-item-delete { opacity: 0.5; }
