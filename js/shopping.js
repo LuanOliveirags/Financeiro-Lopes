@@ -920,4 +920,87 @@ export function setupShoppingListeners() {
   document.getElementById('shoppingPanel')?.addEventListener('click', (e) => {
     if (e.target.id === 'shoppingPanel') closeShoppingPanel();
   });
+
+  // Swipe right to go back (mobile)
+  setupSwipeBack();
+}
+
+// ===== SWIPE BACK (MOBILE) =====
+function setupSwipeBack() {
+  const panel = document.getElementById('shoppingPanel');
+  if (!panel) return;
+
+  let startX = 0, startY = 0, tracking = false;
+  const THRESHOLD = 80;
+  const inner = panel.querySelector('.shopping-panel-inner');
+
+  panel.addEventListener('touchstart', (e) => {
+    // Don't hijack swipe if touching input/select or horizontal-scroll containers
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    // Ignore if a modal is open
+    if (panel.querySelector('.modal.active')) return;
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    tracking = true;
+  }, { passive: true });
+
+  panel.addEventListener('touchmove', (e) => {
+    if (!tracking) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    // Cancel if scrolling vertically
+    if (Math.abs(dy) > Math.abs(dx)) { tracking = false; return; }
+    // Visual feedback: slight translate on swipe right
+    if (dx > 20 && inner) {
+      const progress = Math.min(dx / 300, 1);
+      inner.style.transform = `translateX(${dx * 0.3}px)`;
+      inner.style.opacity = 1 - progress * 0.2;
+    }
+  }, { passive: true });
+
+  panel.addEventListener('touchend', (e) => {
+    if (!tracking) { resetTransform(); return; }
+    tracking = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    if (dx > THRESHOLD) {
+      // Swipe right detected — go back
+      if (shoppingView === 'detail') {
+        animateSwipeOut(() => {
+          shoppingView = 'lists';
+          renderShoppingView();
+          resetTransform();
+        });
+      } else {
+        animateSwipeOut(() => {
+          closeShoppingPanel();
+          resetTransform();
+        });
+      }
+    } else {
+      resetTransform();
+    }
+  }, { passive: true });
+
+  panel.addEventListener('touchcancel', () => { tracking = false; resetTransform(); }, { passive: true });
+
+  function resetTransform() {
+    if (!inner) return;
+    inner.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+    inner.style.transform = '';
+    inner.style.opacity = '';
+    setTimeout(() => { inner.style.transition = ''; }, 260);
+  }
+
+  function animateSwipeOut(cb) {
+    if (!inner) { cb(); return; }
+    inner.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+    inner.style.transform = 'translateX(100%)';
+    inner.style.opacity = '0';
+    setTimeout(() => {
+      cb();
+      inner.style.transition = '';
+    }, 260);
+  }
 }

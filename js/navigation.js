@@ -417,6 +417,7 @@ export function setupEventListeners() {
   setupShoppingListeners();
   setupDebtFilterListeners();
   setupChoresListeners();
+  setupTabSwipe();
 
   // Salary month filter
   const salaryMonthFilter = document.getElementById('salaryMonthFilter');
@@ -437,6 +438,44 @@ export function setupEventListeners() {
       updateCharts(monthTransactions, monthDebts);
     }
   });
+}
+
+// ===== SWIPE BETWEEN TABS (MOBILE) =====
+function setupTabSwipe() {
+  const main = document.querySelector('main.main-content');
+  if (!main) return;
+  const TABS = ['dashboard', 'transactions', 'debts', 'salaries'];
+  let startX = 0, startY = 0, tracking = false;
+  const THRESHOLD = 70;
+
+  main.addEventListener('touchstart', (e) => {
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'CANVAS') return;
+    // Don't swipe if shopping panel or any modal is open
+    if (document.querySelector('#shoppingPanel.active') || document.querySelector('.modal.active')) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  main.addEventListener('touchmove', (e) => {
+    if (!tracking) return;
+    if (Math.abs(e.touches[0].clientY - startY) > Math.abs(e.touches[0].clientX - startX)) {
+      tracking = false;
+    }
+  }, { passive: true });
+
+  main.addEventListener('touchend', (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) < THRESHOLD) return;
+    const activeTab = document.querySelector('.tab-content.active')?.id;
+    const idx = TABS.indexOf(activeTab);
+    if (idx === -1) return;
+    if (dx > 0 && idx > 0) switchTab(TABS[idx - 1]);         // swipe right → prev tab
+    else if (dx < 0 && idx < TABS.length - 1) switchTab(TABS[idx + 1]); // swipe left → next tab
+  }, { passive: true });
 }
 
 // Globals para inline handlers
