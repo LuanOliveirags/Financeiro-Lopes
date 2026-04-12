@@ -1,5 +1,5 @@
 // Service Worker para PWA - Caching e Offline Support
-const CACHE_NAME = 'financeiro-lopes-v3';
+const CACHE_NAME = 'financeiro-lopes-v4';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -21,6 +21,7 @@ const URLS_TO_CACHE = [
   './js/dashboard.js',
   './js/navigation.js',
   './js/chores.js',
+  './js/shopping.js',
   './manifest.json'
 ];
 
