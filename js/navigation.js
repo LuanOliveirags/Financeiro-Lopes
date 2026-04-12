@@ -158,6 +158,7 @@ export function switchTab(tabName) {
   else if (tabName === 'transactions') { initWeekScroller(); updateTransactionHistory(); }
   else if (tabName === 'debts') { updateDebtsList(); }
   else if (tabName === 'salaries') { updateSalaryDisplay(); }
+  else if (tabName === 'shopping') { openShoppingPanel(); }
   else if (tabName === 'chores') { openChoresTab(); }
 }
 
@@ -181,7 +182,7 @@ function handleQuickAction(action) {
     switchTab('salaries');
     setTimeout(() => document.getElementById('salaryModal').classList.add('active'), 300);
   } else if (action === 'shopping') {
-    openShoppingPanel();
+    switchTab('shopping');
   } else if (action === 'settings') {
     switchTab('settings');
   } else if (action === 'chores') {
@@ -444,15 +445,15 @@ export function setupEventListeners() {
 function setupTabSwipe() {
   const main = document.querySelector('main.main-content');
   if (!main) return;
-  const TABS = ['dashboard', 'transactions', 'debts', 'salaries'];
+  const TABS = ['dashboard', 'transactions', 'debts', 'shopping', 'salaries'];
   let startX = 0, startY = 0, tracking = false;
   const THRESHOLD = 70;
 
   main.addEventListener('touchstart', (e) => {
     const tag = e.target.tagName;
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'CANVAS') return;
-    // Don't swipe if shopping panel or any modal is open
-    if (document.querySelector('#shoppingPanel.active') || document.querySelector('.modal.active')) return;
+    // Don't swipe if any modal is open
+    if (document.querySelector('.modal.active')) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     tracking = true;
