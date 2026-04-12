@@ -68,6 +68,7 @@ let shoppingLists = [];
 let activeListId = null;
 let shoppingView = 'lists'; // 'lists' | 'detail'
 let editingItemId = null;
+let quickAddCollapsed = localStorage.getItem('shop_quick_collapsed') === 'true';
 
 // ===== PERSISTÊNCIA =====
 function getStorageKey() {
@@ -298,43 +299,55 @@ function renderListDetail() {
   const isCompleted = list.status === 'completed';
 
   // Progress + Stats
+  const pctChecked = list.items.filter(i => i.checked).reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0);
+
   let html = `
     <div class="shop-detail-stats">
       <div class="shop-progress-bar-wrap">
         <div class="shop-progress-bar">
-          <div class="shop-progress-fill" style="width:${pct}%"></div>
+          <div class="shop-progress-fill ${pct === 100 ? 'complete' : ''}" style="width:${pct}%"></div>
         </div>
-        <span class="shop-progress-label">${checked} de ${total} itens</span>
+        <span class="shop-progress-label">${checked}/${total}</span>
       </div>
       <div class="shop-stats-row">
         <div class="shop-stat">
+          <div class="shop-stat-icon" style="background:rgba(var(--primary-rgb),0.12)"><i class="fa-solid fa-list" style="color:var(--primary)"></i></div>
           <span class="shop-stat-val">${total}</span>
           <span class="shop-stat-label">Total</span>
         </div>
         <div class="shop-stat">
+          <div class="shop-stat-icon" style="background:rgba(6,214,160,0.12)"><i class="fa-solid fa-check" style="color:var(--success)"></i></div>
           <span class="shop-stat-val shop-stat-success">${checked}</span>
           <span class="shop-stat-label">Pegos</span>
         </div>
         <div class="shop-stat">
+          <div class="shop-stat-icon" style="background:rgba(248,150,30,0.12)"><i class="fa-solid fa-clock" style="color:var(--warning)"></i></div>
           <span class="shop-stat-val shop-stat-warning">${total - checked}</span>
           <span class="shop-stat-label">Faltam</span>
         </div>
-        ${estimatedTotal > 0 ? `
         <div class="shop-stat">
-          <span class="shop-stat-val shop-stat-price">${formatCurrency(estimatedTotal)}</span>
+          <div class="shop-stat-icon" style="background:rgba(var(--primary-rgb),0.12)"><i class="fa-solid fa-tag" style="color:var(--primary)"></i></div>
+          <span class="shop-stat-val shop-stat-price">${estimatedTotal > 0 ? formatCurrency(estimatedTotal) : '—'}</span>
           <span class="shop-stat-label">Estimado</span>
-        </div>` : ''}
+        </div>
       </div>
     </div>`;
 
-  // Quick-add chips
+  // Quick-add chips (collapsible)
   if (!isCompleted) {
     const existingNames = new Set(list.items.map(i => i.name.toLowerCase()));
-    const suggestions = QUICK_ITEMS.filter(q => !existingNames.has(q.name.toLowerCase())).slice(0, 20);
+    const suggestions = QUICK_ITEMS.filter(q => !existingNames.has(q.name.toLowerCase())).slice(0, 24);
     if (suggestions.length > 0) {
       html += `<div class="shop-quick-wrap">
-        <p class="shop-quick-label"><i class="fa-solid fa-bolt"></i> Adicionar rápido</p>
-        <div class="shop-quick-chips">${suggestions.map(s => {
+        <button class="shop-quick-toggle" id="shopQuickToggle">
+          <div class="shop-quick-toggle-left">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Adicionar rápido</span>
+            <span class="shop-quick-badge">${suggestions.length}</span>
+          </div>
+          <i class="fa-solid fa-chevron-down shop-quick-chevron ${quickAddCollapsed ? '' : 'open'}"></i>
+        </button>
+        <div class="shop-quick-chips ${quickAddCollapsed ? 'collapsed' : ''}" id="shopQuickChips">${suggestions.map(s => {
           const cat = SHOPPING_CATEGORIES[s.category] || SHOPPING_CATEGORIES.outros;
           return `<button class="shop-quick-chip" data-name="${esc(s.name)}" data-cat="${s.category}" data-unit="${s.unit}">
             <i class="fa-solid ${cat.icon}" style="color:${cat.color}"></i> ${esc(s.name)}
@@ -408,9 +421,20 @@ function renderListDetail() {
   if (addBar) addBar.style.display = isCompleted ? 'none' : '';
 
   // Event listeners
+  // Quick toggle
+  document.getElementById('shopQuickToggle')?.addEventListener('click', () => {
+    quickAddCollapsed = !quickAddCollapsed;
+    localStorage.setItem('shop_quick_collapsed', quickAddCollapsed);
+    const chips = document.getElementById('shopQuickChips');
+    const chevron = document.querySelector('.shop-quick-chevron');
+    if (chips) chips.classList.toggle('collapsed', quickAddCollapsed);
+    if (chevron) chevron.classList.toggle('open', !quickAddCollapsed);
+  });
+
   body.querySelectorAll('.shop-quick-chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      addItemToList(chip.dataset.name, chip.dataset.cat, chip.dataset.unit);
+      chip.classList.add('adding');
+      setTimeout(() => addItemToList(chip.dataset.name, chip.dataset.cat, chip.dataset.unit), 150);
     });
   });
 
@@ -437,19 +461,24 @@ function renderListDetail() {
 
 function renderShopItem(item, isCompleted) {
   const cat = SHOPPING_CATEGORIES[item.category] || SHOPPING_CATEGORIES.outros;
-  const qtyLabel = item.quantity > 1 ? `${item.quantity} ${item.unit || 'un'}` : (item.unit ? `1 ${item.unit}` : '');
+  const qty = item.quantity || 1;
+  const unitLabel = item.unit || 'un';
+  const totalPrice = item.price ? item.price * qty : null;
 
   return `
     <li class="shop-item ${item.checked ? 'checked' : ''}" data-id="${item.id}">
       <button class="shop-item-check" ${isCompleted ? 'disabled' : ''}>
         <i class="fa-solid ${item.checked ? 'fa-circle-check' : 'fa-circle'}"></i>
       </button>
+      <span class="shop-item-dot" style="background:${cat.color}"></span>
       <div class="shop-item-info">
         <span class="shop-item-name">${esc(item.name)}</span>
-        ${qtyLabel ? `<span class="shop-item-qty">${qtyLabel}</span>` : ''}
+        <span class="shop-item-meta">
+          <span class="shop-item-qty">${qty} ${unitLabel}</span>
+          ${totalPrice ? `<span class="shop-item-sep">·</span><span class="shop-item-price">${formatCurrency(totalPrice)}</span>` : ''}
+        </span>
       </div>
-      ${item.price ? `<span class="shop-item-price">${formatCurrency(item.price * (item.quantity || 1))}</span>` : ''}
-      ${!isCompleted ? `<button class="shop-item-delete"><i class="fa-solid fa-xmark"></i></button>` : ''}
+      ${!isCompleted ? `<button class="shop-item-delete" title="Remover"><i class="fa-solid fa-trash-can"></i></button>` : ''}
     </li>`;
 }
 
