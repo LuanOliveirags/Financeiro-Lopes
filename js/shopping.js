@@ -709,6 +709,19 @@ function completeList() {
     }
   }
 
+  // Reset payment method
+  document.getElementById('shopPaymentMethod').value = 'dinheiro';
+  document.querySelectorAll('#shopPaymentMethods .shop-pay-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('#shopPaymentMethods .shop-pay-btn[data-method="dinheiro"]')?.classList.add('active');
+  const vrHint = document.getElementById('shopPayVrHint');
+  if (vrHint) vrHint.style.display = 'none';
+  const regToggle = document.getElementById('shopCheckoutRegister');
+  if (regToggle) {
+    regToggle.checked = true;
+    const toggleWrap = regToggle.closest('.shop-checkout-toggle');
+    if (toggleWrap) toggleWrap.style.display = '';
+  }
+
   // Show checkout modal
   document.getElementById('shoppingCheckoutModal').classList.add('active');
 }
@@ -731,10 +744,12 @@ function confirmCheckout() {
     const responsible = document.getElementById('shopCheckoutResponsible')?.value;
     const category = document.getElementById('shopCheckoutCategory')?.value || 'alimentacao';
     const description = document.getElementById('shopCheckoutDesc')?.value?.trim() || list.name;
+    const paymentMethod = document.getElementById('shopPaymentMethod')?.value || 'dinheiro';
     const today = new Date();
     const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     const store = STORES[list.store] || STORES.outro;
+    const payLabels = { dinheiro: 'Dinheiro', cartao: 'Cartão', pix: 'Pix', vr: 'VR/VA' };
 
     const transaction = {
       id: generateId(),
@@ -743,7 +758,8 @@ function confirmCheckout() {
       category,
       responsible: responsible || 'Família',
       date: dateStr,
-      description: `🛒 ${description} — ${store.name}`,
+      description: `🛒 ${description} — ${store.name} (${payLabels[paymentMethod] || paymentMethod})`,
+      paymentMethod,
       familyId,
       createdAt: new Date().toISOString()
     };
@@ -866,6 +882,25 @@ export function setupShoppingListeners() {
   document.getElementById('shopCheckoutForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     confirmCheckout();
+  });
+
+  // Payment method toggle
+  document.querySelectorAll('#shopPaymentMethods .shop-pay-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#shopPaymentMethods .shop-pay-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const method = btn.dataset.method;
+      document.getElementById('shopPaymentMethod').value = method;
+      const hint = document.getElementById('shopPayVrHint');
+      if (hint) hint.style.display = method === 'vr' ? '' : 'none';
+      // Hide "register as expense" toggle when VR (always registers, but separate)
+      const regToggle = document.getElementById('shopCheckoutRegister');
+      if (regToggle) {
+        const toggleWrap = regToggle.closest('.shop-checkout-toggle');
+        if (toggleWrap) toggleWrap.style.display = method === 'vr' ? 'none' : '';
+        if (method === 'vr') regToggle.checked = true;
+      }
+    });
   });
 
   // Close modals inside shopping

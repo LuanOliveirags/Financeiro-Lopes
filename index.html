@@ -346,6 +346,30 @@
                     </div>
                 </div>
 
+                <!-- VR/VA Dashboard Card -->
+                <div class="vr-dashboard-card" id="vrDashboardCard">
+                    <div class="vr-dash-header">
+                        <div class="vr-dash-icon"><i class="fa-solid fa-utensils"></i></div>
+                        <h3>VR / VA</h3>
+                    </div>
+                    <div class="vr-dash-balance">
+                        <span class="vr-dash-balance-label">Saldo VR</span>
+                        <span class="vr-dash-balance-val" id="vrBalance">R$ 0,00</span>
+                    </div>
+                    <div class="vr-dash-grid">
+                        <div class="vr-dash-item vr-income">
+                            <i class="fa-solid fa-arrow-down"></i>
+                            <span class="vr-dash-item-label">Recebido</span>
+                            <span class="vr-dash-item-val" id="vrIncome">R$ 0,00</span>
+                        </div>
+                        <div class="vr-dash-item vr-expense">
+                            <i class="fa-solid fa-arrow-up"></i>
+                            <span class="vr-dash-item-label">Gasto</span>
+                            <span class="vr-dash-item-val" id="vrExpense">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Charts Section --> <!-- Gráficos de categorias, responsáveis e salários -->
                 <div class="charts-grid">
                     <div class="chart-card">
@@ -751,6 +775,18 @@
                             <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                         <form id="salaryForm">
+                            <div class="form-group">
+                                <label>Tipo de entrada</label>
+                                <div class="salary-type-toggle">
+                                    <button type="button" class="salary-type-btn active" data-type="salario" id="btnSalario">
+                                        <i class="fa-solid fa-sack-dollar"></i> Salário
+                                    </button>
+                                    <button type="button" class="salary-type-btn" data-type="vr" id="btnVR">
+                                        <i class="fa-solid fa-utensils"></i> VR / VA
+                                    </button>
+                                </div>
+                                <input type="hidden" id="salaryType" value="salario">
+                            </div>
                             <div class="form-group">
                                 <label for="salaryPerson">Pessoa</label>
                                 <select id="salaryPerson" required>
@@ -1349,6 +1385,19 @@
                             <div class="form-group">
                                 <label for="shopCheckoutTotal">Valor total gasto (R$)</label>
                                 <input type="number" id="shopCheckoutTotal" step="0.01" min="0" placeholder="0,00" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Forma de pagamento</label>
+                                <div class="shop-payment-methods" id="shopPaymentMethods">
+                                    <button type="button" class="shop-pay-btn active" data-method="dinheiro"><i class="fa-solid fa-money-bill"></i> Dinheiro</button>
+                                    <button type="button" class="shop-pay-btn" data-method="cartao"><i class="fa-solid fa-credit-card"></i> Cartão</button>
+                                    <button type="button" class="shop-pay-btn" data-method="pix"><i class="fa-brands fa-pix"></i> Pix</button>
+                                    <button type="button" class="shop-pay-btn shop-pay-vr" data-method="vr"><i class="fa-solid fa-utensils"></i> VR/VA</button>
+                                </div>
+                                <input type="hidden" id="shopPaymentMethod" value="dinheiro">
+                                <p class="shop-pay-vr-hint" id="shopPayVrHint" style="display:none">
+                                    <i class="fa-solid fa-circle-info"></i> Pagamento com VR/VA não será contabilizado nos gastos gerais
+                                </p>
                             </div>
                             <div class="form-group">
                                 <label for="shopCheckoutResponsible">Quem pagou?</label>

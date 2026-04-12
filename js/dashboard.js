@@ -34,9 +34,15 @@ export function updateDashboard() {
 
   const monthDebts = state.debts.filter(d => d.status === 'active');
 
-  const totalExpenses = monthTransactions.filter(t => t.type === 'saida').reduce((sum, t) => sum + t.amount, 0);
-  const totalTransactionIncome = monthTransactions.filter(t => t.type === 'entrada').reduce((sum, t) => sum + t.amount, 0);
-  const totalSalaryIncome = monthSalaries.reduce((sum, s) => sum + s.amount, 0);
+  // Separate VR/VA from general
+  const generalTransactions = monthTransactions.filter(t => t.paymentMethod !== 'vr');
+  const vrTransactions = monthTransactions.filter(t => t.paymentMethod === 'vr');
+  const generalSalaries = monthSalaries.filter(s => s.salaryType !== 'vr');
+  const vrSalaries = monthSalaries.filter(s => s.salaryType === 'vr');
+
+  const totalExpenses = generalTransactions.filter(t => t.type === 'saida').reduce((sum, t) => sum + t.amount, 0);
+  const totalTransactionIncome = generalTransactions.filter(t => t.type === 'entrada').reduce((sum, t) => sum + t.amount, 0);
+  const totalSalaryIncome = generalSalaries.reduce((sum, s) => sum + s.amount, 0);
   const totalIncome = totalTransactionIncome + totalSalaryIncome;
   const totalBalance = totalIncome - totalExpenses;
   const totalDebt = monthDebts.reduce((sum, d) => sum + d.amount, 0);
@@ -83,7 +89,17 @@ export function updateDashboard() {
   el('totalDeductionsDash', formatCurrency(totalMonthDeductions));
   el('totalIncomeDash', formatCurrency(totalIncome));
 
-  updateCharts(monthTransactions, monthDebts);
+  // VR/VA Dashboard
+  const vrIncomeTotal = vrSalaries.reduce((sum, s) => sum + s.amount, 0);
+  const vrExpenseTotal = vrTransactions.filter(t => t.type === 'saida').reduce((sum, t) => sum + t.amount, 0);
+  const vrBalanceVal = vrIncomeTotal - vrExpenseTotal;
+  el('vrIncome', formatCurrency(vrIncomeTotal));
+  el('vrExpense', formatCurrency(vrExpenseTotal));
+  el('vrBalance', formatCurrency(vrBalanceVal));
+  const vrCard = document.getElementById('vrDashboardCard');
+  if (vrCard) vrCard.style.display = (vrIncomeTotal > 0 || vrExpenseTotal > 0) ? '' : 'none';
+
+  updateCharts(generalTransactions, monthDebts);
   updateRecentTransactions(monthTransactions);
 }
 

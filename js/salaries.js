@@ -27,6 +27,7 @@ export function addSalary(e) {
     person: document.getElementById('salaryPerson').value,
     amount: netAmount,
     grossAmount,
+    salaryType: document.getElementById('salaryType')?.value || 'salario',
     additions: tempAdditions.length > 0 ? [...tempAdditions] : [],
     totalAdditions: totalAdditionsVal,
     deductions: tempDeductions.length > 0 ? [...tempDeductions] : [],
@@ -49,6 +50,10 @@ export function addSalary(e) {
   tempAdditions = [];
   updateDeductionsUI();
   updateAdditionsUI();
+  // Reset salary type toggle
+  document.getElementById('salaryType').value = 'salario';
+  document.querySelectorAll('.salary-type-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btnSalario')?.classList.add('active');
   document.getElementById('salaryModal').classList.remove('active');
   updateSalaryDisplay();
   updateDashboard();
@@ -141,6 +146,15 @@ function updateNetSalaryPreview() {
 
 // ===== SETUP DEDUCTION LISTENERS =====
 export function setupDeductionListeners() {
+  // Salary type toggle (Salário / VR)
+  document.querySelectorAll('.salary-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.salary-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('salaryType').value = btn.dataset.type;
+    });
+  });
+
   const toggleAddBtn = document.getElementById('toggleAdditionsBtn');
   const addBody = document.getElementById('additionsBody');
   if (toggleAddBtn && addBody) {
@@ -250,11 +264,16 @@ export function updateSalaryHistory() {
     const additionsHtml = hasAdditions ? `<div class="salary-deductions-detail">${s.additions.map(a => `<span class="addition-tag">↑ ${esc(a.name)}: ${formatCurrency(a.value)}</span>`).join('')}</div>` : '';
     const deductionsHtml = hasDeductions ? `<div class="salary-deductions-detail">${s.deductions.map(d => `<span class="deduction-tag">↓ ${esc(d.name)}: ${formatCurrency(d.value)}</span>`).join('')}</div>` : '';
 
+    const isVR = s.salaryType === 'vr';
+    const typeIcon = isVR ? '🍽️' : (personIcon[s.person] || '💰');
+    const typeBadge = isVR ? '<span class="vr-badge">VR/VA</span>' : '';
+    const defaultDesc = isVR ? `VR/VA de ${esc(s.person)}` : `Salário de ${esc(s.person)}`;
+
     return `
     <div class="transaction-item">
-      <div class="trans-icon-wrap cat-entrada">${personIcon[s.person] || '💰'}</div>
+      <div class="trans-icon-wrap ${isVR ? 'cat-vr' : 'cat-entrada'}">${typeIcon}</div>
       <div class="trans-info">
-        <div class="trans-name">${esc(s.description) || `Salário de ${esc(s.person)}`}</div>
+        <div class="trans-name">${esc(s.description) || defaultDesc} ${typeBadge}</div>
         <div class="trans-meta">
           <span>${formatDate(s.date)}</span><span>·</span><span>${esc(s.person)}</span>
           ${grossLabel ? `<span>·</span><span>${grossLabel}</span>` : ''}

@@ -70,11 +70,14 @@ export function renderTransactionItem(t) {
   const amtClass = isIn ? 'entrada' : 'saida';
   const catLabel = isIn ? 'Receita' : cat.label;
 
+  const isVR = t.paymentMethod === 'vr';
+  const vrBadge = isVR ? ' <span class="vr-badge">VR/VA</span>' : '';
+
   return `
     <div class="transaction-item">
-      <div class="trans-icon-wrap ${iconCss}">${icon}</div>
+      <div class="trans-icon-wrap ${isVR ? 'cat-vr' : iconCss}">${isVR ? '🍽️' : icon}</div>
       <div class="trans-info">
-        <div class="trans-name">${esc(t.description) || catLabel}</div>
+        <div class="trans-name">${esc(t.description) || catLabel}${vrBadge}</div>
         <div class="trans-meta">
           <span>${formatDate(t.date)}</span>
           <span>·</span>
