@@ -1972,6 +1972,75 @@
   z-index: calc(var(--z-modal) + 10);
 }
 
+/* ─── Checkout Modal ─── */
+.shop-checkout-summary {
+  margin-bottom: 16px;
+}
+.shop-checkout-info {
+  background: var(--bg-card-alt);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.shop-checkout-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+.shop-checkout-info-row > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+.shop-checkout-info-row i {
+  color: var(--primary);
+}
+.shop-checkout-items {
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+}
+.shop-checkout-estimated {
+  font-weight: var(--fw-semi);
+  color: var(--primary);
+}
+.shop-checkout-toggle {
+  margin: 14px 0 18px;
+}
+.shop-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.shop-toggle-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.shop-toggle-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.shop-toggle-text i {
+  color: var(--primary);
+}
+.shop-checkout-btn {
+  background: linear-gradient(135deg, var(--success) 0%, #05b58a 100%) !important;
+  box-shadow: 0 6px 20px rgba(6,214,160,0.3);
+}
+.shop-checkout-btn:hover {
+  box-shadow: 0 10px 30px rgba(6,214,160,0.4);
+}
+
 /* ─── Mobile: always show delete button (no hover on touch) ─── */
 @media (hover: none) {
   .shop-item-delete { opacity: 0.5; }

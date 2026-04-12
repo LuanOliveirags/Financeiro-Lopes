@@ -1334,6 +1334,53 @@
                     </div>
                 </div>
 
+                <!-- CHECKOUT / FINALIZAR COMPRA MODAL -->
+                <div id="shoppingCheckoutModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i class="fa-solid fa-receipt"></i> Finalizar Compras</h3>
+                            <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="shop-checkout-summary" id="shopCheckoutSummary"></div>
+                        <form id="shopCheckoutForm">
+                            <div class="form-group">
+                                <label for="shopCheckoutTotal">Valor total gasto (R$)</label>
+                                <input type="number" id="shopCheckoutTotal" step="0.01" min="0" placeholder="0,00" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="shopCheckoutResponsible">Quem pagou?</label>
+                                <select id="shopCheckoutResponsible" required>
+                                    <!-- Populado dinamicamente -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="shopCheckoutCategory">Categoria da despesa</label>
+                                <select id="shopCheckoutCategory">
+                                    <option value="alimentacao" selected>🍽️ Alimentação</option>
+                                    <option value="moradia">🏠 Moradia</option>
+                                    <option value="utilidades">⚡ Utilidades</option>
+                                    <option value="beleza">💅 Beleza</option>
+                                    <option value="pets">🐾 Pets</option>
+                                    <option value="outros">📁 Outros</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="shopCheckoutDesc">Descrição (opcional)</label>
+                                <input type="text" id="shopCheckoutDesc" placeholder="Ex: Compras do mês" maxlength="80">
+                            </div>
+                            <div class="shop-checkout-toggle">
+                                <label class="shop-toggle-label">
+                                    <input type="checkbox" id="shopCheckoutRegister" checked>
+                                    <span class="shop-toggle-text"><i class="fa-solid fa-chart-line"></i> Registrar como despesa nos gastos</span>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn-primary shop-checkout-btn">
+                                <i class="fa-solid fa-check-double"></i> Confirmar e Finalizar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
             </div>
         </div>
 

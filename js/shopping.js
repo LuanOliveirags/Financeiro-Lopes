@@ -2,8 +2,11 @@
 // SHOPPING.JS — Lista de Compras da Casa
 // ============================================================
 
-import { getFamilyId } from './state.js';
+import { state, getFamilyId } from './state.js';
 import { generateId, esc, formatCurrency, showAlert } from './utils.js';
+import { saveDataToStorage, saveToFirebase } from './data.js';
+import { updateDashboard } from './dashboard.js';
+import { updateTransactionHistory } from './transactions.js';
 
 // ===== CATEGORIAS DE COMPRAS =====
 const SHOPPING_CATEGORIES = {
@@ -194,6 +197,7 @@ function renderListCard(list) {
   }).join('');
 
   const estimatedTotal = list.items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0);
+  const displayTotal = isCompleted && list.totalSpent ? list.totalSpent : estimatedTotal;
 
   return `
     <div class="shop-list-card ${isCompleted ? 'completed' : ''}" data-id="${list.id}">
@@ -203,7 +207,7 @@ function renderListCard(list) {
           <div class="shop-card-meta">
             <span class="shop-card-date"><i class="fa-regular fa-calendar"></i> ${dateStr}</span>
             <span class="shop-card-count"><i class="fa-solid fa-basket-shopping"></i> ${checked}/${total}</span>
-            ${estimatedTotal > 0 ? `<span class="shop-card-price">${formatCurrency(estimatedTotal)}</span>` : ''}
+            ${displayTotal > 0 ? `<span class="shop-card-price">${isCompleted ? '<i class="fa-solid fa-receipt"></i> ' : ''}${formatCurrency(displayTotal)}</span>` : ''}
           </div>
         </div>
         <div class="shop-card-progress-ring">
@@ -595,10 +599,106 @@ function deleteItem(itemId) {
 function completeList() {
   const list = getActiveList();
   if (!list) return;
+
+  const total = list.items.length;
+  const checked = list.items.filter(i => i.checked).length;
+  const estimatedTotal = list.items.reduce((sum, i) => sum + (i.price || 0) * (i.quantity || 1), 0);
+
+  // Build checkout summary
+  const summaryEl = document.getElementById('shopCheckoutSummary');
+  if (summaryEl) {
+    summaryEl.innerHTML = `
+      <div class="shop-checkout-info">
+        <div class="shop-checkout-info-row">
+          <span><i class="fa-solid fa-basket-shopping"></i> ${list.name}</span>
+          <span class="shop-checkout-items">${checked}/${total} pegos</span>
+        </div>
+        ${estimatedTotal > 0 ? `<div class="shop-checkout-info-row">
+          <span>Estimado</span>
+          <span class="shop-checkout-estimated">${formatCurrency(estimatedTotal)}</span>
+        </div>` : ''}
+      </div>`;
+  }
+
+  // Pre-fill total
+  const totalInput = document.getElementById('shopCheckoutTotal');
+  if (totalInput) totalInput.value = estimatedTotal > 0 ? estimatedTotal.toFixed(2) : '';
+
+  // Pre-fill description
+  const descInput = document.getElementById('shopCheckoutDesc');
+  if (descInput) descInput.value = list.name;
+
+  // Populate responsible select with family members
+  const responsibleSelect = document.getElementById('shopCheckoutResponsible');
+  if (responsibleSelect) {
+    const members = state.familyMembers || [];
+    const currentUser = state.currentUser;
+    if (members.length > 0) {
+      responsibleSelect.innerHTML = members.map(m =>
+        `<option value="${esc(m.fullName || m.login)}" ${m.login === currentUser?.login ? 'selected' : ''}>${esc(m.fullName || m.login)}</option>`
+      ).join('');
+    } else if (currentUser) {
+      responsibleSelect.innerHTML = `<option value="${esc(currentUser.fullName || currentUser.login)}" selected>${esc(currentUser.fullName || currentUser.login)}</option>`;
+    }
+  }
+
+  // Show checkout modal
+  document.getElementById('shoppingCheckoutModal').classList.add('active');
+}
+
+function confirmCheckout() {
+  const list = getActiveList();
+  if (!list) return;
+
+  const registerAsExpense = document.getElementById('shopCheckoutRegister')?.checked;
+  const totalValue = parseFloat(document.getElementById('shopCheckoutTotal')?.value);
+
+  // Register transaction if enabled and has value
+  if (registerAsExpense && totalValue > 0) {
+    const familyId = getFamilyId();
+    if (!familyId) {
+      showAlert('Erro: família não identificada.', 'danger');
+      return;
+    }
+
+    const responsible = document.getElementById('shopCheckoutResponsible')?.value;
+    const category = document.getElementById('shopCheckoutCategory')?.value || 'alimentacao';
+    const description = document.getElementById('shopCheckoutDesc')?.value?.trim() || list.name;
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    const transaction = {
+      id: generateId(),
+      type: 'saida',
+      amount: totalValue,
+      category,
+      responsible: responsible || 'Família',
+      date: dateStr,
+      description: `🛒 ${description}`,
+      familyId,
+      createdAt: new Date().toISOString()
+    };
+
+    state.transactions.push(transaction);
+    saveDataToStorage();
+    saveToFirebase('transactions', transaction);
+    updateDashboard();
+    updateTransactionHistory();
+  }
+
+  // Finalize list
   list.status = 'completed';
   list.completedAt = new Date().toISOString();
+  list.totalSpent = totalValue || 0;
   saveShoppingData();
-  showAlert('Compras finalizadas!', 'success');
+
+  document.getElementById('shoppingCheckoutModal').classList.remove('active');
+  showAlert(
+    registerAsExpense && totalValue > 0
+      ? `Compras finalizadas! Despesa de ${formatCurrency(totalValue)} registrada.`
+      : 'Compras finalizadas!',
+    'success'
+  );
   shoppingView = 'lists';
   renderShoppingView();
 }
@@ -691,6 +791,12 @@ export function setupShoppingListeners() {
   document.getElementById('editShopItemForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     saveEditItem();
+  });
+
+  // Checkout form
+  document.getElementById('shopCheckoutForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    confirmCheckout();
   });
 
   // Close modals inside shopping
