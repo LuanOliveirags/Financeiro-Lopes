@@ -170,7 +170,7 @@ export function renderPersonIncomeCards() {
     html += `
       <div class="person-income-card" style="background:linear-gradient(135deg, ${g1}, ${g2})">
         <div class="pic-header">
-          <div class="pic-avatar">${m.name.toLowerCase() === 'bianca' ? '<img src="img/bianca.jpeg" alt="Bianca" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : '<i class="fa-solid ' + icons[i % icons.length] + '"></i>'}</div>
+          <div class="pic-avatar">${m.name.toLowerCase().startsWith('bianca') ? '<img src="img/bianca.jpeg" alt="Bianca" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : m.name.toLowerCase().startsWith('luan') ? '<img src="img/luan.jpg" alt="Luan" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : '<i class="fa-solid ' + icons[i % icons.length] + '"></i>'}</div>
           <span class="pic-name">${m.name}</span>
         </div>
         <div class="pic-salaries">
