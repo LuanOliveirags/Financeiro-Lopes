@@ -192,6 +192,19 @@ function handleQuickAction(action) {
 
 // ===== SETUP EVENT LISTENERS =====
 export function setupEventListeners() {
+  // Toggle password visibility
+  const togglePasswordBtn = document.getElementById('togglePassword');
+  const passwordInput = document.getElementById('password');
+  if (togglePasswordBtn && passwordInput) {
+    togglePasswordBtn.addEventListener('click', () => {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      const icon = togglePasswordBtn.querySelector('i');
+      icon.classList.toggle('fa-eye', !isHidden);
+      icon.classList.toggle('fa-eye-slash', isHidden);
+    });
+  }
+
   // Avatar upload
   const avatarBtn = document.getElementById('avatarUploadBtn');
   const avatarInput = document.getElementById('avatarFileInput');
