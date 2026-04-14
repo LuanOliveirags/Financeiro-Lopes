@@ -56,7 +56,13 @@ export function showAlert(message, type = 'info') {
     <span>${message}</span>
   `;
   const main = document.querySelector('.main-content');
-  if (main) main.insertBefore(alertDiv, main.firstChild);
+  if (main) {
+    main.insertBefore(alertDiv, main.firstChild);
+    // Ambient screen flash feedback
+    if (type === 'success') { main.classList.add('feedback-success'); }
+    else if (type === 'danger') { main.classList.add('feedback-error'); }
+    setTimeout(() => main.classList.remove('feedback-success', 'feedback-error'), 900);
+  }
   setTimeout(() => {
     alertDiv.style.opacity = '0';
     setTimeout(() => alertDiv.remove(), 300);

@@ -43,3 +43,10 @@ export const BANK_IMG = {
   'Banco do Brasil': 'img/6.png',
   'Santander':       'img/7.png'
 };
+
+export const CREDITOR_IMG = {
+  'Recrearte':       'img/recrearte.jpeg',
+  'Enel':            'img/enel.png',
+  'Perua Escolar':   'img/escolar.png',
+  'Condomínio':      'img/condominio.png'
+};

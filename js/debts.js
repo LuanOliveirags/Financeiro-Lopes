@@ -2,7 +2,7 @@
 // DEBTS.JS — CRUD, UI, filtros e alertas de dívidas
 // ============================================================
 
-import { CATEGORY_MAP, BANK_IMG } from './config.js';
+import { CATEGORY_MAP, BANK_IMG, CREDITOR_IMG } from './config.js';
 import { state, getFamilyId } from './state.js';
 import { generateId, esc, formatCurrency, formatDate, toDateStr, showAlert, emptyState } from './utils.js';
 import { saveDataToStorage, saveToFirebase, deleteFromFirebase, updateInFirebase } from './data.js';
@@ -33,11 +33,14 @@ export function addDebt(e) {
   const cartaoMode = document.getElementById('cartaoMode').value;
   const usesInstallments = isFinanciamento || isEmprestimo || (isCartao && cartaoMode === 'parcelado');
 
+  const fixedSel = document.getElementById('debtFixedCreditor');
   const creditor = debtType === 'cartao'
     ? document.getElementById('debtCardIssuer').value
     : (debtType === 'emprestimo' || debtType === 'financiamento')
       ? document.getElementById('debtBankIssuer').value
-      : document.getElementById('debtCreditor').value;
+      : debtType === 'fixa' && fixedSel && fixedSel.value !== '__outro__'
+        ? fixedSel.value
+        : document.getElementById('debtCreditor').value;
   const dueDate = document.getElementById('debtDueDate').value;
   const responsible = document.getElementById('debtResponsible').value;
   const category = document.getElementById('debtCategory').value || '';
@@ -102,6 +105,7 @@ export function resetDebtModal() {
   document.getElementById('cartaoOptions').style.display = 'none';
   document.getElementById('cartaoMode').value = 'unica';
   document.getElementById('creditorTextGroup').style.display = 'block';
+  document.getElementById('creditorFixedGroup').style.display = 'none';
   document.getElementById('creditorCardGroup').style.display = 'none';
   document.getElementById('creditorBankGroup').style.display = 'none';
   document.getElementById('debtCreditor').setAttribute('required', '');
@@ -133,18 +137,37 @@ export function editDebt(id) {
 
   if (debtType === 'cartao') {
     document.getElementById('creditorTextGroup').style.display = 'none';
+    document.getElementById('creditorFixedGroup').style.display = 'none';
     document.getElementById('creditorCardGroup').style.display = 'block';
     document.getElementById('creditorBankGroup').style.display = 'none';
     document.getElementById('debtCreditor').removeAttribute('required');
     document.getElementById('debtCardIssuer').value = debt.creditor;
   } else if (debtType === 'emprestimo' || debtType === 'financiamento') {
     document.getElementById('creditorTextGroup').style.display = 'none';
+    document.getElementById('creditorFixedGroup').style.display = 'none';
     document.getElementById('creditorCardGroup').style.display = 'none';
     document.getElementById('creditorBankGroup').style.display = 'block';
     document.getElementById('debtCreditor').removeAttribute('required');
     document.getElementById('debtBankIssuer').value = debt.creditor;
+  } else if (debtType === 'fixa') {
+    const fixedSel = document.getElementById('debtFixedCreditor');
+    const isKnown = [...fixedSel.options].some(o => o.value === debt.creditor);
+    document.getElementById('creditorFixedGroup').style.display = 'block';
+    document.getElementById('creditorCardGroup').style.display = 'none';
+    document.getElementById('creditorBankGroup').style.display = 'none';
+    if (isKnown) {
+      fixedSel.value = debt.creditor;
+      document.getElementById('creditorTextGroup').style.display = 'none';
+      document.getElementById('debtCreditor').removeAttribute('required');
+    } else {
+      fixedSel.value = '__outro__';
+      document.getElementById('creditorTextGroup').style.display = 'block';
+      document.getElementById('debtCreditor').setAttribute('required', '');
+      document.getElementById('debtCreditor').value = debt.creditor;
+    }
   } else {
     document.getElementById('creditorTextGroup').style.display = 'block';
+    document.getElementById('creditorFixedGroup').style.display = 'none';
     document.getElementById('creditorCardGroup').style.display = 'none';
     document.getElementById('creditorBankGroup').style.display = 'none';
     document.getElementById('debtCreditor').setAttribute('required', '');
@@ -196,9 +219,11 @@ export function setupDebtTypeListeners() {
       const cartaoOpts = document.getElementById('cartaoOptions');
       const installFields = document.getElementById('installmentFields');
       const bankGroup = document.getElementById('creditorBankGroup');
+      const fixedGroup = document.getElementById('creditorFixedGroup');
       if (val === 'cartao') {
         cartaoOpts.style.display = 'block';
         document.getElementById('creditorTextGroup').style.display = 'none';
+        fixedGroup.style.display = 'none';
         document.getElementById('creditorCardGroup').style.display = 'block';
         bankGroup.style.display = 'none';
         document.getElementById('debtCreditor').removeAttribute('required');
@@ -207,13 +232,29 @@ export function setupDebtTypeListeners() {
       } else if (val === 'emprestimo' || val === 'financiamento') {
         cartaoOpts.style.display = 'none';
         document.getElementById('creditorTextGroup').style.display = 'none';
+        fixedGroup.style.display = 'none';
         document.getElementById('creditorCardGroup').style.display = 'none';
         bankGroup.style.display = 'block';
         document.getElementById('debtCreditor').removeAttribute('required');
         installFields.style.display = 'block';
+      } else if (val === 'fixa') {
+        cartaoOpts.style.display = 'none';
+        fixedGroup.style.display = 'block';
+        document.getElementById('creditorCardGroup').style.display = 'none';
+        bankGroup.style.display = 'none';
+        installFields.style.display = 'none';
+        const fixedSel = document.getElementById('debtFixedCreditor');
+        if (fixedSel.value === '__outro__') {
+          document.getElementById('creditorTextGroup').style.display = 'block';
+          document.getElementById('debtCreditor').setAttribute('required', '');
+        } else {
+          document.getElementById('creditorTextGroup').style.display = 'none';
+          document.getElementById('debtCreditor').removeAttribute('required');
+        }
       } else {
         cartaoOpts.style.display = 'none';
         document.getElementById('creditorTextGroup').style.display = 'block';
+        fixedGroup.style.display = 'none';
         document.getElementById('creditorCardGroup').style.display = 'none';
         bankGroup.style.display = 'none';
         document.getElementById('debtCreditor').setAttribute('required', '');
@@ -239,6 +280,23 @@ export function setupDebtTypeListeners() {
       else amountLabel.textContent = 'Valor (R$)';
     });
   });
+
+  // Listener do select de credor fixo (mostrar campo texto quando "Outro...")
+  const fixedCreditorSel = document.getElementById('debtFixedCreditor');
+  if (fixedCreditorSel) {
+    fixedCreditorSel.addEventListener('change', function() {
+      const textGroup = document.getElementById('creditorTextGroup');
+      const creditorInput = document.getElementById('debtCreditor');
+      if (this.value === '__outro__') {
+        textGroup.style.display = 'block';
+        creditorInput.setAttribute('required', '');
+        creditorInput.value = '';
+      } else {
+        textGroup.style.display = 'none';
+        creditorInput.removeAttribute('required');
+      }
+    });
+  }
 
   const amountInput = document.getElementById('debtAmount');
   const installmentsInput = document.getElementById('debtInstallments');
@@ -456,7 +514,11 @@ export function updateDebtsList() {
     else if (isCartao) { typeBadge = 'Cartão'; typeIcon = bankImg || '<i class="fa-solid fa-credit-card"></i>'; }
     else if (isEmprestimo) { typeBadge = 'Empréstimo'; typeIcon = bankImg || '<i class="fa-solid fa-hand-holding-dollar"></i>'; }
     else if (isFinanciamento) { typeBadge = 'Financiamento'; typeIcon = bankImg || '<i class="fa-solid fa-building-columns"></i>'; }
-    else if (isFixa) { typeBadge = 'Fixa'; typeIcon = '<i class="fa-solid fa-rotate"></i>'; }
+    else if (isFixa) {
+      typeBadge = 'Fixa';
+      const credImg = CREDITOR_IMG[d.creditor];
+      typeIcon = credImg ? `<img src="${credImg}" alt="${esc(d.creditor)}" class="debt-bank-logo">` : '<i class="fa-solid fa-rotate"></i>';
+    }
 
     let installmentHtml = '';
     if (hasInstallments) {
@@ -475,7 +537,7 @@ export function updateDebtsList() {
     else if (isFixa) payBtnLabel = 'Pagar mês';
 
     return `
-      <div class="debt-item ${d.status === 'paid' ? 'debt-paid' : ''} ${hasInstallments ? 'debt-financing' : ''} ${isEmprestimo ? 'debt-emprestimo' : ''} ${isCartao ? 'debt-cartao' : ''} ${isFixa && !isCartao ? 'debt-fixed' : ''}" data-debt-id="${d.id}">
+      <div class="debt-item ${d.status === 'paid' ? 'debt-paid' : ''} ${statusBadge === 'overdue' ? 'debt-overdue' : ''} ${hasInstallments ? 'debt-financing' : ''} ${isEmprestimo ? 'debt-emprestimo' : ''} ${isCartao ? 'debt-cartao' : ''} ${isFixa && !isCartao ? 'debt-fixed' : ''}" data-debt-id="${d.id}">
         <div class="debt-item-header">
           <div class="debt-type-icon ${isCartao ? 'type-cartao' : isEmprestimo ? 'type-emprestimo' : isFinanciamento ? 'type-financing' : isFixa ? 'type-fixed' : 'type-unica'}">
             ${typeIcon || '<i class="fa-solid fa-receipt"></i>'}

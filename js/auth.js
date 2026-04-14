@@ -154,16 +154,23 @@ export function renderPersonIncomeCards() {
   const container = document.querySelector('.person-cards-grid');
   if (!container) return;
   const members = state.familyMembers || [];
-  const colors = ['#4361EE', '#F72585', '#06D6A0', '#FF6B35', '#8B5CF6', '#14B8A6'];
+  const gradients = [
+    ['#1e3a8a', '#1e1b6e'],
+    ['#9d174d', '#701a75'],
+    ['#065f46', '#064e3b'],
+    ['#9a3412', '#7c2d12'],
+    ['#5b21b6', '#4c1d95'],
+    ['#0e7490', '#155e75']
+  ];
   const icons = ['fa-user-tie', 'fa-user', 'fa-user-astronaut', 'fa-user-ninja', 'fa-user-secret', 'fa-user-graduate'];
   let html = '';
   members.forEach((m, i) => {
     const slug = m.name.replace(/\s+/g, '_');
-    const color = colors[i % colors.length];
+    const [g1, g2] = gradients[i % gradients.length];
     html += `
-      <div class="person-income-card" style="border-image: linear-gradient(135deg, ${color}, ${color}88) 1;">
+      <div class="person-income-card" style="background:linear-gradient(135deg, ${g1}, ${g2})">
         <div class="pic-header">
-          <div class="pic-avatar" style="background:${color}22;color:${color}"><i class="fa-solid ${icons[i % icons.length]}"></i></div>
+          <div class="pic-avatar">${m.name.toLowerCase() === 'bianca' ? '<img src="img/bianca.jpeg" alt="Bianca" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : '<i class="fa-solid ' + icons[i % icons.length] + '"></i>'}</div>
           <span class="pic-name">${m.name}</span>
         </div>
         <div class="pic-salaries">
@@ -212,7 +219,7 @@ export function renderCardDebtCards() {
     html += `
       <div class="debt-overview-card debt-ov-cartao" data-filter="cartao-${slug}" role="button" tabindex="0">
         <div class="debt-ov-header">
-          <div class="debt-ov-icon" style="background:rgba(139,92,246,0.15)"><i class="fa-solid fa-credit-card" style="color:#8B5CF6"></i></div>
+          <div class="debt-ov-icon"><i class="fa-solid fa-credit-card"></i></div>
           <div>
             <p class="debt-ov-title">Cartão ${m.name}</p>
             <p class="debt-ov-subtitle" id="cardCount_${slug}">0 dívidas</p>
@@ -331,7 +338,8 @@ export function applyUserToUI() {
   const familyLabel = document.getElementById('settingsFamilyName');
   if (familyLabel) familyLabel.textContent = state.currentFamily ? state.currentFamily.name : 'Sem família';
 
-  applyAvatar(user.photoURL);
+  const avatarURL = user.photoURL || (user.fullName && user.fullName.toLowerCase().includes('bianca') ? 'img/bianca.jpeg' : null);
+  applyAvatar(avatarURL);
 
   const adminSection = document.getElementById('adminSection');
   if (adminSection) adminSection.style.display = isAdmin() ? 'block' : 'none';
@@ -716,7 +724,7 @@ async function handleSendResetCode() {
       userId: userData.id, code, email, expiresAt: expiresAt.toISOString(), used: false, createdAt: new Date().toISOString()
     });
     await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
-      to_email: email, to_name: userData.fullName || userData.login, reset_code: code, app_name: 'Lopes Finanças'
+      to_email: email, to_name: userData.fullName || userData.login, reset_code: code, app_name: 'Lopes - Gestão Financeira'
     }, EMAILJS_CONFIG.publicKey);
     _resetState.email = email;
     _resetState.userId = userData.id;

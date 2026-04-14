@@ -9,7 +9,7 @@ import { uploadAvatar, loginUser, registerUser, changeUserPassword, loadUsersLis
 import { addTransaction, updateTransactionHistory } from './transactions.js';
 import { addDebt, resetDebtModal, setupDebtTypeListeners, setupDebtFilterListeners, updateDebtsList } from './debts.js';
 import { addSalary, setupDeductionListeners, updateSalaryDisplay, updateSalaryHistory } from './salaries.js';
-import { updateDashboard, updateCharts } from './dashboard.js';
+import { updateDashboard, updateCharts, setupKpiClickListeners } from './dashboard.js';
 import { openChoresTab, setupChoresListeners } from './chores.js';
 import { openShoppingPanel, setupShoppingListeners } from './shopping.js';
 
@@ -274,6 +274,15 @@ export function setupEventListeners() {
       document.querySelectorAll('.type-toggle-btn').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       document.getElementById('transType').value = this.dataset.value;
+    });
+  });
+
+  // Transaction payment method toggle
+  document.querySelectorAll('#tranPaymentMethods .shop-pay-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('#tranPaymentMethods .shop-pay-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      document.getElementById('tranPaymentMethod').value = this.dataset.method;
     });
   });
 

@@ -4,7 +4,7 @@
 
 import { CATEGORY_MAP } from './config.js';
 import { state, getFamilyId } from './state.js';
-import { generateId, esc, formatCurrency, formatDate, showAlert, emptyState } from './utils.js';
+import { generateId, esc, formatCurrency, formatDate, showAlert, emptyState, toDateStr } from './utils.js';
 import { saveDataToStorage } from './data.js';
 import { saveToFirebase, deleteFromFirebase } from './data.js';
 import { updateDashboard } from './dashboard.js';
@@ -23,6 +23,7 @@ export function addTransaction(e) {
     responsible: document.getElementById('tranResponsible').value,
     date: document.getElementById('tranDate').value,
     description: document.getElementById('tranDescription').value,
+    paymentMethod: document.getElementById('tranPaymentMethod')?.value || 'dinheiro',
     familyId,
     createdAt: new Date().toISOString()
   };
@@ -38,11 +39,15 @@ export function addTransaction(e) {
   showAlert('Transação registrada!', 'success');
 
   e.target.reset();
-  const now = new Date();
-  document.getElementById('tranDate').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  document.getElementById('tranDate').value = toDateStr(new Date());
   document.getElementById('transType').value = 'saida';
   document.querySelectorAll('.type-toggle-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('btnSaida')?.classList.add('active');
+
+  // Reset payment method
+  document.getElementById('tranPaymentMethod').value = 'dinheiro';
+  document.querySelectorAll('#tranPaymentMethods .shop-pay-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('#tranPaymentMethods .shop-pay-btn[data-method="dinheiro"]')?.classList.add('active');
 
   updateDashboard();
   updateTransactionHistory();

@@ -1,5 +1,5 @@
 // Service Worker para PWA - Caching e Offline Support
-const CACHE_NAME = 'financeiro-lopes-v7';
+const CACHE_NAME = 'financeiro-lopes-v8';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -22,7 +22,10 @@ const URLS_TO_CACHE = [
   './js/navigation.js',
   './js/chores.js',
   './js/shopping.js',
-  './manifest.json'
+  './manifest.json',
+  './img/icon-any-192.png',
+  './img/icon-maskable-192.png',
+  './img/apple-touch-icon.png'
 ];
 
 // Install Event

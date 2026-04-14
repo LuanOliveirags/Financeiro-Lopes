@@ -11,6 +11,37 @@ import { updateRecentTransactions } from './transactions.js';
 // ===== DASHBOARD MODE STATE =====
 let dashboardMode = 'geral'; // 'geral' | 'vr'
 
+// ===== KPI CARD CLICK → NAVIGATE + FILTER =====
+export function setupKpiClickListeners() {
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('[data-kpi-action]');
+    if (!card) return;
+    const action = card.dataset.kpiAction;
+    const filter = card.dataset.kpiFilter;
+
+    // Navigate to the target tab
+    if (typeof window.switchTab === 'function') {
+      window.switchTab(action);
+    }
+
+    // If there's a debt filter, simulate clicking the matching filter card in debts tab
+    if (action === 'debts' && filter) {
+      setTimeout(() => {
+        // Clear any existing filter first
+        if (typeof window.clearDebtFilter === 'function') {
+          window.clearDebtFilter();
+        }
+        // Find and click the matching debt overview card or summary-mini
+        const targetCard = document.querySelector(`.debt-overview-card[data-filter="${filter}"], .summary-mini[data-filter="${filter}"]`);
+        if (targetCard) {
+          targetCard.click();
+          targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+    }
+  });
+}
+
 export function setupDashboardToggle() {
   const btnGeral = document.getElementById('btnModeGeral');
   const btnVR = document.getElementById('btnModeVR');
@@ -164,6 +195,23 @@ export function updateDashboard() {
   // Update balance label
   const balanceLabel = document.querySelector('.balance-label');
   if (balanceLabel) balanceLabel.textContent = dashboardMode === 'vr' ? 'Saldo VR / VA' : 'Saldo líquido';
+
+  // Dynamic balance pulse — card "breathes" based on financial health
+  const balanceCard = document.querySelector('.balance-card');
+  if (balanceCard) {
+    balanceCard.classList.remove('positive-pulse', 'negative-pulse');
+    const bal = dashboardMode === 'vr' ? vrBalanceVal : totalBalance;
+    if (bal > 0) balanceCard.classList.add('positive-pulse');
+    else if (bal < 0) balanceCard.classList.add('negative-pulse');
+  }
+
+  // Value flash on balance update
+  const balanceEl = document.getElementById('totalBalance');
+  if (balanceEl) {
+    balanceEl.classList.remove('value-updated');
+    void balanceEl.offsetWidth; // force reflow
+    balanceEl.classList.add('value-updated');
+  }
 }
 
 // ===== ATUALIZAR GRÁFICOS =====
@@ -173,7 +221,6 @@ export function updateCharts(transactions, debts) {
   state.charts.sparkline = createBalanceSparkline(transactions);
   state.charts.category = createCategoryChart(transactions);
   state.charts.responsible = createResponsibleChart(transactions);
-  state.charts.incomes = createIncomesChart(state.salaries);
   state.charts.debtType = createDebtTypeChart(debts);
 }
 
@@ -202,9 +249,13 @@ function createBalanceSparkline(transactions) {
   if (!cumData.some(v => v !== 0)) { ctx.style.display = 'none'; return null; }
   ctx.style.display = '';
 
+  const isVR = dashboardMode === 'vr';
+  const sparkColor = isVR ? '#689F38' : '#3D6A8E';
+  const sparkBg = isVR ? 'rgba(139,195,74,0.10)' : 'rgba(61, 106, 142,0.10)';
+
   return new Chart(ctx, {
     type: 'line',
-    data: { labels, datasets: [{ data: cumData, borderColor: '#F72585', backgroundColor: 'rgba(247,37,133,0.10)', tension: 0.42, fill: true, pointRadius: 0, borderWidth: 2.5 }] },
+    data: { labels, datasets: [{ data: cumData, borderColor: sparkColor, backgroundColor: sparkBg, tension: 0.42, fill: true, pointRadius: 0, borderWidth: 2.5 }] },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { enabled: false } },
@@ -221,7 +272,7 @@ function createCategoryChart(transactions) {
   const categories = {};
   transactions.filter(t => t.type === 'saida').forEach(t => { categories[t.category] = (categories[t.category] || 0) + t.amount; });
   if (Object.keys(categories).length === 0) return null;
-  const COLORS = ['#F72585', '#4CC9F0', '#7209B7', '#4361EE', '#06D6A0', '#F8961E', '#4895EF', '#9CA3AF'];
+  const COLORS = ['#3D6A8E', '#4CC9F0', '#C9A84C', '#4361EE', '#06D6A0', '#F8961E', '#4895EF', '#9CA3AF'];
   return new Chart(ctx, {
     type: 'doughnut',
     data: { labels: Object.keys(categories).map(k => CATEGORY_MAP[k]?.label || k), datasets: [{ data: Object.values(categories), backgroundColor: COLORS, borderWidth: 0 }] },
@@ -245,39 +296,9 @@ function createResponsibleChart(transactions) {
       labels: Object.keys(responsible),
       datasets: [
         { label: 'Receitas', data: Object.values(responsible).map(r => r.entrada), backgroundColor: '#4CC9F0', borderRadius: 6 },
-        { label: 'Despesas', data: Object.values(responsible).map(r => r.saida), backgroundColor: '#F72585', borderRadius: 6 }
+        { label: 'Despesas', data: Object.values(responsible).map(r => r.saida), backgroundColor: '#3D6A8E', borderRadius: 6 }
       ]
     },
-    options: {
-      responsive: true, maintainAspectRatio: true,
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, font: { size: 11 } } } },
-      scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 11 } } }, x: { grid: { display: false }, ticks: { font: { size: 11 } } } },
-      animation: { duration: 800 }
-    }
-  });
-}
-
-// ===== GRÁFICO DE SALÁRIOS =====
-function createIncomesChart(salaries) {
-  const ctx = document.getElementById('incomesChart');
-  if (!ctx) return null;
-  const members = state.familyMembers || [];
-  const chartColors = ['#4361EE', '#F72585', '#06D6A0', '#FF6B35', '#8B5CF6', '#14B8A6'];
-  const incomesData = {};
-  salaries.forEach(s => {
-    const date = new Date(s.date + 'T12:00:00');
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    if (!incomesData[key]) { incomesData[key] = {}; members.forEach(m => { incomesData[key][m.name] = 0; }); }
-    if (incomesData[key][s.person] !== undefined) incomesData[key][s.person] += s.amount;
-  });
-  const months = Object.keys(incomesData).sort();
-  if (months.length === 0) return null;
-  const datasets = members.map((m, i) => ({
-    label: m.name, data: months.map(mo => incomesData[mo][m.name] || 0),
-    backgroundColor: chartColors[i % chartColors.length], borderRadius: 6
-  }));
-  return new Chart(ctx, {
-    type: 'bar', data: { labels: months, datasets },
     options: {
       responsive: true, maintainAspectRatio: true,
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, font: { size: 11 } } } },

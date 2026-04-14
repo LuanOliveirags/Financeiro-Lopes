@@ -3,7 +3,7 @@
 // ============================================================
 
 import { state, getFamilyId } from './state.js';
-import { generateId, esc, formatCurrency, showAlert } from './utils.js';
+import { generateId, esc, formatCurrency, showAlert, toDateStr } from './utils.js';
 import { saveDataToStorage, saveToFirebase } from './data.js';
 import { updateDashboard } from './dashboard.js';
 import { updateTransactionHistory } from './transactions.js';
@@ -25,7 +25,7 @@ const SHOPPING_CATEGORIES = {
   laticinios: { label: 'Laticínios',        icon: 'fa-cheese',             color: '#FFD166' },
   mercearia:  { label: 'Mercearia',         icon: 'fa-jar',                color: '#8338EC' },
   limpeza:    { label: 'Limpeza',           icon: 'fa-spray-can-sparkles', color: '#4361EE' },
-  higiene:    { label: 'Higiene & Beleza',  icon: 'fa-pump-soap',          color: '#FF69B4' },
+  higiene:    { label: 'Higiene & Beleza',  icon: 'fa-pump-soap',          color: '#C9A84C' },
   casa:       { label: 'Casa & Utilidades', icon: 'fa-house',              color: '#0096C7' },
   pets:       { label: 'Pets',              icon: 'fa-paw',                color: '#FFA500' },
   outros:     { label: 'Outros',            icon: 'fa-box',                color: '#9CA3AF' }
@@ -695,7 +695,7 @@ function completeList() {
     const currentUser = state.currentUser;
     if (members.length > 0) {
       responsibleSelect.innerHTML = members.map(m =>
-        `<option value="${esc(m.fullName || m.login)}" ${m.login === currentUser?.login ? 'selected' : ''}>${esc(m.fullName || m.login)}</option>`
+        `<option value="${esc(m.name || m.login)}" ${m.login === currentUser?.login ? 'selected' : ''}>${esc(m.name || m.login)}</option>`
       ).join('');
     } else if (currentUser) {
       responsibleSelect.innerHTML = `<option value="${esc(currentUser.fullName || currentUser.login)}" selected>${esc(currentUser.fullName || currentUser.login)}</option>`;
@@ -739,7 +739,7 @@ function confirmCheckout() {
     const description = document.getElementById('shopCheckoutDesc')?.value?.trim() || list.name;
     const paymentMethod = document.getElementById('shopPaymentMethod')?.value || 'dinheiro';
     const today = new Date();
-    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const dateStr = toDateStr(today);
 
     const store = STORES[list.store] || STORES.outro;
     const payLabels = { dinheiro: 'Dinheiro', cartao: 'Cartão', pix: 'Pix', vr: 'VR/VA' };

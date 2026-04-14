@@ -288,7 +288,7 @@ export function updateSalaryHistory() {
     const defaultDesc = isVR ? `VR/VA de ${esc(s.person)}` : `Salário de ${esc(s.person)}`;
 
     return `
-    <div class="transaction-item">
+    <div class="transaction-item ${isVR ? 'transaction-vr' : ''}">
       <div class="trans-icon-wrap ${isVR ? 'cat-vr' : 'cat-entrada'}">${typeIcon}</div>
       <div class="trans-info">
         <div class="trans-name">${esc(s.description) || defaultDesc} ${typeBadge}</div>
@@ -299,7 +299,7 @@ export function updateSalaryHistory() {
         ${additionsHtml}${deductionsHtml}
       </div>
       <div style="display:flex;align-items:center;gap:8px">
-        <div class="trans-amount entrada">+${formatCurrency(s.amount)}</div>
+        <div class="trans-amount ${isVR ? 'vr-amount' : 'entrada'}">+${formatCurrency(s.amount)}</div>
         <button onclick="deleteSalary('${s.id}')" class="btn-delete" title="Excluir"><i class="fa-solid fa-trash"></i></button>
       </div>
     </div>`;

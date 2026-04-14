@@ -1,6 +1,6 @@
-﻿/* ============================================================
+/* ============================================================
    STYLE.CSS — DESIGN SYSTEM & BASE STYLES
-   Lopes Finanças · Pink / Magenta Theme · Inter Font
+   Lopes - Gestão Financeira · Navy Blue & Gold Theme · Inter Font
    ============================================================ */
 
 /* ─── RESET ─── */
@@ -12,20 +12,24 @@
 
 /* ─── DESIGN TOKENS ─── */
 :root {
-  /* Primary — Hot Pink/Magenta */
-  --primary:        #F72585;
-  --primary-dark:   #C9184A;
-  --primary-light:  #FF69B4;
-  --primary-rgb:    247, 37, 133;
+  /* Primary — Navy Blue (from Lopes logo) */
+  --primary:        #3D6A8E;
+  --primary-dark:   #2B4D68;
+  --primary-light:  #6D9ABE;
+  --primary-rgb:    61, 106, 142;
+
+  /* Accent — Gold (from Lopes logo) */
+  --accent-gold:    #C9A84C;
+  --accent-gold-dark: #A68A35;
 
   /* Income — Cyan / Teal */
   --income:         #4CC9F0;
   --income-dark:    #0096C7;
   --income-bg:      #EAF8FE;
 
-  /* Expense — same as primary */
-  --expense:        #F72585;
-  --expense-bg:     #FEE8F2;
+  /* Expense — warm red-orange */
+  --expense:        #E74C3C;
+  --expense-bg:     #FDECEB;
 
   /* Semantic */
   --success:        #06D6A0;
@@ -56,7 +60,7 @@
   --shadow-md:   0 4px 16px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
   --shadow-lg:   0 8px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.07);
   --shadow-xl:   0 16px 48px rgba(0,0,0,0.14), 0 8px 20px rgba(0,0,0,0.08);
-  --shadow-pink: 0 8px 32px rgba(247, 37, 133, 0.30);
+  --shadow-brand: 0 8px 32px rgba(61, 106, 142, 0.30);
 
   /* Border Radius */
   --r-xs:  4px;
@@ -98,7 +102,7 @@
   --z-toast:   1100;
 
   /* Gradients */
-  --grad-primary: linear-gradient(135deg, #F72585 0%, #B5179E 100%);
+  --grad-primary: linear-gradient(135deg, #3D6A8E 0%, #2B4D68 100%);
   --grad-income:  linear-gradient(135deg, #4CC9F0 0%, #0077B6 100%);
   --grad-bg:      linear-gradient(160deg, #F0F2F8 0%, #E8EAF6 100%);
   --grad-card:    linear-gradient(145deg, #FFFFFF 0%, #F8F9FF 100%);
@@ -145,11 +149,19 @@ body {
   inset: 0;
 }
 
-/* ─── SCROLLBAR ─── */
-::-webkit-scrollbar { width: 0; height: 0; background: transparent; }
-* { scrollbar-width: none; }
-.main-content::-webkit-scrollbar { display: none; width: 0; }
-.main-content { -ms-overflow-style: none; scrollbar-width: none; }
+/* ─── SCROLLBAR (mobile: hidden, desktop: see responsive.css) ─── */
+@media (max-width: 1023px) {
+  ::-webkit-scrollbar { width: 0; height: 0; background: transparent; }
+  * { scrollbar-width: none; }
+  .main-content::-webkit-scrollbar { display: none; width: 0; }
+  .main-content { -ms-overflow-style: none; scrollbar-width: none; }
+}
+@media (min-width: 1024px) {
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(var(--primary-rgb), 0.15); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(var(--primary-rgb), 0.3); }
+}
 
 /* ─── TYPOGRAPHY ─── */
 h1, h2, h3, h4 { font-weight: var(--fw-bold); line-height: 1.2; color: var(--text-primary); }
@@ -247,12 +259,12 @@ button { border: none; cursor: pointer; background: none; }
   font-size: 0.9375rem;
   font-weight: var(--fw-semi);
   border-radius: var(--r-md);
-  box-shadow: var(--shadow-pink);
+  box-shadow: var(--shadow-brand);
   transition: all var(--ease);
   letter-spacing: 0.01em;
   margin-top: 4px;
 }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(247,37,133,0.4); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(61, 106, 142,0.4); }
 .btn-primary:active { transform: translateY(0); }
 
 .btn-secondary {

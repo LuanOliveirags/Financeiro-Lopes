@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    SECTIONS.CSS — SECTION-SPECIFIC COMPONENTS
    Stats  · Transactions · Debts · Salaries
    ============================================================ */
@@ -71,8 +71,8 @@
 }
 .dash-mode-slider.vr-active {
   transform: translateX(100%);
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+  background: linear-gradient(135deg, #8BC34A, #689F38);
+  box-shadow: 0 4px 14px rgba(139, 195, 74, 0.4);
 }
 .dash-mode-btn {
   flex: 1;
@@ -97,37 +97,37 @@
 
 /* VR Mode — Balance Card */
 .balance-card.vr-mode {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 60%, #fcd34d 100%);
+  background: linear-gradient(135deg, #F1F8E9 0%, #C5E1A5 60%, #AED581 100%);
   transition: background 0.5s ease;
 }
 [data-theme="dark"] .balance-card.vr-mode {
-  background: linear-gradient(135deg, #451a03 0%, #78350f 60%, #92400e 100%);
+  background: linear-gradient(135deg, #1B3409 0%, #2E4A1A 60%, #33691E 100%);
 }
 .balance-card.vr-mode::before {
-  background: rgba(245, 158, 11, 0.12);
+  background: rgba(139, 195, 74, 0.12);
 }
-.balance-card.vr-mode .balance-label { color: #92400e; }
-[data-theme="dark"] .balance-card.vr-mode .balance-label { color: #fde68a; }
-.balance-card.vr-mode .balance-amount { color: #78350f; }
-[data-theme="dark"] .balance-card.vr-mode .balance-amount { color: #fef3c7; }
-.balance-card.vr-mode .sparkline-x-labels span { color: #a16207; }
-[data-theme="dark"] .balance-card.vr-mode .sparkline-x-labels span { color: #fbbf24; }
+.balance-card.vr-mode .balance-label { color: #33691E; }
+[data-theme="dark"] .balance-card.vr-mode .balance-label { color: #C5E1A5; }
+.balance-card.vr-mode .balance-amount { color: #1B5E20; }
+[data-theme="dark"] .balance-card.vr-mode .balance-amount { color: #F1F8E9; }
+.balance-card.vr-mode .sparkline-x-labels span { color: #558B2F; }
+[data-theme="dark"] .balance-card.vr-mode .sparkline-x-labels span { color: #9CCC65; }
 
 /* VR Mode — IE Cards */
 .ie-card.vr-mode {
-  border-color: rgba(245, 158, 11, 0.25);
+  border-color: rgba(139, 195, 74, 0.25);
   transition: border-color 0.4s ease;
 }
 .ie-card.vr-mode .ie-circle {
-  background: rgba(245, 158, 11, 0.15) !important;
-  color: #d97706 !important;
+  background: rgba(139, 195, 74, 0.15) !important;
+  color: #689F38 !important;
 }
 [data-theme="dark"] .ie-card.vr-mode .ie-circle {
-  background: rgba(245, 158, 11, 0.2) !important;
-  color: #fbbf24 !important;
+  background: rgba(139, 195, 74, 0.2) !important;
+  color: #9CCC65 !important;
 }
-.ie-card.vr-mode .ie-label { color: #a16207; }
-[data-theme="dark"] .ie-card.vr-mode .ie-label { color: #fbbf24; }
+.ie-card.vr-mode .ie-label { color: #558B2F; }
+[data-theme="dark"] .ie-card.vr-mode .ie-label { color: #9CCC65; }
 
 /* VR Mode — Hide irrelevant KPI rows */
 .dashboard-vr-mode .kpi-mini-row { display: none; }
@@ -140,24 +140,24 @@
 }
 .dashboard-vr-mode .vr-kpi-summary { display: block; }
 .vr-kpi-summary-card {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  background: linear-gradient(135deg, #F1F8E9 0%, #C5E1A5 100%);
   border-radius: var(--r-xl);
   padding: 18px 20px;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12);
+  box-shadow: 0 4px 16px rgba(139, 195, 74, 0.12);
 }
 [data-theme="dark"] .vr-kpi-summary-card {
-  background: linear-gradient(135deg, #451a03 0%, #78350f 100%);
+  background: linear-gradient(135deg, #1B3409 0%, #2E4A1A 100%);
 }
 .vr-kpi-summary-title {
   font-size: 0.78rem;
   font-weight: var(--fw-semi);
-  color: #92400e;
+  color: #33691E;
   margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
-[data-theme="dark"] .vr-kpi-summary-title { color: #fde68a; }
+[data-theme="dark"] .vr-kpi-summary-title { color: #C5E1A5; }
 .vr-kpi-summary-title i { font-size: 0.85rem; }
 .vr-kpi-summary-grid {
   display: grid;
@@ -173,17 +173,17 @@
 [data-theme="dark"] .vr-kpi-item { background: rgba(0,0,0,0.2); }
 .vr-kpi-item-label {
   font-size: 0.7rem;
-  color: #92400e;
+  color: #33691E;
   margin-bottom: 4px;
   font-weight: var(--fw-medium);
 }
-[data-theme="dark"] .vr-kpi-item-label { color: #fde68a; }
+[data-theme="dark"] .vr-kpi-item-label { color: #C5E1A5; }
 .vr-kpi-item-val {
   font-size: 1rem;
   font-weight: var(--fw-bold);
-  color: #78350f;
+  color: #1B5E20;
 }
-[data-theme="dark"] .vr-kpi-item-val { color: #fef3c7; }
+[data-theme="dark"] .vr-kpi-item-val { color: #F1F8E9; }
 
 /* Balance Card */
 .balance-card {
@@ -252,8 +252,10 @@
   transition: all var(--ease);
   overflow: hidden;
   min-width: 0;
+  cursor: pointer;
 }
 .ie-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.ie-card:active { transform: scale(0.97); }
 .ie-circle {
   width: 46px; height: 46px;
   border-radius: 50%;
@@ -289,9 +291,9 @@
 /* KPI Mini Row */
 .kpi-mini-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  padding: 0 16px 20px;
+  padding: 0 16px 16px;
   min-width: 0;
 }
 .kpi-mini-card {
@@ -305,6 +307,13 @@
   border: 1.5px solid var(--border);
   min-width: 0;
   overflow: hidden;
+}
+.kpi-mini-card[data-kpi-action] {
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.kpi-mini-card[data-kpi-action]:active {
+  transform: scale(0.97);
 }
 .kpi-mini-icon {
   width: 38px; height: 38px;
@@ -323,6 +332,7 @@
 .kpi-mini-sub    { font-size: 0.65rem; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi-highlight-monthly { border-color: rgba(255,159,67,0.35); }
 .kpi-highlight-financing { border-color: rgba(67,97,238,0.35); }
+.kpi-highlight-loan { border-color: rgba(255,107,53,0.35); }
 
 /* Charts Grid */
 .charts-grid {
@@ -657,33 +667,49 @@
 .debt-overview-card {
   background: var(--bg-card);
   border-radius: var(--r-xl);
-  padding: 18px;
+  padding: 20px;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   position: relative;
   overflow: hidden;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
 }
-.debt-ov-monthly { border-left: 3px solid #FF9F43; }
-.debt-ov-financing { border-left: 3px solid #4361EE; }
-.debt-ov-cartao { border-left: 3px solid #8B5CF6; }
+.debt-ov-monthly .debt-ov-icon { background: rgba(255,159,67,0.12); color: #FF9F43; }
+.debt-ov-monthly .debt-ov-amount { color: #e88a2e; }
+
+.debt-ov-financing .debt-ov-icon { background: rgba(67,97,238,0.12); color: #4361EE; }
+.debt-ov-financing .debt-ov-amount { color: #3a56d4; }
+
+.debt-ov-loan .debt-ov-icon { background: rgba(255,107,53,0.12); color: #FF6B35; }
+.debt-ov-loan .debt-ov-amount { color: #e55f2e; }
+
+.debt-ov-cartao .debt-ov-icon { background: rgba(139,92,246,0.12); color: #8B5CF6; }
+.debt-ov-cartao .debt-ov-amount { color: #7c4ee0; }
+
+/* Dark-mode colored amounts */
+[data-theme="dark"] .debt-ov-monthly .debt-ov-amount { color: #FFB366; }
+[data-theme="dark"] .debt-ov-financing .debt-ov-amount { color: #6B8AF7; }
+[data-theme="dark"] .debt-ov-loan .debt-ov-amount { color: #FF8B5E; }
+[data-theme="dark"] .debt-ov-cartao .debt-ov-amount { color: #A78BFA; }
 .debt-ov-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 .debt-ov-icon {
-  width: 36px; height: 36px;
-  border-radius: var(--r-sm);
+  width: 40px; height: 40px;
+  border-radius: var(--r-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   flex-shrink: 0;
 }
 .debt-ov-title {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: var(--fw-bold);
   color: var(--text-primary);
   line-height: 1.2;
@@ -691,17 +717,20 @@
 .debt-ov-subtitle {
   font-size: 0.65rem;
   color: var(--text-muted);
+  margin-top: 1px;
 }
 .debt-ov-amount {
-  font-size: 1.25rem;
-  font-weight: var(--fw-extrabold);
+  font-size: 1.5rem;
+  font-weight: var(--fw-black);
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  line-height: 1;
 }
 .debt-ov-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: auto;
 }
 .debt-ov-count {
   font-size: 0.7rem;
@@ -710,19 +739,19 @@
 .debt-ov-badge {
   font-size: 0.6rem;
   font-weight: var(--fw-semibold);
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 20px;
 }
 .badge-monthly {
-  background: rgba(255,159,67,0.15);
+  background: rgba(255,159,67,0.12);
   color: #FF9F43;
 }
 .debt-ov-remaining {
   font-size: 0.65rem;
   font-weight: var(--fw-semibold);
   color: #4361EE;
-  background: rgba(67,97,238,0.1);
-  padding: 2px 8px;
+  background: rgba(67,97,238,0.08);
+  padding: 3px 10px;
   border-radius: 20px;
 }
 
@@ -732,29 +761,45 @@
   gap: 12px;
   padding: 0 16px 16px;
 }
+
+/* Debt summary strip — compact inline row */
+.debt-summary-strip {
+  display: flex;
+  gap: 12px;
+  padding: 0 16px 16px;
+  flex-wrap: wrap;
+}
+.debt-summary-strip .summary-mini {
+  flex: 1;
+  min-width: 140px;
+}
 .summary-mini {
   background: var(--bg-card);
-  border-radius: var(--r-lg);
-  padding: 16px;
+  border-radius: var(--r-xl);
+  padding: 18px 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  box-shadow: var(--shadow-xs);
-  border: 1.5px solid var(--border);
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 .sm-icon {
-  width: 40px; height: 40px;
-  border-radius: var(--r-sm);
+  width: 44px; height: 44px;
+  border-radius: var(--r-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   flex-shrink: 0;
 }
 .debt-sm-icon   { background: var(--expense-bg); color: var(--expense); }
 .active-sm-icon { background: var(--warning-bg); color: var(--warning); }
-.sm-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px; }
-.sm-value { font-size: 1rem; font-weight: var(--fw-bold); color: var(--text-primary); }
+.paid-sm-icon   { background: rgba(6,214,160,0.12); color: #06D6A0; }
+.sm-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 3px; font-weight: var(--fw-medium); }
+.sm-value { font-size: 1.125rem; font-weight: var(--fw-extrabold); color: var(--text-primary); letter-spacing: -0.02em; }
 
 .debts-list {
   padding: 0 16px 16px;
@@ -772,21 +817,33 @@
   position: relative;
   overflow: hidden;
 }
-.debt-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--text-muted);
-  border-radius: 4px 0 0 4px;
-}
-.debt-financing::before { background: #4361EE; }
-.debt-emprestimo::before { background: #06D6A0; }
-.debt-cartao::before { background: #8B5CF6; }
-.debt-fixed::before { background: #F8961E; }
 .debt-item:hover { box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1)); }
+
+/* ─ Overdue urgency effect ─ */
+.debt-overdue {
+  border-color: rgba(239, 71, 111, 0.35);
+  background: linear-gradient(135deg, rgba(239,71,111,0.04) 0%, var(--bg-card) 60%);
+  box-shadow: 0 0 0 1px rgba(239,71,111,0.08), 0 4px 16px rgba(239,71,111,0.10);
+  animation: overdueGlow 2.5s ease-in-out infinite;
+}
+.debt-overdue:hover {
+  box-shadow: 0 0 0 1px rgba(239,71,111,0.15), 0 6px 24px rgba(239,71,111,0.18);
+}
+.debt-overdue .debt-amount-badge {
+  color: #EF476F;
+}
+.debt-overdue .debt-type-icon {
+  background: rgba(239,71,111,0.12);
+  color: #EF476F;
+}
+@keyframes overdueGlow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(239,71,111,0.08), 0 4px 16px rgba(239,71,111,0.10); }
+  50%      { box-shadow: 0 0 0 2px rgba(239,71,111,0.18), 0 4px 20px rgba(239,71,111,0.16); }
+}
+[data-theme="dark"] .debt-overdue {
+  border-color: rgba(239, 71, 111, 0.4);
+  background: linear-gradient(135deg, rgba(239,71,111,0.08) 0%, var(--bg-card) 60%);
+}
 
 /* ─ Header: icon + creditor + amount ─ */
 .debt-item-header {
@@ -1131,9 +1188,9 @@
   color: var(--primary);
 }
 #btnVR.active {
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.08);
-  color: #d97706;
+  border-color: #8BC34A;
+  background: rgba(139, 195, 74, 0.08);
+  color: #689F38;
 }
 
 /* VR Badge in salary history */
@@ -1144,26 +1201,43 @@
   border-radius: 99px;
   font-size: 0.65rem;
   font-weight: var(--fw-bold);
-  background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
+  background: rgba(139, 195, 74, 0.12);
+  color: #689F38;
   vertical-align: middle;
   margin-left: 6px;
 }
 .cat-vr {
-  background: rgba(245, 158, 11, 0.12) !important;
+  background: rgba(139, 195, 74, 0.12) !important;
+  color: #689F38 !important;
+}
+
+/* VR/VA transaction item — Alelo green theme */
+.transaction-vr {
+  background: linear-gradient(135deg, rgba(139,195,74,0.06) 0%, var(--bg-card) 50%);
+  border-left: 3px solid #8BC34A;
+}
+[data-theme="dark"] .transaction-vr {
+  background: linear-gradient(135deg, rgba(139,195,74,0.08) 0%, var(--bg-card) 50%);
+}
+.trans-amount.vr-amount {
+  color: #689F38;
+  font-weight: var(--fw-black);
+}
+[data-theme="dark"] .trans-amount.vr-amount {
+  color: #8BC34A;
 }
 
 /* VR/VA Dashboard Card */
 .vr-dashboard-card {
   display: none;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%);
+  background: linear-gradient(135deg, #F1F8E9 0%, #C5E1A5 50%, #AED581 100%);
   border-radius: var(--r-xl);
   padding: 18px 20px;
   margin-bottom: 16px;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
+  box-shadow: 0 4px 16px rgba(139, 195, 74, 0.15);
 }
 [data-theme="dark"] .vr-dashboard-card {
-  background: linear-gradient(135deg, #451a03 0%, #78350f 50%, #92400e 100%);
+  background: linear-gradient(135deg, #1B3409 0%, #2E4A1A 50%, #33691E 100%);
 }
 .vr-dash-header {
   display: flex;
@@ -1175,24 +1249,24 @@
   width: 36px;
   height: 36px;
   border-radius: var(--r-md);
-  background: rgba(245, 158, 11, 0.2);
+  background: rgba(139, 195, 74, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1rem;
-  color: #d97706;
+  color: #689F38;
 }
 [data-theme="dark"] .vr-dash-icon {
-  background: rgba(245, 158, 11, 0.25);
-  color: #fbbf24;
+  background: rgba(139, 195, 74, 0.25);
+  color: #9CCC65;
 }
 .vr-dash-header h3 {
   font-size: 0.9rem;
   font-weight: var(--fw-bold);
-  color: #92400e;
+  color: #33691E;
   margin: 0;
 }
-[data-theme="dark"] .vr-dash-header h3 { color: #fde68a; }
+[data-theme="dark"] .vr-dash-header h3 { color: #C5E1A5; }
 .vr-dash-balance {
   display: flex;
   justify-content: space-between;
@@ -1208,15 +1282,15 @@
 .vr-dash-balance-label {
   font-size: 0.78rem;
   font-weight: var(--fw-semi);
-  color: #92400e;
+  color: #33691E;
 }
-[data-theme="dark"] .vr-dash-balance-label { color: #fde68a; }
+[data-theme="dark"] .vr-dash-balance-label { color: #C5E1A5; }
 .vr-dash-balance-val {
   font-size: 1.2rem;
   font-weight: var(--fw-bold);
-  color: #78350f;
+  color: #1B5E20;
 }
-[data-theme="dark"] .vr-dash-balance-val { color: #fef3c7; }
+[data-theme="dark"] .vr-dash-balance-val { color: #F1F8E9; }
 .vr-dash-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1240,113 +1314,137 @@
 .vr-expense i { color: #dc2626; }
 .vr-dash-item-label {
   font-size: 0.7rem;
-  color: #92400e;
+  color: #33691E;
   font-weight: var(--fw-semi);
 }
-[data-theme="dark"] .vr-dash-item-label { color: #fde68a; }
+[data-theme="dark"] .vr-dash-item-label { color: #C5E1A5; }
 .vr-dash-item-val {
   font-size: 0.95rem;
   font-weight: var(--fw-bold);
-  color: #78350f;
+  color: #1B5E20;
 }
-[data-theme="dark"] .vr-dash-item-val { color: #fef3c7; }
+[data-theme="dark"] .vr-dash-item-val { color: #F1F8E9; }
 
 .person-cards-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 14px;
   padding: 0 16px 16px;
 }
 .person-income-card {
   border-radius: var(--r-xl);
-  padding: 18px;
+  padding: 20px;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: transform 0.35s cubic-bezier(.4,0,.2,1), box-shadow 0.35s cubic-bezier(.4,0,.2,1);
 }
+/* Decorative top-right circle */
 .person-income-card::before {
   content: '';
   position: absolute;
-  top: -20px; right: -20px;
+  top: -30px; right: -30px;
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: rgba(255,255,255, 0.12);
+  pointer-events: none;
+}
+/* Decorative bottom-left circle */
+.person-income-card::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: -20px;
   width: 80px; height: 80px;
   border-radius: 50%;
-  background: rgba(255,255,255, 0.18);
+  background: rgba(255,255,255, 0.06);
+  pointer-events: none;
 }
 .luan-card     { background: linear-gradient(135deg, #1e3a8a 0%, #1e1b6e 100%); grid-column: span 1; }
-.bianca-card   { background: linear-gradient(135deg, #9d174d 0%, #701a75 100%); grid-column: span 1; }
-.combined-card { background: linear-gradient(135deg, #0e7490 0%, #0c4a6e 100%); grid-column: span 2; }
+.bianca-card   { background: linear-gradient(135deg, #C9A84C 0%, #A68A35 100%); grid-column: span 1; }
+.combined-card { background: linear-gradient(135deg, #0e7490 0%, #064e63 50%, #0c4a6e 100%); grid-column: span 2; }
 [data-theme="dark"] .luan-card     { background: linear-gradient(135deg, #4361EE 0%, #3A0CA3 100%); }
-[data-theme="dark"] .bianca-card   { background: linear-gradient(135deg, #F72585 0%, #B5179E 100%); }
+[data-theme="dark"] .bianca-card   { background: linear-gradient(135deg, #C9A84C 0%, #A68A35 100%); }
 [data-theme="dark"] .combined-card { background: linear-gradient(135deg, #4CC9F0 0%, #0077B6 100%); }
 
 .pic-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 .pic-avatar {
-  width: 34px; height: 34px;
+  width: 40px; height: 40px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 0.875rem;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 0 0 2px rgba(255,255,255,0.2);
+  backdrop-filter: blur(4px);
 }
-.pic-name { color: #fff; font-size: 0.875rem; font-weight: var(--fw-bold); text-shadow: 0 1px 4px rgba(0,0,0,0.35); }
+.combined-avatar {
+  background: rgba(255,255,255,0.25);
+  width: 44px; height: 44px;
+  font-size: 1rem;
+}
+.pic-name { color: #fff; font-size: 0.95rem; font-weight: var(--fw-bold); text-shadow: 0 1px 4px rgba(0,0,0,0.35); letter-spacing: 0.01em; }
 
 /* Salary + VR rows inside person card */
 .pic-salaries {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 .pic-salary-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 12px;
-  border-radius: var(--r-md);
-  background: rgba(255,255,255,0.2);
-  backdrop-filter: blur(4px);
+  padding: 10px 14px;
+  border-radius: var(--r-lg);
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: background 0.2s ease;
 }
 .pic-salary-label {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.73rem;
-  color: #fff;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.9);
   font-weight: var(--fw-bold);
   text-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
-.pic-salary-label i { font-size: 0.68rem; }
+.pic-salary-label i { font-size: 0.7rem; opacity: 0.8; }
 .pic-salary-val {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: var(--fw-black);
   color: #fff;
   letter-spacing: -0.02em;
   text-shadow: 0 1px 4px rgba(0,0,0,0.35);
 }
 .pic-vr-row {
-  background: rgba(245, 158, 11, 0.3);
+  background: rgba(139, 195, 74, 0.25);
+  border-color: rgba(139, 195, 74, 0.3);
 }
 .pic-vr-val {
-  color: #fff;
+  color: #AED581;
   text-shadow: 0 1px 4px rgba(0,0,0,0.35);
 }
 [data-theme="dark"] .pic-vr-val {
-  color: #fde68a;
+  color: #AED581;
 }
 .person-income-card .salary-annual {
-  font-size: 0.72rem;
-  color: rgba(255,255,255,0.9);
-  font-weight: var(--fw-semi);
-  padding-left: 2px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.75);
+  font-weight: var(--fw-medium);
+  padding: 4px 0 0 2px;
   text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  letter-spacing: 0.01em;
 }
 
 /* Combined card grid layout */
@@ -1361,49 +1459,52 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 10px 8px;
-  border-radius: var(--r-md);
-  background: rgba(255,255,255,0.18);
-  backdrop-filter: blur(4px);
+  gap: 6px;
+  padding: 14px 12px;
+  border-radius: var(--r-lg);
+  background: rgba(255,255,255,0.13);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: background 0.2s ease;
 }
 .pic-combined-vr {
-  background: rgba(245, 158, 11, 0.22);
+  background: rgba(139, 195, 74, 0.2);
+  border-color: rgba(139, 195, 74, 0.15);
 }
 .pic-combined-label {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.72rem;
-  color: #fff;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.85);
   font-weight: var(--fw-bold);
   text-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
-.pic-combined-label i { font-size: 0.7rem; }
+.pic-combined-label i { font-size: 0.72rem; opacity: 0.8; }
 .pic-combined-val {
-  font-size: 1.15rem;
+  font-size: 1.35rem;
   font-weight: var(--fw-black);
   color: #fff;
-  letter-spacing: -0.02em;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  letter-spacing: -0.03em;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.35);
 }
 .pic-combined-val.pic-vr-val {
-  color: #fff;
+  color: #AED581;
 }
 [data-theme="dark"] .pic-combined-val.pic-vr-val {
-  color: #fde68a;
+  color: #AED581;
 }
 .pic-combined-sub {
-  font-size: 0.7rem;
-  color: rgba(255,255,255,0.92);
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.7);
   font-weight: var(--fw-medium);
   text-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 .pic-combined-divider {
-  width: 1.5px;
-  height: 50px;
-  background: rgba(255,255,255,0.35);
-  margin: 0 6px;
+  width: 1px;
+  height: 55px;
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,0.4), transparent);
+  margin: 0 10px;
 }
 
 /* Keep .salary-current / .salary-annual used elsewhere */
@@ -1446,12 +1547,12 @@
   justify-content: space-between;
   padding: 6px 10px;
   border-radius: var(--r-md);
-  background: rgba(247,37,133,0.08);
+  background: rgba(61, 106, 142,0.08);
   font-size: 0.8125rem;
   gap: 8px;
 }
 .deduction-name { flex: 1; color: var(--text-primary); }
-.deduction-value { color: #F72585; font-weight: var(--fw-semibold); white-space: nowrap; }
+.deduction-value { color: var(--primary); font-weight: var(--fw-semibold); white-space: nowrap; }
 .btn-remove-deduction {
   background: transparent;
   border: none;
@@ -1462,7 +1563,7 @@
   border-radius: var(--r-sm);
   transition: all var(--ease);
 }
-.btn-remove-deduction:hover { color: #F72585; background: rgba(247,37,133,0.15); }
+.btn-remove-deduction:hover { color: var(--danger); background: rgba(239,35,60,0.15); }
 .deduction-add-row {
   display: flex;
   gap: 8px;
@@ -1483,7 +1584,7 @@
   font-size: 0.875rem;
   transition: transform var(--ease), box-shadow var(--ease);
 }
-.btn-add-deduction:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(247,37,133,0.3); }
+.btn-add-deduction:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(61, 106, 142,0.3); }
 .deduction-total-row {
   display: flex;
   justify-content: space-between;
@@ -1494,7 +1595,7 @@
   margin-top: 4px;
   color: var(--text-secondary);
 }
-.deduction-total-value { font-weight: var(--fw-semibold); color: #F72585; }
+.deduction-total-value { font-weight: var(--fw-semibold); color: var(--primary); }
 .net-salary-row { border-top: 1.5px solid var(--border); padding-top: 8px; }
 .net-salary-value { font-weight: var(--fw-bold); color: #06D6A0; font-size: 0.9375rem; }
 
@@ -1565,8 +1666,8 @@
   font-size: 0.6875rem;
   padding: 2px 8px;
   border-radius: var(--r-full);
-  background: rgba(247,37,133,0.1);
-  color: #F72585;
+  background: rgba(61, 106, 142,0.1);
+  color: var(--primary);
   white-space: nowrap;
 }
 
@@ -1596,7 +1697,7 @@
 }
 .debt-installment-remaining {
   font-size: 0.75rem;
-  color: #F72585;
+  color: var(--primary);
   font-weight: var(--fw-semibold);
   display: block;
   margin-top: 2px;
@@ -1604,7 +1705,7 @@
 /* Debt paid override — merged into new .debt-paid block above */
 
 /* New category colors */
-.cat-beleza       { background: rgba(255,105,180,0.15); color: #FF69B4; }
+.cat-beleza       { background: rgba(201,168,76,0.15); color: #C9A84C; }
 .cat-pets         { background: rgba(255,165,0,0.15);   color: #FFA500; }
 .cat-assinaturas  { background: rgba(138,43,226,0.15);  color: #8A2BE2; }
 .cat-investimentos{ background: rgba(0,128,0,0.15);     color: #008000; }
@@ -1740,12 +1841,12 @@
   background: var(--grad-primary);
   color: #fff;
   font-weight: var(--fw-semi);
-  box-shadow: var(--shadow-pink);
+  box-shadow: var(--shadow-brand);
   transition: all var(--ease);
 }
 .shop-empty-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 36px rgba(247,37,133,0.4);
+  box-shadow: 0 12px 36px rgba(61, 106, 142,0.4);
 }
 
 /* ─── Section Labels ─── */
@@ -2277,7 +2378,7 @@
   justify-content: center;
   font-size: 0.9rem;
   flex-shrink: 0;
-  box-shadow: var(--shadow-pink);
+  box-shadow: var(--shadow-brand);
   transition: all var(--ease);
 }
 .shopping-add-item-btn:hover {
@@ -2368,21 +2469,21 @@
   color: var(--primary);
 }
 .shop-pay-vr.active {
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.08);
-  color: #d97706;
+  border-color: #8BC34A;
+  background: rgba(139, 195, 74, 0.08);
+  color: #689F38;
 }
 .shop-pay-vr-hint {
   margin-top: 8px;
   font-size: 0.75rem;
-  color: #d97706;
+  color: #689F38;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 10px;
-  background: rgba(245, 158, 11, 0.08);
+  background: rgba(139, 195, 74, 0.08);
   border-radius: var(--r-sm);
-  border-left: 3px solid #f59e0b;
+  border-left: 3px solid #8BC34A;
 }
 
 /* ─── Checkout Modal ─── */

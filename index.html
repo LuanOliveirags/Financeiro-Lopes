@@ -1,16 +1,17 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#F72585">
-    <meta name="description" content="App de Gestão financeira pessoal - Lopes Finanças">
+    <meta name="theme-color" content="#3D6A8E">
+    <meta name="description" content="App de Gestão financeira pessoal - Lopes - Gestão Financeira">
     <meta name="keywords" content="Finanças, despesas, Gestão, PWA">
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="img/icon-192.png">
-    <link rel="apple-touch-icon" href="img/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="img/icon-any-192.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="img/icon-any-96.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
     
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -38,13 +39,10 @@
         <div class="login-wrapper">
             <div class="login-logo">
                 <div class="login-avatar-wrap">
-                    <div class="login-avatar-ring">
-                        <img src="img/perfil.png" alt="Lopes Finanças" class="profile-logo" onerror="this.style.display='none'">
-                        <div class="avatar-icon-fallback"><i class="fa-solid fa-wallet"></i></div>
-                    </div>
+                    <img src="img/lopes-logo-opt.png" alt="Lopes - Gestão Financeira" class="profile-logo">
                 </div>
-                <h1>Lopes Finanças</h1>
-                <p class="login-tagline">Gestão financeira inteligente</p>
+                <h1>Lopes</h1>
+                <p class="login-tagline">Gestão Financeira</p>
             </div>
             
             <form id="loginForm" class="login-form">
@@ -145,11 +143,10 @@
             <div class="header-content">
                 <div class="header-left">
                     <div class="header-avatar-wrap">
-                        <img id="headerAvatar" src="img/perfil.png" alt="Avatar" class="profile-logo-small" onerror="this.style.display='none'">
-                        <div class="avatar-icon-sm"><i class="fa-solid fa-user"></i></div>
+                        <img id="headerAvatar" src="img/lopes-logo-opt.png" alt="Lopes - Gestão Financeira" class="profile-logo-small">
                     </div>
                     <div class="header-text">
-                        <p class="header-greeting">Lopes Finanças</p>
+                        <p class="header-greeting">Lopes - Gestão Financeira</p>
                         <h2 class="header-title" id="headerUserName">Usuário</h2>
                     </div>
                 </div>
@@ -169,6 +166,11 @@
 
         <!-- Bottom Navigation --> <!-- Navegação inferior para alternar entre abas principais -->
         <nav class="bottom-nav">
+            <div class="sidebar-brand">
+                <img src="img/lopes-logo-opt.png" alt="Lopes" class="sidebar-brand-logo" style="width: 70px; height: 70px;">
+                <span>Lopes - Gestão Financeira</span>
+            
+            </div>
             <button class="bottom-nav-item active" data-tab="dashboard">
                 <span class="nav-icon-wrap"><i class="fa-solid fa-chart-pie"></i></span>
                 <span class="nav-label">Status</span>
@@ -182,9 +184,9 @@
                     <i class="fa-solid fa-plus fab-plus"></i>
                 </button>
                 <div id="quickActionsMenu" class="quick-actions-menu">
-                    <button class="quick-action-item" data-action="shopping">
-                        <div class="qa-icon-wrap"><i class="fa-solid fa-cart-shopping"></i></div>
-                        <span class="action-label">Compras</span>
+                    <button class="quick-action-item" data-action="chores">
+                        <div class="qa-icon-wrap"><i class="fa-solid fa-broom"></i></div>
+                        <span class="action-label">Tarefas</span>
                     </button>
                     <button class="quick-action-item" data-action="transaction">
                         <div class="qa-icon-wrap"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
@@ -200,9 +202,9 @@
                 <span class="nav-icon-wrap"><i class="fa-solid fa-sack-dollar"></i></span>
                 <span class="nav-label">Salário</span>
             </button>
-            <button class="bottom-nav-item" data-tab="chores" id="choresNavBtn" style="display:none">
-                <span class="nav-icon-wrap"><i class="fa-solid fa-broom"></i></span>
-                <span class="nav-label">Tarefas</span>
+            <button class="bottom-nav-item" data-tab="shopping">
+                <span class="nav-icon-wrap"><i class="fa-solid fa-cart-shopping"></i></span>
+                <span class="nav-label">Compras</span>
             </button>
             <button class="bottom-nav-item" data-tab="settings" id="settingsNavBtn" style="display:none">
                 <span class="nav-icon-wrap"><i class="fa-solid fa-gear"></i></span>
@@ -260,8 +262,8 @@
                 </div>
 
                 <!-- Income & Expense Cards --> <!-- Cartões de receita e despesa -->
-                <div class="ie-grid">
-                    <div class="ie-card">
+                <div class="ie-grid stagger-enter">
+                    <div class="ie-card" data-kpi-action="salaries" role="button" tabindex="0">
                         <div class="ie-circle income-circle">
                             <i class="fa-solid fa-arrow-trend-up"></i>
                         </div>
@@ -270,7 +272,7 @@
                             <p class="ie-value income-value" id="totalIncomeDash">R$ 0,00</p>
                         </div>
                     </div>
-                    <div class="ie-card">
+                    <div class="ie-card" data-kpi-action="transactions" role="button" tabindex="0">
                         <div class="ie-circle expense-circle">
                             <i class="fa-solid fa-arrow-trend-down"></i>
                         </div>
@@ -282,8 +284,8 @@
                 </div>
 
                 <!-- KPI Minis --> <!-- Indicadores rápidos: dívidas e responsáveis -->
-                <div class="kpi-mini-row">
-                    <div class="kpi-mini-card kpi-highlight-monthly">
+                <div class="kpi-mini-row stagger-enter">
+                    <div class="kpi-mini-card kpi-highlight-monthly" data-kpi-action="debts" data-kpi-filter="monthly" role="button" tabindex="0">
                         <div class="kpi-mini-icon" style="background:rgba(255,159,67,0.15)">
                             <i class="fa-solid fa-rotate" style="color:#FF9F43"></i>
                         </div>
@@ -293,7 +295,7 @@
                             <p class="kpi-mini-sub" id="dashMonthlyCount">0 ativas</p>
                         </div>
                     </div>
-                    <div class="kpi-mini-card kpi-highlight-financing">
+                    <div class="kpi-mini-card kpi-highlight-financing" data-kpi-action="debts" data-kpi-filter="financing" role="button" tabindex="0">
                         <div class="kpi-mini-icon" style="background:rgba(67,97,238,0.15)">
                             <i class="fa-solid fa-building-columns" style="color:#4361EE"></i>
                         </div>
@@ -303,9 +305,7 @@
                             <p class="kpi-mini-sub" id="dashFinancingRemaining">Restante: R$ 0,00</p>
                         </div>
                     </div>
-                </div>
-                <div class="kpi-mini-row">
-                    <div class="kpi-mini-card kpi-highlight-loan">
+                    <div class="kpi-mini-card kpi-highlight-loan" data-kpi-action="debts" data-kpi-filter="loan" role="button" tabindex="0">
                         <div class="kpi-mini-icon" style="background:rgba(255,107,53,0.15)">
                             <i class="fa-solid fa-hand-holding-dollar" style="color:#FF6B35"></i>
                         </div>
@@ -315,7 +315,7 @@
                             <p class="kpi-mini-sub" id="dashLoanRemaining">Restante: R$ 0,00</p>
                         </div>
                     </div>
-                    <div class="kpi-mini-card">
+                    <div class="kpi-mini-card" data-kpi-action="debts" data-kpi-filter="paid" role="button" tabindex="0">
                         <div class="kpi-mini-icon paid-kpi-icon" style="background:rgba(6,214,160,0.15)">
                             <i class="fa-solid fa-circle-check" style="color:#06D6A0"></i>
                         </div>
@@ -324,9 +324,7 @@
                             <p class="kpi-mini-val" id="totalPaidDebts">R$ 0,00</p>
                         </div>
                     </div>
-                </div>
-                <div class="kpi-mini-row">
-                    <div class="kpi-mini-card">
+                    <div class="kpi-mini-card" data-kpi-action="salaries" role="button" tabindex="0">
                         <div class="kpi-mini-icon people-kpi-icon">
                             <i class="fa-solid fa-users"></i>
                         </div>
@@ -335,18 +333,16 @@
                             <p class="kpi-mini-val" id="totalResponsible">0</p>
                         </div>
                     </div>
-                </div>
-                <div class="kpi-mini-row">
-                    <div class="kpi-mini-card">
+                    <div class="kpi-mini-card" data-kpi-action="salaries" role="button" tabindex="0">
                         <div class="kpi-mini-icon" style="background:rgba(247,37,133,0.15)">
-                            <i class="fa-solid fa-money-bill-wave" style="color:#F72585"></i>
+                            <i class="fa-solid fa-money-bill-wave" style="color:#3D6A8E"></i>
                         </div>
                         <div class="kpi-mini-text">
                             <p class="kpi-mini-label">Descontos (mês)</p>
                             <p class="kpi-mini-val" id="totalDeductionsDash">R$ 0,00</p>
                         </div>
                     </div>
-                    <div class="kpi-mini-card">
+                    <div class="kpi-mini-card" data-kpi-action="debts" data-kpi-filter="all" role="button" tabindex="0">
                         <div class="kpi-mini-icon debt-kpi-icon">
                             <i class="fa-solid fa-credit-card"></i>
                         </div>
@@ -409,7 +405,7 @@
                 </div>
 
                 <!-- Charts Section --> <!-- Gráficos de categorias, responsáveis e salários -->
-                <div class="charts-grid">
+                <div class="charts-grid stagger-enter">
                     <div class="chart-card">
                         <div class="chart-card-header">
                             <i class="fa-solid fa-chart-pie chart-icon"></i>
@@ -423,13 +419,6 @@
                             <h3>Por Responsável</h3>
                         </div>
                         <canvas id="responsibleChart"></canvas>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-card-header">
-                            <i class="fa-solid fa-money-bill-trend-up chart-icon"></i>
-                            <h3>Salários</h3>
-                        </div>
-                        <canvas id="incomesChart"></canvas>
                     </div>
                     <div class="chart-card">
                         <div class="chart-card-header">
@@ -537,6 +526,17 @@
                             </div>
 
                             <div class="form-group">
+                                <label>Forma de pagamento</label>
+                                <div class="shop-payment-methods" id="tranPaymentMethods">
+                                    <button type="button" class="shop-pay-btn active" data-method="dinheiro"><i class="fa-solid fa-money-bill"></i> Dinheiro</button>
+                                    <button type="button" class="shop-pay-btn" data-method="cartao"><i class="fa-solid fa-credit-card"></i> Cartão</button>
+                                    <button type="button" class="shop-pay-btn" data-method="pix"><i class="fa-brands fa-pix"></i> Pix</button>
+                                    <button type="button" class="shop-pay-btn shop-pay-vr" data-method="vr"><i class="fa-solid fa-utensils"></i> VR/VA</button>
+                                </div>
+                                <input type="hidden" id="tranPaymentMethod" value="dinheiro">
+                            </div>
+
+                            <div class="form-group">
                                 <label for="tranDescription">Descrição (opcional)</label>
                                 <input type="text" id="tranDescription" placeholder="Ex: Almoço no restaurante">
                             </div>
@@ -575,6 +575,16 @@
                             <div class="form-group" id="creditorTextGroup">
                                 <label for="debtCreditor">Credor</label>
                                 <input type="text" id="debtCreditor" placeholder="Nome do credor" required>
+                            </div>
+                            <div class="form-group" id="creditorFixedGroup" style="display:none">
+                                <label for="debtFixedCreditor">Credor Fixo</label>
+                                <select id="debtFixedCreditor">
+                                    <option value="Recrearte">Recrearte</option>
+                                    <option value="Enel">Enel (Luz)</option>
+                                    <option value="Perua Escolar">Perua Escolar</option>
+                                    <option value="Condomínio">Condomínio</option>
+                                    <option value="__outro__">Outro...</option>
+                                </select>
                             </div>
                             <div class="form-group" id="creditorCardGroup" style="display:none">
                                 <label for="debtCardIssuer">Banco / Cartão</label>
@@ -722,10 +732,10 @@
                 </div>
 
                 <!-- Debt Summary --> <!-- Resumo das dívidas -->
-                <div class="debt-overview-panel">
+                <div class="debt-overview-panel stagger-enter">
                     <div class="debt-overview-card debt-ov-monthly" data-filter="monthly" role="button" tabindex="0">
                         <div class="debt-ov-header">
-                            <div class="debt-ov-icon" style="background:rgba(255,159,67,0.15)"><i class="fa-solid fa-rotate" style="color:#FF9F43"></i></div>
+                            <div class="debt-ov-icon"><i class="fa-solid fa-rotate"></i></div>
                             <div>
                                 <p class="debt-ov-title">Mensais</p>
                                 <p class="debt-ov-subtitle">Fixas + Únicas ativas</p>
@@ -739,7 +749,7 @@
                     </div>
                     <div class="debt-overview-card debt-ov-financing" data-filter="financing" role="button" tabindex="0">
                         <div class="debt-ov-header">
-                            <div class="debt-ov-icon" style="background:rgba(67,97,238,0.15)"><i class="fa-solid fa-building-columns" style="color:#4361EE"></i></div>
+                            <div class="debt-ov-icon"><i class="fa-solid fa-building-columns"></i></div>
                             <div>
                                 <p class="debt-ov-title">Financiamentos</p>
                                 <p class="debt-ov-subtitle">Parcela mensal</p>
@@ -751,11 +761,9 @@
                             <span class="debt-ov-remaining" id="financingRemaining">Restante: R$ 0,00</span>
                         </div>
                     </div>
-                </div>
-                <div class="debt-overview-panel">
                     <div class="debt-overview-card debt-ov-loan" data-filter="loan" role="button" tabindex="0">
                         <div class="debt-ov-header">
-                            <div class="debt-ov-icon" style="background:rgba(255,107,53,0.15)"><i class="fa-solid fa-hand-holding-dollar" style="color:#FF6B35"></i></div>
+                            <div class="debt-ov-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
                             <div>
                                 <p class="debt-ov-title">Empréstimos</p>
                                 <p class="debt-ov-subtitle">Parcela mensal</p>
@@ -771,7 +779,7 @@
                 <div class="debt-overview-panel" id="cardDebtCardsContainer">
                     <!-- Cartões de dívida por membro - Populado dinamicamente por JS -->
                 </div>
-                <div class="summary-cards-row">
+                <div class="debt-summary-strip stagger-enter">
                     <div class="summary-mini" data-filter="all" role="button" tabindex="0">
                         <div class="sm-icon active-sm-icon"><i class="fa-solid fa-hourglass-half"></i></div>
                         <div class="sm-text">
@@ -780,7 +788,7 @@
                         </div>
                     </div>
                     <div class="summary-mini" data-filter="paid" role="button" tabindex="0">
-                        <div class="sm-icon" style="background:rgba(6,214,160,0.15)"><i class="fa-solid fa-circle-check" style="color:#06D6A0"></i></div>
+                        <div class="sm-icon paid-sm-icon"><i class="fa-solid fa-circle-check"></i></div>
                         <div class="sm-text">
                             <p class="sm-label">Total Pagas</p>
                             <p class="sm-value" id="totalPaidDebtsTab">R$ 0,00</p>
@@ -1263,7 +1271,7 @@
                 <div class="chores-person-section">
                     <div class="chores-person-bar chores-bianca-bar">
                         <div class="cpb-left">
-                            <div class="cpb-avatar bianca-avatar"><i class="fa-solid fa-user"></i></div>
+                            <div class="cpb-avatar bianca-avatar"><img src="img/bianca.jpeg" alt="Bianca" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>
                             <span class="cpb-name">Bianca</span>
                         </div>
                         <span class="cpb-badge" id="choresBiancaBadge">0/0</span>
