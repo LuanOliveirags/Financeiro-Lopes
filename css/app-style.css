@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    APP-STYLE.CSS — LAYOUT, LOGIN, HEADER, NAVIGATION
    ============================================================ */
 
@@ -59,9 +59,13 @@
   margin-bottom: 32px;
 }
 
-.login-avatar-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
+.login-avatar-wrap { 
+  display: flex; 
+  justify-content: center; 
+  margin-bottom: 12px;
+}
 .profile-logo {
-  width: 150px;
+  width: 140px;
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 4px 20px rgba(0,0,0,0.35));
@@ -69,8 +73,8 @@
 .avatar-icon-fallback { display: none; }
 
 .login-logo h1 {
-  color: #fff;
-  font-size: 1.75rem;
+  color: #b3cffa;
+  font-size: 1.5rem;
   font-weight: var(--fw-black);
   margin-bottom: 4px;
   letter-spacing: -0.02em;
