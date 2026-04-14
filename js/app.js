@@ -5,7 +5,7 @@
 import { initFirebase, setRefreshCallback } from './data.js';
 import { createDefaultAdmin, checkLoginStatus, initResetPasswordUI } from './auth.js';
 import { setupEventListeners, setupOnlineOfflineListeners } from './navigation.js';
-import { updateDashboard, setupDashboardToggle, setupKpiClickListeners } from './dashboard.js';
+import { updateDashboard, setupDashboardToggle, setupKpiClickListeners, setupValuesToggle } from './dashboard.js';
 import { updateTransactionHistory } from './transactions.js';
 import { updateDebtsList } from './debts.js';
 import { updateSalaryDisplay } from './salaries.js';
@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners();
   setupDashboardToggle();
   setupKpiClickListeners();
+  setupValuesToggle();
   setupOnlineOfflineListeners();
   initResetPasswordUI();
   await checkLoginStatus();

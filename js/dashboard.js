@@ -71,6 +71,29 @@ export function setupDashboardToggle() {
   btnVR.addEventListener('click', () => setMode('vr'));
 }
 
+// ===== HIDE/SHOW VALUES TOGGLE =====
+export function setupValuesToggle() {
+  const btn = document.getElementById('toggleValuesBtn');
+  const icon = document.getElementById('toggleValuesIcon');
+  if (!btn || !icon) return;
+
+  const hidden = localStorage.getItem('valuesHidden') === 'true';
+  const dashboard = document.getElementById('dashboard');
+  if (hidden) {
+    dashboard.classList.add('values-hidden');
+    icon.classList.replace('fa-eye', 'fa-eye-slash');
+  }
+
+  btn.addEventListener('click', () => {
+    const isHidden = dashboard.classList.toggle('values-hidden');
+    icon.classList.replace(
+      isHidden ? 'fa-eye' : 'fa-eye-slash',
+      isHidden ? 'fa-eye-slash' : 'fa-eye'
+    );
+    localStorage.setItem('valuesHidden', isHidden);
+  });
+}
+
 // ===== ATUALIZAR DASHBOARD =====
 export function updateDashboard() {
   const monthVal = document.getElementById('monthFilter').value;

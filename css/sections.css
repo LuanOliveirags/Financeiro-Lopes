@@ -232,6 +232,21 @@
 }
 .sparkline-x-labels span { font-size: 0.6875rem; color: var(--text-muted); }
 
+/* Hide Values Toggle */
+.values-hidden .balance-amount,
+.values-hidden .ie-value,
+.values-hidden .kpi-mini-val,
+.values-hidden .kpi-mini-sub,
+.values-hidden .vr-kpi-item-val,
+.values-hidden #vrBalance,
+.values-hidden #vrIncome,
+.values-hidden #vrExpense {
+  filter: blur(10px);
+  user-select: none;
+  pointer-events: none;
+  transition: filter 0.25s ease;
+}
+
 /* Income / Expense Cards */
 .ie-grid {
   display: grid;
