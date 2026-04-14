@@ -1658,7 +1658,23 @@
             </div>
 
             <!-- Input -->
+            <!-- Emoji Picker -->
+            <div id="emojiPicker" class="emoji-picker" style="display:none">
+                <div class="emoji-picker-tabs">
+                    <button class="emoji-tab active" data-cat="smileys" title="Smileys">😀</button>
+                    <button class="emoji-tab" data-cat="gestos" title="Gestos">👋</button>
+                    <button class="emoji-tab" data-cat="coracoes" title="Corações">❤️</button>
+                    <button class="emoji-tab" data-cat="animais" title="Animais">🐶</button>
+                    <button class="emoji-tab" data-cat="comida" title="Comida">🍕</button>
+                    <button class="emoji-tab" data-cat="objetos" title="Objetos">⚽</button>
+                </div>
+                <div class="emoji-picker-grid" id="emojiGrid"></div>
+            </div>
+
             <form id="chatForm" class="chat-input-bar" autocomplete="off" novalidate>
+                <button type="button" id="emojiToggleBtn" class="emoji-toggle-btn" aria-label="Emojis">
+                    <i class="fa-regular fa-face-smile"></i>
+                </button>
                 <input
                     type="text"
                     id="chatInput"

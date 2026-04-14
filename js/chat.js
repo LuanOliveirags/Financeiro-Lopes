@@ -22,6 +22,7 @@ let _lastTimestamp    = null;
 let _otherSeenAt      = '';     // seenAt do outro (atualizado via listener em tempo real)
 let _editingMsgId     = null;   // id da mensagem sendo editada
 let _convDocListener  = null;   // listener do doc da conversa atual (para seenAt)
+let _activeReactionBar = null;  // elemento da barra de reações ativa
 
 // ================================================================
 // PÚBLICO
@@ -336,6 +337,7 @@ function _openConversation(convId, otherUser) {
 
   _showView('chatViewMessages');
   _bindForm();
+  _initEmojiPicker();
   _startMsgListener(convId);
   _markSeen(convId);
 
@@ -529,6 +531,10 @@ function _bindForm() {
     if (!text) return;
     input.value = '';
     sendMessage(text);
+    // Close emoji picker on send
+    const picker = document.getElementById('emojiPicker');
+    if (picker) picker.style.display = 'none';
+    document.getElementById('emojiToggleBtn')?.classList.remove('active');
   });
   document.getElementById('chatInput')?.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -537,6 +543,72 @@ function _bindForm() {
     }
   });
   _formBound = true;
+}
+
+// ================================================================
+// EMOJI PICKER
+// ================================================================
+const EMOJI_DATA = {
+  smileys: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🫢','🫣','🤫','🤔','🫡','🤐','🤨','😐','😑','😶','🫥','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','🫤','😟','🙁','😮','😯','😲','😳','🥺','🥹','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖'],
+  gestos: ['👋','🤚','🖐️','✋','🖖','🫱','🫲','🫳','🫴','👌','🤌','🤏','✌️','🤞','🫰','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','🫵','👍','👎','✊','👊','🤛','🤜','👏','🙌','🫶','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🧠','🫀','🫁','🦷','🦴','👀','👁️','👅','👄','🫦','💋'],
+  coracoes: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','❣️','💕','💞','💓','💗','💖','💘','💝','💟','♥️','🫶','😍','🥰','😘','💑','💏','💌','🌹','🥀','💐'],
+  animais: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐻‍❄️','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🪱','🐛','🦋','🐌','🐞','🐜','🪰','🪲','🪳','🦟','🦗','🕷️','🐢','🐍','🦎','🦂','🦀','🦞','🦐','🦑','🐙','🐠','🐟','🐡','🐬','🐳','🐋','🦈','🐊','🐅','🐆','🦓','🦍','🦧','🐘','🦛','🦏','🐪','🐫','🦒','🦘','🦬','🐃','🐂','🐄','🐎','🐖','🐏','🐑','🦙','🐐','🦌','🐕','🐩','🦮','🐕‍🦺','🐈','🐈‍⬛','🪶','🐓','🦃','🦤','🦚','🦜','🦢','🦩','🕊️','🐇','🦝','🦨','🦡','🦫','🦦','🦥','🐁','🐀','🐿️','🦔'],
+  comida: ['🍕','🍔','🍟','🌭','🍿','🧂','🥓','🥚','🥐','🍞','🥖','🥨','🧀','🥗','🥙','🥪','🌮','🌯','🫔','🥫','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍘','🍥','🥠','🥮','🍢','🍡','🍧','🍨','🍦','🥧','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍩','🍪','🌰','🥜','🍯','🥛','🍼','🫖','☕','🍵','🧃','🥤','🧋','🍶','🍺','🍻','🥂','🍷','🥃','🍸','🍹','🧉','🍾','🫗','🍴','🥄','🔪','🫙'],
+  objetos: ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁','🏹','🎣','🤿','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🎪','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🪘','🎷','🎺','🪗','🎸','🪕','🎻','🎲','♟️','🎯','🎳','🎮','🕹️','🧸','🪄','🎈','🎉','🎊','🎁','🎀','🪅','🪩','🎗️','🏆','🥇','🥈','🥉','🏅']
+};
+
+function _initEmojiPicker() {
+  const picker = document.getElementById('emojiPicker');
+  const grid = document.getElementById('emojiGrid');
+  const toggleBtn = document.getElementById('emojiToggleBtn');
+  const input = document.getElementById('chatInput');
+  if (!picker || !grid || !toggleBtn || !input) return;
+
+  function renderCategory(cat) {
+    grid.innerHTML = '';
+    (EMOJI_DATA[cat] || []).forEach(em => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = em;
+      btn.addEventListener('click', () => {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        input.value = input.value.slice(0, start) + em + input.value.slice(end);
+        const pos = start + em.length;
+        input.setSelectionRange(pos, pos);
+        input.focus();
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  // Tab clicks
+  picker.querySelectorAll('.emoji-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      picker.querySelector('.emoji-tab.active')?.classList.remove('active');
+      tab.classList.add('active');
+      renderCategory(tab.dataset.cat);
+    });
+  });
+
+  // Toggle picker
+  toggleBtn.addEventListener('click', () => {
+    const showing = picker.style.display === 'none';
+    picker.style.display = showing ? '' : 'none';
+    toggleBtn.classList.toggle('active', showing);
+    if (showing) renderCategory(picker.querySelector('.emoji-tab.active')?.dataset.cat || 'smileys');
+  });
+
+  // Close when clicking outside
+  document.addEventListener('click', (e) => {
+    if (picker.style.display !== 'none' && !picker.contains(e.target) && !toggleBtn.contains(e.target)) {
+      picker.style.display = 'none';
+      toggleBtn.classList.remove('active');
+    }
+  });
+
+  // Render default
+  renderCategory('smileys');
 }
 
 // ================================================================
@@ -585,14 +657,21 @@ function _renderMessages(messages) {
       : `<div class="chat-avatar-bubble chat-initial">${esc(initial)}</div>`;
 
     const isEdited = !!msg.editedAt;
+    const reactionsHtml = _buildReactionsHtml(msg.reactions, me.id);
     html += `
       <div class="chat-msg ${isMine ? 'msg-mine' : 'msg-theirs'}" data-msg-id="${esc(msg.id)}" data-msg-ts="${esc(msg.timestamp)}" data-msg-mine="${isMine}">
         ${!isMine ? `<div class="chat-msg-avatar">${avatarEl}</div>` : ''}
         <div class="chat-bubble-col">
           ${!isMine ? `<span class="chat-sender-name">${esc(msg.senderName)}</span>` : ''}
-          <div class="chat-bubble">
-            <p class="chat-bubble-text">${_formatText(msg.text)}</p>
+          <div class="chat-bubble-wrap">
+            <div class="chat-bubble">
+              <p class="chat-bubble-text">${_formatText(msg.text)}</p>
+            </div>
+            <button type="button" class="chat-react-trigger" title="Reagir" data-msg-id="${esc(msg.id)}">
+              <i class="fa-regular fa-face-smile"></i>
+            </button>
           </div>
+          ${reactionsHtml}
           <span class="chat-time-label">${timeStr}${isEdited ? ' <span class="chat-edited">\u2022 editado</span>' : ''}</span>
         </div>
         ${isMine ? `<div class="chat-msg-avatar chat-avatar-mine">${avatarEl}</div>` : ''}
@@ -601,6 +680,8 @@ function _renderMessages(messages) {
 
   listEl.innerHTML = html;
   _bindMsgLongPress(listEl);
+  _bindReactionBadges(listEl);
+  _bindReactTriggers(listEl);
   _scrollToBottom(_chatOpen);
 }
 
@@ -876,15 +957,189 @@ async function _loadArchivedView() {
 }
 
 // ================================================================
-// EDITAR MENSAGEM (long-press + modal)
+// REAÇÕES EM MENSAGENS
+// ================================================================
+const QUICK_REACTIONS = ['❤️','😂','😮','😢','😡','👍'];
+
+const MORE_REACTIONS = [
+  '😍','🥰','😘','🤣','😅','😜','🤭','🤩',
+  '🙏','👏','🔥','🎉','💯','✨','💔','😱',
+  '😈','😔','😳','🤔','🙄','🥵','🥶','🤢',
+  '😴','💀','🤡','👻','👎','✌️','🤞','🤙',
+  '💪','🌹','🌟','🌈','🎂','🏆','⚽','🍻'
+];
+
+function _buildReactionsHtml(reactions, myId) {
+  if (!reactions || typeof reactions !== 'object') return '';
+  // Agrupar: { emoji: { count, hasMine } }
+  const grouped = {};
+  for (const [uid, emoji] of Object.entries(reactions)) {
+    if (!grouped[emoji]) grouped[emoji] = { count: 0, hasMine: false };
+    grouped[emoji].count++;
+    if (uid === myId) grouped[emoji].hasMine = true;
+  }
+  if (Object.keys(grouped).length === 0) return '';
+  let html = '<div class="chat-reactions">';
+  for (const [emoji, data] of Object.entries(grouped)) {
+    html += `<span class="chat-reaction-badge${data.hasMine ? ' mine' : ''}" data-react-emoji="${emoji}">`;
+    html += `<span class="react-emoji">${emoji}</span>`;
+    if (data.count > 1) html += `<span class="react-count">${data.count}</span>`;
+    html += '</span>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function _showReactionBar(msgEl) {
+  _closeReactionBar();
+  const bubbleWrap = msgEl.querySelector('.chat-bubble-wrap');
+  if (!bubbleWrap) return;
+
+  const bar = document.createElement('div');
+  bar.className = 'chat-reaction-bar';
+
+  // Quick reactions
+  QUICK_REACTIONS.forEach(em => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = em;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      _toggleReaction(msgEl.dataset.msgId, em);
+      _closeReactionBar();
+    });
+    bar.appendChild(btn);
+  });
+
+  // "+" button for more emojis
+  const plusBtn = document.createElement('button');
+  plusBtn.type = 'button';
+  plusBtn.className = 'reaction-more-btn';
+  plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+  plusBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    _showExpandedReactions(bar, msgEl);
+  });
+  bar.appendChild(plusBtn);
+
+  // Position above the bubble
+  msgEl.style.position = 'relative';
+  const isMine = msgEl.dataset.msgMine === 'true';
+  bar.style.bottom = '100%';
+  bar.style.marginBottom = '6px';
+  if (isMine) {
+    bar.style.right = '40px';
+  } else {
+    bar.style.left = '40px';
+  }
+  msgEl.appendChild(bar);
+  _activeReactionBar = bar;
+}
+
+function _showExpandedReactions(bar, msgEl) {
+  // Toggle expanded grid
+  let grid = bar.querySelector('.reaction-expanded-grid');
+  if (grid) { grid.remove(); return; }
+
+  grid = document.createElement('div');
+  grid.className = 'reaction-expanded-grid';
+  MORE_REACTIONS.forEach(em => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = em;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      _toggleReaction(msgEl.dataset.msgId, em);
+      _closeReactionBar();
+    });
+    grid.appendChild(btn);
+  });
+  bar.appendChild(grid);
+}
+
+function _closeReactionBar() {
+  if (_activeReactionBar) {
+    _activeReactionBar.remove();
+    _activeReactionBar = null;
+  }
+}
+
+async function _toggleReaction(msgId, emoji) {
+  if (!_currentConvId || !state.currentUser) return;
+  const me = state.currentUser.id;
+  try {
+    const msgRef = db.collection('conversations').doc(_currentConvId)
+      .collection('messages').doc(msgId);
+    const snap = await msgRef.get();
+    if (!snap.exists) return;
+    const reactions = snap.data().reactions || {};
+    if (reactions[me] === emoji) {
+      // Remove own reaction (toggle off)
+      delete reactions[me];
+    } else {
+      // Set/change reaction
+      reactions[me] = emoji;
+    }
+    await msgRef.update({ reactions });
+  } catch (err) {
+    console.error('[Chat] Erro ao reagir:', err);
+  }
+}
+
+function _bindReactionBadges(listEl) {
+  listEl.addEventListener('click', e => {
+    const badge = e.target.closest('.chat-reaction-badge');
+    if (!badge) return;
+    const msgEl = badge.closest('.chat-msg');
+    if (!msgEl) return;
+    const emoji = badge.dataset.reactEmoji;
+    if (emoji) _toggleReaction(msgEl.dataset.msgId, emoji);
+  });
+}
+
+function _bindReactTriggers(listEl) {
+  listEl.querySelectorAll('.chat-react-trigger').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const msgEl = btn.closest('.chat-msg');
+      if (msgEl) _showReactionBar(msgEl);
+    });
+  });
+}
+
+// Close reaction bar on click outside
+document.addEventListener('click', e => {
+  if (_activeReactionBar && !_activeReactionBar.contains(e.target) && !e.target.closest('.chat-msg')) {
+    _closeReactionBar();
+  }
+});
+
+// ================================================================
+// EDITAR MENSAGEM (long-press + modal) & REAÇÃO (double-tap)
 // ================================================================
 function _bindMsgLongPress(listEl) {
   if (listEl._lpBound) return;
   listEl._lpBound = true;
 
   let timer = null;
+  let lastTap = 0;
   const cancel = () => { clearTimeout(timer); timer = null; };
 
+  // Double-tap → reaction bar (any message)
+  listEl.addEventListener('click', e => {
+    const msgEl = e.target.closest('.chat-msg');
+    if (!msgEl || e.target.closest('.chat-reaction-bar') || e.target.closest('.chat-reaction-badge')) return;
+    const now = Date.now();
+    if (now - lastTap < 350) {
+      e.preventDefault();
+      _showReactionBar(msgEl);
+      lastTap = 0;
+    } else {
+      lastTap = now;
+    }
+  });
+
+  // Long-press → edit (own messages only)
   listEl.addEventListener('pointerdown', e => {
     const msgEl = e.target.closest('[data-msg-mine="true"]');
     if (!msgEl) return;
@@ -901,7 +1156,7 @@ function _bindMsgLongPress(listEl) {
   listEl.addEventListener('pointercancel', cancel);
   listEl.addEventListener('pointermove',   cancel);
   listEl.addEventListener('contextmenu', e => {
-    if (e.target.closest('[data-msg-mine="true"]')) e.preventDefault();
+    if (e.target.closest('.chat-msg')) e.preventDefault();
   });
 }
 
