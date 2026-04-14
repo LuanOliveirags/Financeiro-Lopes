@@ -98,6 +98,24 @@ export async function changeUserPassword(userId, oldPassword, newPassword) {
   return true;
 }
 
+/** Salva/atualiza o número de telefone do usuário atual. */
+export async function savePhoneNumber(rawPhone) {
+  if (!firebaseReady || !state.currentUser) throw new Error('Não autenticado.');
+  const normalized = rawPhone.replace(/\D/g, '');
+  if (normalized.length < 10 || normalized.length > 11) {
+    throw new Error('Número inválido. Use o formato (DDD) + número com 9 dígitos.');
+  }
+  // Garante unicidade: nenhum outro usuário pode ter o mesmo telefone
+  const existing = await db.collection('users').where('phone', '==', normalized).limit(1).get();
+  if (!existing.empty && existing.docs[0].id !== state.currentUser.id) {
+    throw new Error('Este número já está cadastrado para outro usuário.');
+  }
+  await db.collection('users').doc(state.currentUser.id).update({ phone: normalized });
+  state.currentUser.phone = normalized;
+  localStorage.setItem('user', JSON.stringify(state.currentUser));
+  return normalized;
+}
+
 // ===== FAMÍLIA =====
 export async function loadFamily() {
   if (!firebaseReady || !state.currentUser || !state.currentUser.familyId) {
@@ -329,6 +347,22 @@ export function applyUserToUI() {
   set('settingsUserName', user.fullName);
   set('settingsUserEmail', user.email);
 
+  // Exibir telefone no perfil
+  const phoneEl = document.getElementById('settingsUserPhone');
+  if (phoneEl) {
+    const p = user.phone || '';
+    if (p) {
+      const norm = p.replace(/\D/g, '');
+      phoneEl.textContent = norm.length === 11
+        ? `(${norm.slice(0,2)}) ${norm[2]} ${norm.slice(3,7)}-${norm.slice(7)}`
+        : norm.length === 10
+          ? `(${norm.slice(0,2)}) ${norm.slice(2,6)}-${norm.slice(6)}`
+          : p;
+    } else {
+      phoneEl.textContent = 'Nenhum telefone cadastrado';
+    }
+  }
+
   const profileRole = document.getElementById('settingsUserRole');
   if (profileRole) {
     const roleText = user.role === 'superadmin' ? 'Super Admin' : user.role === 'admin' ? 'Administrador' : 'Usuário';
@@ -349,7 +383,7 @@ export function applyUserToUI() {
   const choresBtn = document.getElementById('choresNavBtn');
   const settingsNavBtn = document.getElementById('settingsNavBtn');
   if (choresBtn) choresBtn.style.display = isLopes ? '' : 'none';
-  if (settingsNavBtn) settingsNavBtn.style.display = isLopes ? 'none' : '';
+  if (settingsNavBtn) settingsNavBtn.style.display = 'none';
 }
 
 export function applyAvatar(photoURL) {
@@ -540,6 +574,22 @@ export async function openEditUser(userId) {
     document.getElementById('editUserRole').value = u.role || 'user';
     document.getElementById('editUserNewPassword').value = '';
 
+    // Preencher telefone (formatar se existir)
+    const phoneInput = document.getElementById('editUserPhone');
+    if (phoneInput) {
+      const p = u.phone || '';
+      if (p) {
+        const n = p.replace(/\D/g, '');
+        phoneInput.value = n.length === 11
+          ? `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`
+          : n.length === 10
+            ? `(${n.slice(0,2)}) ${n.slice(2,6)}-${n.slice(6)}`
+            : p;
+      } else {
+        phoneInput.value = '';
+      }
+    }
+
     const roleGroup = document.getElementById('editUserRoleGroup');
     const familyGroup = document.getElementById('editUserFamilyGroup');
     const superadminOpt = document.getElementById('editUserRole')?.querySelector('option[value="superadmin"]');
@@ -593,7 +643,24 @@ export async function saveUserEdit(e) {
     const emailCheck = await db.collection('users').where('email', '==', email).get();
     if (emailCheck.docs.find(d => d.data().id !== userId)) { showAlert('E-mail já cadastrado.', 'danger'); return; }
 
+    // Telefone: normaliza e verifica unicidade
+    const rawPhone = (document.getElementById('editUserPhone')?.value || '').trim();
+    const normalizedPhone = rawPhone.replace(/\D/g, '');
+    if (normalizedPhone) {
+      if (normalizedPhone.length < 10 || normalizedPhone.length > 11) {
+        showAlert('Telefone inválido. Use o formato (DDD) + número com 8 ou 9 dígitos.', 'danger');
+        return;
+      }
+      const phoneCheck = await db.collection('users').where('phone', '==', normalizedPhone).limit(1).get();
+      if (!phoneCheck.empty && phoneCheck.docs[0].id !== userId) {
+        showAlert('Este número de telefone já está cadastrado para outro usuário.', 'danger');
+        return;
+      }
+    }
+
     const updates = { fullName, email, login };
+    updates.phone = normalizedPhone || '';
+
     if (isSuperAdmin()) {
       updates.role = document.getElementById('editUserRole').value;
       const familyId = document.getElementById('editUserFamily')?.value;

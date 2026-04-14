@@ -5,13 +5,15 @@
 import { state, isSuperAdmin, getFamilyId } from './state.js';
 import { showAlert, toDateStr } from './utils.js';
 import { firebaseReady, saveDataToStorage, loadDataFromStorage, exportData, importData, syncData, clearCache, syncAllToFirebase } from './data.js';
-import { uploadAvatar, loginUser, registerUser, changeUserPassword, loadUsersList, saveUserEdit, loadFamiliesListUI, createFamily, populateFamilySelects, loadFamily, applyUserToUI, logout } from './auth.js';
+import { uploadAvatar, loginUser, registerUser, changeUserPassword, savePhoneNumber, loadUsersList, saveUserEdit, loadFamiliesListUI, createFamily, populateFamilySelects, loadFamily, applyUserToUI, logout } from './auth.js';
 import { addTransaction, updateTransactionHistory } from './transactions.js';
 import { addDebt, resetDebtModal, setupDebtTypeListeners, setupDebtFilterListeners, updateDebtsList } from './debts.js';
 import { addSalary, setupDeductionListeners, updateSalaryDisplay, updateSalaryHistory } from './salaries.js';
 import { updateDashboard, updateCharts, setupKpiClickListeners } from './dashboard.js';
 import { openChoresTab, setupChoresListeners } from './chores.js';
 import { openShoppingPanel, setupShoppingListeners } from './shopping.js';
+import { getNotifSettings, saveNotifSettings, enableNotifications, disableNotifications, checkAndNotify, isNotifSupported } from './notifications.js';
+import { openChat, initChat, cleanupChat } from './chat.js';
 
 // ===== THEME =====
 function initializeTheme() {
@@ -187,11 +189,26 @@ function handleQuickAction(action) {
     switchTab('settings');
   } else if (action === 'chores') {
     switchTab('chores');
+  } else if (action === 'chat') {
+    openChat();
   }
 }
 
 // ===== SETUP EVENT LISTENERS =====
 export function setupEventListeners() {
+  // Toggle password visibility
+  const togglePasswordBtn = document.getElementById('togglePassword');
+  const passwordInput = document.getElementById('password');
+  if (togglePasswordBtn && passwordInput) {
+    togglePasswordBtn.addEventListener('click', () => {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      const icon = togglePasswordBtn.querySelector('i');
+      icon.classList.toggle('fa-eye', !isHidden);
+      icon.classList.toggle('fa-eye-slash', isHidden);
+    });
+  }
+
   // Avatar upload
   const avatarBtn = document.getElementById('avatarUploadBtn');
   const avatarInput = document.getElementById('avatarFileInput');
@@ -245,8 +262,12 @@ export function setupEventListeners() {
     }
   });
 
-  // Logout
-  document.getElementById('logoutBtn')?.addEventListener('click', logout);
+  // Logout — limpa chat antes de sair
+  document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    const wasLoggedIn = state.isLoggedIn;
+    logout();
+    if (wasLoggedIn && !state.isLoggedIn) cleanupChat();
+  });
 
   // Bottom Navigation
   document.querySelectorAll('.bottom-nav-item').forEach(tab => {
@@ -345,6 +366,9 @@ export function setupEventListeners() {
   // Theme
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
+  // ── Telefone do perfil ──
+  _setupPhoneModal();
+
   // User management
   const changePassBtn = document.getElementById('changePasswordBtn');
   if (changePassBtn) changePassBtn.addEventListener('click', () => document.getElementById('changePasswordModal').classList.add('active'));
@@ -379,6 +403,16 @@ export function setupEventListeners() {
 
   const editUserForm = document.getElementById('editUserForm');
   if (editUserForm) editUserForm.addEventListener('submit', saveUserEdit);
+
+  // Máscara de telefone no modal de edição de usuário
+  document.getElementById('editUserPhone')?.addEventListener('input', function(e) {
+    let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+    if (!v) { e.target.value = ''; return; }
+    let r = '(' + v.slice(0, 2);
+    if (v.length > 2) r += ') ' + v.slice(2, 7);
+    if (v.length > 7) r += '-' + v.slice(7, 11);
+    e.target.value = r;
+  });
 
   const changePassForm = document.getElementById('changePasswordForm');
   if (changePassForm) {
@@ -448,6 +482,101 @@ export function setupEventListeners() {
       updateCharts(monthTransactions, monthDebts);
     }
   });
+
+  // Escuta mensagem do SW para navegar até uma aba (ex: clique em notificação)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data?.type === 'SW_NAVIGATE')  switchTab(event.data.tab || 'debts');
+      if (event.data?.type === 'SW_OPEN_CHAT') openChat();
+    });
+  }
+
+  // Configurar painel de notificações (assíncrono, não bloqueia UI)
+  setupNotificationSettings();
+}
+
+// ===== NOTIFICATION SETTINGS =====
+async function setupNotificationSettings() {
+  const group = document.getElementById('notifSettingsGroup');
+  if (!group) return;
+
+  // Oculta o bloco se o navegador não suporta notificações
+  if (!isNotifSupported()) {
+    group.style.display = 'none';
+    return;
+  }
+
+  // Atualiza badge de permissão do sistema
+  function updatePermBadge() {
+    const badge = document.getElementById('notifPermBadge');
+    if (!badge) return;
+    const perm = Notification.permission;
+    badge.textContent  = perm === 'granted' ? 'Permitido' : perm === 'denied' ? 'Bloqueado' : 'Pendente';
+    badge.className    = 'status-pill ' + (perm === 'granted' ? 'connected' : perm === 'denied' ? 'disconnected' : '');
+  }
+
+  // Preenche controles com valores salvos
+  function loadUI() {
+    const s    = getNotifSettings();
+    const perm = Notification.permission === 'granted';
+    const el   = id => document.getElementById(id);
+
+    if (el('notifToggle'))     el('notifToggle').checked     = s.enabled && perm;
+    if (el('notifOverdue'))    el('notifOverdue').checked    = s.notifyOverdue;
+    if (el('notifToday'))      el('notifToday').checked      = s.notifyToday;
+    if (el('notifDaysBefore')) el('notifDaysBefore').value   = String(s.notifyDaysBefore);
+
+    const sub = el('notifSubSettings');
+    if (sub) sub.style.display = (s.enabled && perm) ? '' : 'none';
+  }
+
+  updatePermBadge();
+  loadUI();
+
+  // Toggle principal — solicita permissão e ativa/desativa
+  document.getElementById('notifToggle')?.addEventListener('change', async (e) => {
+    if (e.target.checked) {
+      const result = await enableNotifications();
+      if (result !== 'granted') {
+        e.target.checked = false;
+        showAlert('Permissão de notificação negada pelo sistema. Habilite nas configurações do navegador.', 'danger');
+        updatePermBadge();
+        return;
+      }
+      document.getElementById('notifSubSettings').style.display = '';
+      showAlert('Notificações ativadas! Você será avisado sobre dívidas pendentes.', 'success');
+    } else {
+      disableNotifications();
+      document.getElementById('notifSubSettings').style.display = 'none';
+      showAlert('Notificações desativadas.', 'info');
+    }
+    updatePermBadge();
+    const s = getNotifSettings();
+    s.enabled = e.target.checked && Notification.permission === 'granted';
+    saveNotifSettings(s);
+  });
+
+  // Sub-opções
+  document.getElementById('notifOverdue')?.addEventListener('change', (e) => {
+    saveNotifSettings({ ...getNotifSettings(), notifyOverdue: e.target.checked });
+  });
+  document.getElementById('notifToday')?.addEventListener('change', (e) => {
+    saveNotifSettings({ ...getNotifSettings(), notifyToday: e.target.checked });
+  });
+  document.getElementById('notifDaysBefore')?.addEventListener('change', (e) => {
+    saveNotifSettings({ ...getNotifSettings(), notifyDaysBefore: parseInt(e.target.value) });
+  });
+
+  // Botão de teste
+  document.getElementById('notifTestBtn')?.addEventListener('click', async () => {
+    const s = getNotifSettings();
+    if (!s.enabled || Notification.permission !== 'granted') {
+      showAlert('Ative as notificações primeiro.', 'danger');
+      return;
+    }
+    showAlert('Verificando dívidas e enviando notificação de teste...', 'info');
+    await checkAndNotify(true);
+  });
 }
 
 // ===== SWIPE BETWEEN TABS (MOBILE) =====
@@ -492,3 +621,76 @@ function setupTabSwipe() {
 window.switchTab = switchTab;
 window.selectMonth = selectMonth;
 window.selectWeekDay = selectWeekDay;
+
+// ================================================================
+// MODAL DE EDIÇÃO DE TELEFONE
+// ================================================================
+
+function _setupPhoneModal() {
+  const editBtn   = document.getElementById('editPhoneBtn');
+  const modal     = document.getElementById('phoneEditModal');
+  const closeBtn  = document.getElementById('phoneModalClose');
+  const saveBtn   = document.getElementById('savePhoneBtn');
+  const input     = document.getElementById('profilePhoneInput');
+  const errorEl   = document.getElementById('phoneModalError');
+
+  if (!editBtn || !modal) return;
+
+  function _maskInput(e) {
+    let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+    if (!v) { e.target.value = ''; return; }
+    let r = '(' + v.slice(0, 2);
+    if (v.length > 2) r += ') ' + v.slice(2, 7);
+    if (v.length > 7) r += '-' + v.slice(7, 11);
+    e.target.value = r;
+  }
+
+  function _openModal() {
+    // Preenche com telefone atual, se existir
+    const current = (state.currentUser && state.currentUser.phone) || '';
+    if (current) {
+      const n = current.replace(/\D/g, '');
+      input.value = n.length === 11
+        ? `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`
+        : current;
+    } else {
+      input.value = '';
+    }
+    errorEl.style.display = 'none';
+    errorEl.textContent = '';
+    modal.style.display = 'flex';
+    setTimeout(() => input.focus(), 100);
+  }
+
+  function _closeModal() {
+    modal.style.display = 'none';
+  }
+
+  editBtn.addEventListener('click', _openModal);
+  closeBtn.addEventListener('click', _closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) _closeModal(); });
+  input.addEventListener('input', _maskInput);
+
+  saveBtn.addEventListener('click', async () => {
+    errorEl.style.display = 'none';
+    const raw = input.value.trim();
+    if (!raw) { errorEl.textContent = 'Digite um número de telefone.'; errorEl.style.display = 'block'; return; }
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+
+    try {
+      await savePhoneNumber(raw);
+      applyUserToUI();
+      _closeModal();
+      showAlert('Telefone salvo com sucesso!', 'success');
+    } catch (err) {
+      errorEl.textContent = err.message || 'Erro ao salvar telefone.';
+      errorEl.style.display = 'block';
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
+    }
+  });
+}
+

@@ -54,6 +54,9 @@
                 <div class="form-group input-float">
                     <i class="fa-solid fa-lock field-icon"></i>
                     <input type="password" id="password" placeholder="Senha" required autocomplete="current-password">
+                    <button type="button" id="togglePassword" class="toggle-password-btn" aria-label="Mostrar senha">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
                 </div>
                 
                 <button type="submit" class="login-btn">
@@ -184,6 +187,13 @@
                     <i class="fa-solid fa-plus fab-plus"></i>
                 </button>
                 <div id="quickActionsMenu" class="quick-actions-menu">
+                    <button class="quick-action-item" data-action="chat">
+                        <div class="qa-icon-wrap qa-chat-wrap">
+                            <i class="fa-solid fa-comments"></i>
+                            <span class="chat-fab-badge" id="chatUnreadBadge" style="display:none" aria-label="Mensagens não lidas">0</span>
+                        </div>
+                        <span class="action-label">Chat</span>
+                    </button>
                     <button class="quick-action-item" data-action="chores">
                         <div class="qa-icon-wrap"><i class="fa-solid fa-broom"></i></div>
                         <span class="action-label">Tarefas</span>
@@ -949,6 +959,13 @@
                     <div class="spc-text">
                         <h3 id="settingsUserName">Usuário</h3>
                         <p id="settingsUserEmail">—</p>
+                        <div class="spc-phone-row" id="spcPhoneRow">
+                            <i class="fa-solid fa-phone spc-phone-icon"></i>
+                            <span id="settingsUserPhone" class="spc-phone-val">Nenhum telefone cadastrado</span>
+                            <button id="editPhoneBtn" class="spc-btn-edit-phone" aria-label="Editar telefone" title="Editar telefone">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                        </div>
                         <span id="settingsUserRole" class="status-pill connected">Usuário</span>
                         <span class="status-pill" style="margin-left:6px;"><i class="fa-solid fa-people-roof" style="margin-right:4px;"></i><span id="settingsFamilyName">—</span></span>
                     </div>
@@ -1017,6 +1034,61 @@
                                 <span class="sr-text">Sincronizar agora</span>
                                 <i class="fa-solid fa-chevron-right sr-arrow"></i>
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- NOTIFICAÇÕES -->
+                    <div class="settings-group" id="notifSettingsGroup">
+                        <p class="sg-label">NOTIFICAÇÕES</p>
+                        <div class="sg-body">
+
+                            <div class="settings-row">
+                                <div class="sr-icon notif-bell-icon"><i class="fa-solid fa-bell"></i></div>
+                                <span class="sr-text">Ativar notificações</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="notifToggle">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div id="notifSubSettings" style="display:none">
+                                <div class="settings-row">
+                                    <div class="sr-icon" style="background:rgba(255,80,80,0.12)"><i class="fa-solid fa-triangle-exclamation" style="color:#FF5050"></i></div>
+                                    <span class="sr-text">Em atraso</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="notifOverdue" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="settings-row">
+                                    <div class="sr-icon" style="background:rgba(6,214,160,0.12)"><i class="fa-solid fa-calendar-day" style="color:#06D6A0"></i></div>
+                                    <span class="sr-text">Vencem hoje</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="notifToday" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="settings-row">
+                                    <div class="sr-icon" style="background:rgba(67,97,238,0.12)"><i class="fa-solid fa-clock" style="color:#4361EE"></i></div>
+                                    <span class="sr-text">Aviso antecipado</span>
+                                    <select id="notifDaysBefore" class="filter-chip" style="margin-left:auto">
+                                        <option value="1">1 dia antes</option>
+                                        <option value="3" selected>3 dias antes</option>
+                                        <option value="7">7 dias antes</option>
+                                    </select>
+                                </div>
+                                <button id="notifTestBtn" class="settings-row">
+                                    <div class="sr-icon" style="background:rgba(61,106,142,0.12)"><i class="fa-solid fa-paper-plane" style="color:#3D6A8E"></i></div>
+                                    <span class="sr-text">Testar notificação agora</span>
+                                    <i class="fa-solid fa-chevron-right sr-arrow"></i>
+                                </button>
+                            </div>
+
+                            <div class="settings-row info-row">
+                                <div class="sr-icon" style="background:rgba(6,214,160,0.12)"><i class="fa-solid fa-shield-check" style="color:#06D6A0"></i></div>
+                                <span class="sr-text">Permissão do sistema</span>
+                                <span id="notifPermBadge" class="status-pill">Verificando</span>
+                            </div>
                         </div>
                     </div>
 
@@ -1155,6 +1227,10 @@
                                 <select id="editUserFamily" class="filter-chip" style="width:100%;padding-right:16px;">
                                     <option value="">Selecione uma família...</option>
                                 </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="editUserPhone">Telefone <small style="color:var(--text-muted);font-weight:400;">(DDD + número)</small></label>
+                                <input type="tel" id="editUserPhone" placeholder="(XX) 9XXXX-XXXX" maxlength="16" inputmode="numeric" autocomplete="tel">
                             </div>
                             <div class="form-group">
                                 <label for="editUserNewPassword">Nova senha (deixe vazio para manter)</label>
@@ -1483,6 +1559,201 @@
 
     </div>
 
+    <!-- ====== CHAT PANEL ====== -->
+    <div id="chatPanel" class="chat-panel" role="dialog" aria-modal="true" aria-label="Chat">
+
+        <!-- ── VIEW 1: Lista de conversas ── -->
+        <div id="chatViewList" class="chat-view active">
+            <div class="chat-header">
+                <button id="chatCloseBtn" class="chat-back-btn" aria-label="Fechar chat">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="chat-header-text" style="flex:1;margin-left:6px;">
+                    <h3 class="chat-title">Chat</h3>
+                </div>
+                <button id="newChatBtn" class="chat-back-btn" aria-label="Nova conversa" title="Nova conversa">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <div id="convListEl" class="conv-list">
+                <div id="convListEmpty" class="chat-empty-state">
+                    <div class="chat-empty-icon"><i class="fa-solid fa-comments"></i></div>
+                    <p class="chat-empty-title">Nenhuma conversa</p>
+                    <p class="chat-empty-sub">Toque em <strong>+</strong> para iniciar uma conversa</p>
+                </div>
+            </div>
+            <button id="convArchivedBtn" class="conv-archived-btn" style="display:none" aria-label="Conversas arquivadas">
+                <i class="fa-solid fa-box-archive"></i>
+                <span>Arquivadas</span>
+                <span class="archived-count">0</span>
+            </button>
+        </div>
+
+        <!-- ── VIEW 2: Buscar contato por telefone ── -->
+        <div id="chatViewSearch" class="chat-view">
+            <div class="chat-header">
+                <button id="searchBackBtn" class="chat-back-btn" aria-label="Voltar">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div style="flex:1;margin-left:6px;">
+                    <h3 class="chat-title">Nova conversa</h3>
+                </div>
+            </div>
+            <div class="search-contact-body">
+                <p class="search-contact-hint">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Digite o telefone do contato cadastrado no Lopes Gestão Financeira
+                </p>
+                <div class="search-phone-wrap">
+                    <i class="fa-solid fa-phone search-phone-icon"></i>
+                    <input
+                        type="tel"
+                        id="searchPhoneInput"
+                        placeholder="(XX) 9XXXX-XXXX"
+                        maxlength="16"
+                        class="search-phone-input"
+                        inputmode="numeric"
+                        autocomplete="tel"
+                        aria-label="Número de telefone"
+                    >
+                </div>
+                <button id="searchPhoneBtn" class="search-phone-submit">
+                    <i class="fa-solid fa-magnifying-glass"></i> Buscar contato
+                </button>
+                <div id="searchPhoneResult" class="search-result-area" style="display:none"></div>
+            </div>
+        </div>
+
+        <!-- ── VIEW 3: Conversa individual ── -->
+        <div id="chatViewMessages" class="chat-view">
+            <div class="chat-header">
+                <button id="chatMsgBackBtn" class="chat-back-btn" aria-label="Voltar">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div class="chat-header-info">
+                    <div class="chat-header-avatars">
+                        <img id="chatHdrAvatar" src="" alt="" class="chat-hdr-avatar"
+                             onerror="this.style.display='none'">
+                    </div>
+                    <div class="chat-header-text">
+                        <h3 class="chat-title">Chat</h3>
+                        <span id="chatHdrSubtitle" class="chat-subtitle"></span>
+                    </div>
+                </div>
+                <button id="chatOptionsBtn" class="chat-back-btn" aria-label="Opções da conversa" title="Opções">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </button>
+            </div>
+
+            <!-- Mensagens -->
+            <div id="chatMessagesList" class="chat-messages-list" role="log" aria-live="polite" aria-relevant="additions">
+                <div id="chatEmptyState" class="chat-empty-state">
+                    <div class="chat-empty-icon"><i class="fa-solid fa-comments"></i></div>
+                    <p class="chat-empty-title">Nenhuma mensagem ainda</p>
+                    <p class="chat-empty-sub">Diga olá para começar a conversa! 👋</p>
+                </div>
+            </div>
+
+            <!-- Input -->
+            <form id="chatForm" class="chat-input-bar" autocomplete="off" novalidate>
+                <input
+                    type="text"
+                    id="chatInput"
+                    class="chat-input"
+                    placeholder="Mensagem..."
+                    maxlength="1000"
+                    autocomplete="off"
+                    autocorrect="on"
+                    aria-label="Escrever mensagem"
+                >
+                <button type="submit" id="chatSendBtn" class="chat-send-btn" aria-label="Enviar">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- ── VIEW 4: Conversas arquivadas ── -->
+        <div id="chatViewArchived" class="chat-view">
+            <div class="chat-header">
+                <button id="archivedBackBtn" class="chat-back-btn" aria-label="Voltar">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div style="flex:1;margin-left:6px;">
+                    <h3 class="chat-title">Arquivadas</h3>
+                </div>
+            </div>
+            <div id="archivedListEl" class="conv-list">
+                <div id="archivedListEmpty" class="chat-empty-state" style="display:none">
+                    <div class="chat-empty-icon"><i class="fa-solid fa-box-archive"></i></div>
+                    <p class="chat-empty-title">Nenhuma conversa arquivada</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Opções da conversa (bottom sheet) -->
+        <div id="chatOptionsSheet" class="chat-options-overlay" style="display:none">
+            <div class="chat-options-panel">
+                <div class="chat-options-handle"></div>
+                <button id="chatOptClear" class="chat-options-btn chat-options-btn--danger">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Limpar conversa</span>
+                </button>
+                <button id="chatOptArchive" class="chat-options-btn">
+                    <i class="fa-solid fa-box-archive"></i>
+                    <span>Arquivar conversa</span>
+                </button>
+                <button id="chatOptCancel" class="chat-options-btn chat-options-btn--cancel">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal: editar mensagem -->
+        <div id="chatEditMsgModal" class="chat-edit-overlay" style="display:none">
+            <div class="chat-edit-modal">
+                <div class="chat-edit-header">
+                    <h4>Editar mensagem</h4>
+                    <button id="chatEditCloseBtn" class="phone-modal-close" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <textarea
+                    id="chatEditMsgInput"
+                    class="chat-edit-input"
+                    maxlength="1000"
+                    rows="3"
+                    placeholder="Mensagem..."
+                    aria-label="Editar mensagem"
+                ></textarea>
+                <p class="chat-edit-hint"><i class="fa-solid fa-eye-slash"></i> Só pode editar se o outro ainda não visualizou</p>
+                <div class="chat-edit-actions">
+                    <button id="chatEditCancelBtn" class="chat-edit-btn chat-edit-btn--cancel">Cancelar</button>
+                    <button id="chatEditSaveBtn" class="chat-edit-btn chat-edit-btn--save">
+                        <i class="fa-solid fa-check"></i> Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /.chat-panel -->
+
+    <!-- Modal: editar telefone do perfil -->
+    <div id="phoneEditModal" class="phone-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Editar telefone">
+        <div class="phone-modal">
+            <div class="phone-modal-header">
+                <h3>Editar telefone</h3>
+                <button id="phoneModalClose" class="phone-modal-close" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="phone-modal-hint">Este número será usado para que outros usuários possam encontrá-lo no chat pelo número de telefone.</p>
+            <div class="phone-modal-input-wrap">
+                <i class="fa-solid fa-phone"></i>
+                <input type="tel" id="profilePhoneInput" placeholder="(XX) 9XXXX-XXXX" maxlength="16" inputmode="numeric" autocomplete="tel">
+            </div>
+            <div id="phoneModalError" class="phone-modal-error" style="display:none"></div>
+            <button id="savePhoneBtn" class="phone-modal-save">
+                <i class="fa-solid fa-floppy-disk"></i> Salvar
+            </button>
+        </div>
+    </div>
+
     <!-- Service Worker Registration --> <!-- Registro do Service Worker para PWA -->
     <script>
         if ('serviceWorker' in navigator) {
@@ -1504,6 +1775,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <!-- Firebase Cloud Messaging — push notifications do chat no celular -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
     <!-- Main Script --> <!-- Aplicação modular ES Modules -->
     <script type="module" src="js/app.js"></script>

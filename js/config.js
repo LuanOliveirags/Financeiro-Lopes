@@ -12,6 +12,15 @@ export const firebaseConfig = {
   measurementId: "G-7FHPEHP5G5"
 };
 
+// ===== FIREBASE CLOUD MESSAGING (notificações push do chat no celular) =====
+// Como obter:
+//   FCM_VAPID_KEY  → Firebase Console → Configurações → Cloud Messaging
+//                    → Web Push certificates → Gerar par de chaves → copiar a "Chave pública"
+//   FCM_SERVER_KEY → Firebase Console → Configurações → Cloud Messaging
+//                    → APIs de mensagens Cloud → Chave do servidor (Legacy)
+export const FCM_VAPID_KEY  = 'YOUR_VAPID_KEY_HERE';  // começa com "BK..." ou "BA..."
+export const FCM_SERVER_KEY = 'YOUR_SERVER_KEY_HERE'; // começa com "AAAA..."
+
 export const EMAILJS_CONFIG = {
   serviceId: 'YOUR_SERVICE_ID',
   templateId: 'YOUR_TEMPLATE_ID',
