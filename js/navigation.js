@@ -465,6 +465,7 @@ export function setupEventListeners() {
   setupDebtFilterListeners();
   setupChoresListeners();
   setupTabSwipe();
+  setupChatSwipe();
 
   // Salary month filter
   const salaryMonthFilter = document.getElementById('salaryMonthFilter');
@@ -595,6 +596,8 @@ function setupTabSwipe() {
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'CANVAS') return;
     // Don't swipe if any modal is open
     if (document.querySelector('.modal.active')) return;
+    // Don't swipe if chat panel is open
+    if (document.getElementById('chatPanel')?.classList.contains('active')) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     tracking = true;
@@ -617,6 +620,61 @@ function setupTabSwipe() {
     if (idx === -1) return;
     if (dx > 0 && idx > 0) switchTab(TABS[idx - 1]);         // swipe right → prev tab
     else if (dx < 0 && idx < TABS.length - 1) switchTab(TABS[idx + 1]); // swipe left → next tab
+  }, { passive: true });
+}
+
+// ===== SWIPE TO GO BACK INSIDE CHAT PANEL =====
+function setupChatSwipe() {
+  const panel = document.getElementById('chatPanel');
+  if (!panel) return;
+
+  const THRESHOLD = 60;   // px mínimos para ativar
+  const EDGE_ZONE = 40;   // px da borda esquerda para iniciar (swipe-from-edge)
+  let startX = 0, startY = 0, tracking = false;
+
+  // Importa closeChat e as funções de navegação do chat dinamicamente
+  async function _chatBack() {
+    const { closeChat } = await import('./chat.js');
+
+    const views = ['chatViewPhoneGate', 'chatViewSearch', 'chatViewMessages', 'chatViewArchived'];
+    const activeView = views.find(id => document.getElementById(id)?.classList.contains('active'));
+
+    if (activeView === 'chatViewMessages') {
+      // Vai para lista de conversas
+      document.getElementById('chatMsgBackBtn')?.click();
+    } else if (activeView === 'chatViewSearch') {
+      document.getElementById('searchBackBtn')?.click();
+    } else if (activeView === 'chatViewArchived') {
+      document.getElementById('archivedBackBtn')?.click();
+    } else {
+      // chatViewList ou gate → fecha o chat
+      closeChat();
+    }
+  }
+
+  panel.addEventListener('touchstart', (e) => {
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    // Só rastreia se o toque começar perto da borda esquerda (swipe-from-edge nativo)
+    if (e.touches[0].clientX > EDGE_ZONE) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  panel.addEventListener('touchmove', (e) => {
+    if (!tracking) return;
+    // Cancela se o movimento for mais vertical que horizontal
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (Math.abs(dy) > Math.abs(dx)) { tracking = false; }
+  }, { passive: true });
+
+  panel.addEventListener('touchend', (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    if (dx > THRESHOLD) _chatBack();
   }, { passive: true });
 }
 
