@@ -787,9 +787,12 @@ function _showEmptyState(show) {
 
 function _updateBadge(count) {
   const badge = document.getElementById('chatUnreadBadge');
-  if (!badge) return;
-  badge.textContent   = count > 9 ? '9+' : String(count);
-  badge.style.display = count > 0 ? 'flex' : 'none';
+  if (badge) {
+    badge.textContent   = count > 9 ? '9+' : String(count);
+    badge.style.display = count > 0 ? 'flex' : 'none';
+  }
+  const dot = document.getElementById('chatFabDot');
+  if (dot) dot.style.display = count > 0 ? 'block' : 'none';
 }
 
 async function _notifyNewMessage(msg) {
