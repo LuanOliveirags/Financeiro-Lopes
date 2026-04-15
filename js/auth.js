@@ -116,6 +116,15 @@ export async function savePhoneNumber(rawPhone) {
   return normalized;
 }
 
+export async function saveRecado(text) {
+  if (!firebaseReady || !state.currentUser) throw new Error('Não autenticado.');
+  const trimmed = text.trim().slice(0, 120);
+  await db.collection('users').doc(state.currentUser.id).update({ recado: trimmed });
+  state.currentUser.recado = trimmed;
+  localStorage.setItem('user', JSON.stringify(state.currentUser));
+  return trimmed;
+}
+
 // ===== FAMÍLIA =====
 export async function loadFamily() {
   if (!firebaseReady || !state.currentUser || !state.currentUser.familyId) {
@@ -363,6 +372,30 @@ export function applyUserToUI() {
     }
   }
 
+  // Exibir recado no perfil
+  const recadoEl = document.getElementById('settingsUserRecado');
+  if (recadoEl) recadoEl.textContent = user.recado || 'Nenhum recado';
+
+  // Chat: barra inferior e painel "Meu Perfil"
+  const chatMyName   = document.getElementById('chatMyName');
+  const chatMyRecado = document.getElementById('chatMyRecado');
+  if (chatMyName)   chatMyName.textContent   = user.fullName || 'Meu Perfil';
+  if (chatMyRecado) chatMyRecado.textContent = user.recado   || 'Sem recado';
+  const myProfileName   = document.getElementById('myProfileName');
+  const myProfileRecado = document.getElementById('myProfileRecado');
+  const myProfilePhone  = document.getElementById('myProfilePhone');
+  if (myProfileName)   myProfileName.textContent   = user.fullName || '—';
+  if (myProfileRecado) myProfileRecado.textContent = user.recado   || 'Nenhum recado';
+  if (myProfilePhone) {
+    const p = user.phone || '';
+    const n = p.replace(/\D/g, '');
+    myProfilePhone.textContent = n.length === 11
+      ? `(${n.slice(0,2)}) ${n[2]} ${n.slice(3,7)}-${n.slice(7)}`
+      : n.length === 10
+        ? `(${n.slice(0,2)}) ${n.slice(2,6)}-${n.slice(6)}`
+        : p || 'Não cadastrado';
+  }
+
   const profileRole = document.getElementById('settingsUserRole');
   if (profileRole) {
     const roleText = user.role === 'superadmin' ? 'Super Admin' : user.role === 'admin' ? 'Administrador' : 'Usuário';
@@ -387,14 +420,22 @@ export function applyUserToUI() {
 }
 
 export function applyAvatar(photoURL) {
-  const headerImg = document.getElementById('headerAvatar');
-  const settingsImg = document.getElementById('settingsAvatar');
+  const headerImg      = document.getElementById('headerAvatar');
+  const settingsImg    = document.getElementById('settingsAvatar');
+  const chatMyImg      = document.getElementById('chatMyAvatar');
+  const chatMyFallback = document.getElementById('chatMyAvatarFallback');
+  const myProfImg      = document.getElementById('myProfileAvatar');
+  const myProfFallback = document.getElementById('myProfileAvatarFallback');
   if (photoURL) {
-    if (headerImg) { headerImg.src = photoURL; headerImg.style.display = 'block'; }
+    if (headerImg)   { headerImg.src   = photoURL; headerImg.style.display   = 'block'; }
     if (settingsImg) { settingsImg.src = photoURL; settingsImg.style.display = 'block'; }
+    if (chatMyImg)   { chatMyImg.src   = photoURL; chatMyImg.style.display   = 'block'; if (chatMyFallback) chatMyFallback.style.display = 'none'; }
+    if (myProfImg)   { myProfImg.src   = photoURL; myProfImg.style.display   = 'block'; if (myProfFallback) myProfFallback.style.display = 'none'; }
   } else {
-    if (headerImg) headerImg.style.display = 'none';
+    if (headerImg)   headerImg.style.display   = 'none';
     if (settingsImg) settingsImg.style.display = 'none';
+    if (chatMyImg)   { chatMyImg.style.display = 'none'; if (chatMyFallback) chatMyFallback.style.display = 'flex'; }
+    if (myProfImg)   { myProfImg.style.display = 'none'; if (myProfFallback) myProfFallback.style.display = 'flex'; }
   }
 }
 

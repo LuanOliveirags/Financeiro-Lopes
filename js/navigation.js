@@ -5,7 +5,7 @@
 import { state, isSuperAdmin, getFamilyId } from './state.js';
 import { showAlert, toDateStr } from './utils.js';
 import { firebaseReady, saveDataToStorage, loadDataFromStorage, exportData, importData, syncData, clearCache, syncAllToFirebase } from './data.js';
-import { uploadAvatar, loginUser, registerUser, changeUserPassword, savePhoneNumber, loadUsersList, saveUserEdit, loadFamiliesListUI, createFamily, populateFamilySelects, loadFamily, applyUserToUI, logout } from './auth.js';
+import { uploadAvatar, loginUser, registerUser, changeUserPassword, savePhoneNumber, saveRecado, loadUsersList, saveUserEdit, loadFamiliesListUI, createFamily, populateFamilySelects, loadFamily, applyUserToUI, logout } from './auth.js';
 import { addTransaction, updateTransactionHistory } from './transactions.js';
 import { addDebt, resetDebtModal, setupDebtTypeListeners, setupDebtFilterListeners, updateDebtsList } from './debts.js';
 import { addSalary, setupDeductionListeners, updateSalaryDisplay, updateSalaryHistory } from './salaries.js';
@@ -369,6 +369,9 @@ export function setupEventListeners() {
   // ── Telefone do perfil ──
   _setupPhoneModal();
 
+  // ── Recado do perfil ──
+  _setupRecadoModal();
+
   // User management
   const changePassBtn = document.getElementById('changePasswordBtn');
   if (changePassBtn) changePassBtn.addEventListener('click', () => document.getElementById('changePasswordModal').classList.add('active'));
@@ -686,6 +689,57 @@ function _setupPhoneModal() {
       showAlert('Telefone salvo com sucesso!', 'success');
     } catch (err) {
       errorEl.textContent = err.message || 'Erro ao salvar telefone.';
+      errorEl.style.display = 'block';
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar';
+    }
+  });
+}
+
+function _setupRecadoModal() {
+  const editBtn  = document.getElementById('editRecadoBtn');
+  const modal    = document.getElementById('recadoEditModal');
+  const closeBtn = document.getElementById('recadoModalClose');
+  const saveBtn  = document.getElementById('saveRecadoBtn');
+  const input    = document.getElementById('profileRecadoInput');
+  const countEl  = document.getElementById('recadoCharCount');
+  const errorEl  = document.getElementById('recadoModalError');
+
+  if (!editBtn || !modal) return;
+
+  function _updateCount() {
+    countEl.textContent = `${input.value.length} / 120`;
+  }
+
+  function _openModal() {
+    input.value = (state.currentUser && state.currentUser.recado) || '';
+    _updateCount();
+    errorEl.style.display = 'none';
+    modal.style.display = 'flex';
+    setTimeout(() => input.focus(), 100);
+  }
+
+  function _closeModal() {
+    modal.style.display = 'none';
+  }
+
+  editBtn.addEventListener('click', _openModal);
+  closeBtn.addEventListener('click', _closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) _closeModal(); });
+  input.addEventListener('input', _updateCount);
+
+  saveBtn.addEventListener('click', async () => {
+    errorEl.style.display = 'none';
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+    try {
+      await saveRecado(input.value);
+      applyUserToUI();
+      _closeModal();
+      showAlert('Recado salvo!', 'success');
+    } catch (err) {
+      errorEl.textContent = err.message || 'Erro ao salvar recado.';
       errorEl.style.display = 'block';
     } finally {
       saveBtn.disabled = false;

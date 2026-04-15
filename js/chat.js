@@ -514,6 +514,20 @@ function _bindButtons() {
       );
     });
 
+  // Meu perfil (barra inferior da lista)
+  document.getElementById('chatMyProfileBtn')
+    ?.addEventListener('click', _openMyProfile);
+  document.getElementById('myProfileCloseBtn')
+    ?.addEventListener('click', _closeMyProfile);
+  document.getElementById('chatMyProfilePanel')
+    ?.addEventListener('click', e => { if (e.target === e.currentTarget) _closeMyProfile(); });
+  document.getElementById('myProfileAvatarUploadBtn')
+    ?.addEventListener('click', () => document.getElementById('avatarFileInput')?.click());
+  document.getElementById('myProfileEditPhoneBtn')
+    ?.addEventListener('click', () => document.getElementById('editPhoneBtn')?.click());
+  document.getElementById('myProfileEditRecadoBtn')
+    ?.addEventListener('click', () => document.getElementById('editRecadoBtn')?.click());
+
   // Arquivadas
   document.getElementById('convArchivedBtn')
     ?.addEventListener('click', _loadArchivedView);
@@ -825,6 +839,17 @@ function _closeOptions() {
 // ================================================================
 // PERFIL DO CONTATO
 // ================================================================
+function _openMyProfile() {
+  const panel = document.getElementById('chatMyProfilePanel');
+  if (!panel || !state.currentUser) return;
+  panel.style.display = 'flex';
+}
+
+function _closeMyProfile() {
+  const panel = document.getElementById('chatMyProfilePanel');
+  if (panel) panel.style.display = 'none';
+}
+
 function _openProfile() {
   if (!_currentOtherUser) return;
   const panel = document.getElementById('chatProfilePanel');

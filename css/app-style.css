@@ -2291,6 +2291,46 @@
 }
 .spc-btn-edit-phone:hover { background: rgba(var(--primary-rgb,61,106,142), 0.22); }
 
+/* Recado — reutiliza estilos do telefone */
+.spc-recado-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 2px 0 4px;
+}
+.spc-recado-val {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  flex: 1;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Textarea no modal de recado */
+.recado-input-wrap {
+  align-items: flex-start !important;
+  border-radius: 14px !important;
+  padding: 12px 16px !important;
+}
+.recado-textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  outline: none;
+  resize: none;
+  line-height: 1.5;
+  font-family: inherit;
+}
+.recado-textarea::placeholder { color: var(--text-muted); }
+.recado-char-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: -8px;
+}
+
 /* ================================================================
    MODAL — editar telefone
    ================================================================ */
@@ -2482,6 +2522,112 @@
   font-size: 0.78rem;
   font-weight: var(--fw-semi);
 }
+
+/* ── Barra inferior: avatar do próprio usuário ── */
+.chat-list-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--ease);
+  flex-shrink: 0;
+}
+.chat-list-footer:hover { background: var(--bg-card-alt); }
+
+.clf-avatar-wrap {
+  position: relative;
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--bg-card-alt);
+}
+.clf-avatar {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.clf-avatar-fallback {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(var(--primary-rgb), 0.12);
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+.clf-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.clf-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.clf-recado {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.clf-arrow {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* ── Meu perfil: overlay de câmera no avatar ── */
+.my-profile-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #fff;
+  font-size: 0.6875rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.chat-profile-avatar-wrap:hover .my-profile-avatar-overlay { opacity: 1; }
+.my-profile-avatar-overlay i { font-size: 1.4rem; }
+
+/* ── Meu perfil: linha editável ── */
+.my-profile-editable-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.my-profile-editable-row .chat-profile-bio { flex: 1; }
+.my-profile-edit-btn {
+  background: rgba(var(--primary-rgb), 0.10);
+  border: none;
+  color: var(--primary);
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.my-profile-edit-btn:hover { background: rgba(var(--primary-rgb), 0.22); }
 
 /* ── Botão restaurar conversa arquivada ── */
 .conv-unarchive-btn {
