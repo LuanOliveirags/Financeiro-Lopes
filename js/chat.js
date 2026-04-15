@@ -315,7 +315,7 @@ function _openConversation(convId, otherUser) {
   if (titleEl) titleEl.textContent = otherUser.name || 'Chat';
 
   const subEl = document.getElementById('chatHdrSubtitle');
-  if (subEl) subEl.textContent = '';
+  if (subEl) subEl.textContent = 'toque aqui para ver o perfil';
 
   const avatarEl = document.getElementById('chatHdrAvatar');
   if (avatarEl) {
@@ -334,6 +334,11 @@ function _openConversation(convId, otherUser) {
   _convDocListener = db.collection('conversations').doc(convId).onSnapshot(snap => {
     if (snap.exists) _otherSeenAt = (snap.data().seenAt || {})[_listenOtherId] || '';
   }, () => {});
+
+  // Destacar conversa ativa na lista (desktop)
+  document.querySelectorAll('.conv-item').forEach(el =>
+    el.classList.toggle('conv-active', el.dataset.convId === convId)
+  );
 
   _showView('chatViewMessages');
   _bindForm();
@@ -466,6 +471,7 @@ function _bindButtons() {
       _currentConvId    = null;
       _currentOtherUser = null;
       _lastTimestamp    = null;
+      document.querySelectorAll('.conv-item.conv-active').forEach(el => el.classList.remove('conv-active'));
       _showView('chatViewList');
     });
 
@@ -489,6 +495,24 @@ function _bindButtons() {
     ?.addEventListener('click', _closeOptions);
   document.getElementById('chatOptionsSheet')
     ?.addEventListener('click', e => { if (e.target === e.currentTarget) _closeOptions(); });
+
+  // Perfil do contato
+  document.getElementById('chatHeaderInfo')
+    ?.addEventListener('click', _openProfile);
+  document.getElementById('profileCloseBtn')
+    ?.addEventListener('click', _closeProfile);
+  document.getElementById('chatProfilePanel')
+    ?.addEventListener('click', e => { if (e.target === e.currentTarget) _closeProfile(); });
+  document.getElementById('profileBtnClear')
+    ?.addEventListener('click', () => { _closeProfile(); _clearConversation(); });
+  document.getElementById('profileBtnArchive')
+    ?.addEventListener('click', () => { _closeProfile(); _archiveConversation(); });
+  document.getElementById('profileBtnBlock')
+    ?.addEventListener('click', () => {
+      import('./utils.js').then(({ showAlert }) =>
+        showAlert('Funcionalidade em breve.', 'info')
+      );
+    });
 
   // Arquivadas
   document.getElementById('convArchivedBtn')
@@ -616,6 +640,7 @@ function _initEmojiPicker() {
 // ================================================================
 
 const VIEWS = ['chatViewList', 'chatViewSearch', 'chatViewMessages', 'chatViewArchived'];
+
 function _showView(id) {
   VIEWS.forEach(v => {
     const el = document.getElementById(v);
@@ -795,6 +820,52 @@ function _openOptions() {
 function _closeOptions() {
   const sheet = document.getElementById('chatOptionsSheet');
   if (sheet) sheet.style.display = 'none';
+}
+
+// ================================================================
+// PERFIL DO CONTATO
+// ================================================================
+function _openProfile() {
+  if (!_currentOtherUser) return;
+  const panel = document.getElementById('chatProfilePanel');
+  if (!panel) return;
+
+  const user = _currentOtherUser;
+  const photo = _resolvePhoto(user.photoURL, user.name || user.login);
+
+  // Avatar
+  const avatarEl = document.getElementById('profileAvatar');
+  const fallback = document.getElementById('profileAvatarFallback');
+  if (avatarEl && photo) {
+    avatarEl.src = photo;
+    avatarEl.style.display = '';
+    if (fallback) fallback.style.display = 'none';
+  } else {
+    if (avatarEl) avatarEl.style.display = 'none';
+    if (fallback) fallback.style.display = 'flex';
+  }
+
+  // Name
+  const nameEl = document.getElementById('profileName');
+  if (nameEl) nameEl.textContent = user.name || 'Contato';
+
+  // Phone - tentamos buscar do Firestore
+  const phoneEl = document.getElementById('profilePhone');
+  if (phoneEl) {
+    phoneEl.textContent = '';
+    db.collection('users').doc(user.id).get().then(snap => {
+      if (snap.exists && snap.data().phone) {
+        phoneEl.textContent = _formatPhone(snap.data().phone);
+      }
+    }).catch(() => {});
+  }
+
+  panel.style.display = 'flex';
+}
+
+function _closeProfile() {
+  const panel = document.getElementById('chatProfilePanel');
+  if (panel) panel.style.display = 'none';
 }
 
 async function _clearConversation() {

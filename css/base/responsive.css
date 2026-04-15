@@ -569,6 +569,60 @@ html {
     padding-bottom: 24px;
     height: auto;
   }
+
+  /* ── Chat — Desktop split-panel (lista + mensagens lado a lado) ── */
+  .chat-panel {
+    flex-direction: row;
+    inset: 0 0 0 var(--sidebar-w);
+  }
+
+  /* Lista sempre visível como sidebar esquerda */
+  #chatViewList {
+    display: flex !important;
+    width: 360px;
+    min-width: 320px;
+    max-width: 400px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+  }
+
+  /* Mensagens ocupam o resto */
+  #chatViewMessages {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Busca e Arquivadas sobrepõem a lista */
+  #chatViewSearch,
+  #chatViewArchived {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 360px;
+    min-width: 320px;
+    max-width: 400px;
+    height: 100%;
+    z-index: 2;
+    background: var(--bg);
+  }
+
+  /* Esconder seta voltar no painel de mensagens no desktop */
+  #chatMsgBackBtn {
+    display: none;
+  }
+
+  /* Placeholder quando nenhuma conversa está aberta */
+  .chat-desktop-placeholder {
+    display: flex;
+  }
+  .chat-panel .chat-view#chatViewMessages.active ~ .chat-desktop-placeholder {
+    display: none;
+  }
+
+  /* Conv item ativa destaque */
+  .conv-item.conv-active {
+    background: rgba(var(--primary-rgb), 0.08);
+  }
 }
 
 
