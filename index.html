@@ -1742,6 +1742,10 @@
                     autocorrect="on"
                     aria-label="Escrever mensagem"
                 >
+                <button type="button" id="chatImageBtn" class="emoji-toggle-btn" aria-label="Enviar imagem">
+                    <i class="fa-solid fa-image"></i>
+                </button>
+                <input type="file" id="chatImageInput" accept="image/*" style="display:none">
                 <button type="submit" id="chatSendBtn" class="chat-send-btn" aria-label="Enviar">
                     <i class="fa-solid fa-paper-plane"></i>
                 </button>
@@ -1778,12 +1782,16 @@
             <div class="chat-options-panel">
                 <div class="chat-options-handle"></div>
                 <button id="chatOptClear" class="chat-options-btn chat-options-btn--danger">
-                    <i class="fa-solid fa-trash-can"></i>
-                    <span>Limpar conversa</span>
+                    <i class="fa-solid fa-broom"></i>
+                    <span>Limpar mensagens</span>
                 </button>
                 <button id="chatOptArchive" class="chat-options-btn">
                     <i class="fa-solid fa-box-archive"></i>
                     <span>Arquivar conversa</span>
+                </button>
+                <button id="chatOptDelete" class="chat-options-btn chat-options-btn--danger">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span>Excluir conversa</span>
                 </button>
                 <button id="chatOptCancel" class="chat-options-btn chat-options-btn--cancel">
                     Cancelar

@@ -5,7 +5,7 @@
 // ============================================================
 
 import { state } from './state.js';
-import { db, firebaseReady } from './data.js';
+import { db, firebaseReady, storage } from './data.js';
 import { generateId, esc } from './utils.js';
 import { initFCM, sendFCMPush } from './fcm.js';
 import { savePhoneNumber } from './auth.js';
@@ -503,10 +503,18 @@ function _bindButtons() {
     ?.addEventListener('click', _clearConversation);
   document.getElementById('chatOptArchive')
     ?.addEventListener('click', _archiveConversation);
+  document.getElementById('chatOptDelete')
+    ?.addEventListener('click', _deleteConversation);
   document.getElementById('chatOptCancel')
     ?.addEventListener('click', _closeOptions);
   document.getElementById('chatOptionsSheet')
     ?.addEventListener('click', e => { if (e.target === e.currentTarget) _closeOptions(); });
+
+  // Imagem
+  document.getElementById('chatImageBtn')
+    ?.addEventListener('click', () => document.getElementById('chatImageInput')?.click());
+  document.getElementById('chatImageInput')
+    ?.addEventListener('change', _handleImageUpload);
 
   // Perfil do contato
   document.getElementById('chatHeaderInfo')
@@ -743,14 +751,21 @@ function _renderMessages(messages) {
 
     const isEdited = !!msg.editedAt;
     const reactionsHtml = _buildReactionsHtml(msg.reactions, me.id);
+
+    const bubbleContent = msg.type === 'image' && msg.imageUrl
+      ? `<a href="${esc(msg.imageUrl)}" target="_blank" rel="noopener noreferrer" class="chat-img-link">
+           <img src="${esc(msg.imageUrl)}" class="chat-bubble-img" alt="Imagem" loading="lazy">
+         </a>`
+      : `<p class="chat-bubble-text">${_formatText(msg.text)}</p>`;
+
     html += `
       <div class="chat-msg ${isMine ? 'msg-mine' : 'msg-theirs'}" data-msg-id="${esc(msg.id)}" data-msg-ts="${esc(msg.timestamp)}" data-msg-mine="${isMine}">
         ${!isMine ? `<div class="chat-msg-avatar">${avatarEl}</div>` : ''}
         <div class="chat-bubble-col">
           ${!isMine ? `<span class="chat-sender-name">${esc(msg.senderName)}</span>` : ''}
           <div class="chat-bubble-wrap">
-            <div class="chat-bubble">
-              <p class="chat-bubble-text">${_formatText(msg.text)}</p>
+            <div class="chat-bubble${msg.type === 'image' ? ' chat-bubble--img' : ''}">
+              ${bubbleContent}
             </div>
             <button type="button" class="chat-react-trigger" title="Reagir" data-msg-id="${esc(msg.id)}">
               <i class="fa-regular fa-face-smile"></i>
@@ -1001,6 +1016,109 @@ async function _archiveConversation() {
     import('./utils.js').then(({ showAlert }) =>
       showAlert('Erro ao arquivar conversa.', 'error')
     );
+  }
+}
+
+async function _deleteConversation() {
+  _closeOptions();
+  if (!_currentConvId) return;
+  if (!confirm('Excluir esta conversa permanentemente? As mensagens serão apagadas para todos os participantes.')) return;
+
+  try {
+    const convRef = db.collection('conversations').doc(_currentConvId);
+    const msgsRef = convRef.collection('messages');
+    const snap    = await msgsRef.get();
+
+    let batch = db.batch();
+    let count = 0;
+    for (const doc of snap.docs) {
+      batch.delete(doc.ref);
+      if (++count >= 400) { await batch.commit(); batch = db.batch(); count = 0; }
+    }
+    if (count > 0) await batch.commit();
+    await convRef.delete();
+
+    _stopMsgListener();
+    _currentConvId    = null;
+    _currentOtherUser = null;
+    _lastTimestamp    = null;
+    _showView('chatViewList');
+
+    import('./utils.js').then(({ showAlert }) =>
+      showAlert('Conversa excluída.', 'success')
+    );
+  } catch (err) {
+    console.error('[Chat] Erro ao excluir conversa:', err);
+    import('./utils.js').then(({ showAlert }) =>
+      showAlert('Não foi possível excluir a conversa.', 'error')
+    );
+  }
+}
+
+// ================================================================
+// ENVIO DE IMAGEM
+// ================================================================
+async function _handleImageUpload(e) {
+  const file = e.target.files?.[0];
+  e.target.value = '';
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    import('./utils.js').then(({ showAlert }) => showAlert('Selecione um arquivo de imagem válido.', 'error'));
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    import('./utils.js').then(({ showAlert }) => showAlert('Imagem muito grande. Limite: 10 MB.', 'error'));
+    return;
+  }
+  if (!storage) {
+    import('./utils.js').then(({ showAlert }) => showAlert('Firebase Storage não disponível.', 'error'));
+    return;
+  }
+  if (!_currentConvId || !state.currentUser) return;
+
+  const btn = document.getElementById('chatImageBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
+
+  try {
+    const msgId   = generateId();
+    const ext     = file.name.split('.').pop() || 'jpg';
+    const path    = `chat-images/${_currentConvId}/${msgId}.${ext}`;
+    const ref     = storage.ref(path);
+    await ref.put(file);
+    const url     = await ref.getDownloadURL();
+
+    const now     = new Date().toISOString();
+    const me      = state.currentUser;
+    const msg = {
+      id:          msgId,
+      senderId:    me.id,
+      senderName:  me.fullName || me.login,
+      senderPhoto: _resolvePhoto(me.photoURL, me.fullName || me.login),
+      text:        '',
+      imageUrl:    url,
+      type:        'image',
+      timestamp:   now
+    };
+
+    const convRef = db.collection('conversations').doc(_currentConvId);
+    await convRef.collection('messages').doc(msgId).set(msg);
+    await convRef.update({
+      lastMessage: { text: '📷 Imagem', timestamp: now, senderId: me.id },
+      updatedAt:   now
+    });
+
+    if (_currentOtherUser) {
+      try {
+        const doc = await db.collection('users').doc(_currentOtherUser.id).get();
+        const token = doc.exists ? doc.data().fcmToken : null;
+        if (token) sendFCMPush(token, msg.senderName, '📷 Imagem');
+      } catch (_) { /* ignore */ }
+    }
+  } catch (err) {
+    console.error('[Chat] Erro ao enviar imagem:', err);
+    import('./utils.js').then(({ showAlert }) => showAlert('Não foi possível enviar a imagem.', 'error'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-image"></i>'; }
   }
 }
 

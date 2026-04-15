@@ -1205,6 +1205,26 @@
   color: inherit;
 }
 
+/* Bolha de imagem */
+.chat-bubble--img {
+  padding: 4px;
+  background: transparent !important;
+  box-shadow: none;
+  border: none;
+}
+.chat-img-link { display: block; line-height: 0; border-radius: 10px; overflow: hidden; }
+.chat-bubble-img {
+  max-width: 220px;
+  max-height: 300px;
+  width: 100%;
+  border-radius: 10px;
+  display: block;
+  object-fit: cover;
+  cursor: zoom-in;
+  transition: opacity 0.2s;
+}
+.chat-bubble-img:hover { opacity: 0.92; }
+
 .chat-link {
   color: inherit;
   text-decoration: underline;
