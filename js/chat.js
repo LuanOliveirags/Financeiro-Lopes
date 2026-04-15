@@ -8,6 +8,7 @@ import { state } from './state.js';
 import { db, firebaseReady } from './data.js';
 import { generateId, esc } from './utils.js';
 import { initFCM, sendFCMPush } from './fcm.js';
+import { savePhoneNumber } from './auth.js';
 
 // ===== ESTADO INTERNO =====
 let _convListListener = null;   // listener da lista de conversas
@@ -33,11 +34,22 @@ export function openChat() {
   const panel = document.getElementById('chatPanel');
   if (!panel) return;
   _bindButtons();
-  if (!_convListListener) _initConvList();
-  initFCM().catch(() => {});
   panel.classList.add('active');
   document.body.style.overflow = 'hidden';
   _chatOpen = true;
+
+  // Verifica se o usuário tem telefone cadastrado
+  if (!state.currentUser?.phone) {
+    _showView('chatViewPhoneGate');
+    const inp = document.getElementById('phoneGateInput');
+    if (inp) { inp.value = ''; inp.focus(); }
+    const err = document.getElementById('phoneGateError');
+    if (err) err.style.display = 'none';
+    return;
+  }
+
+  if (!_convListListener) _initConvList();
+  initFCM().catch(() => {});
   _showView('chatViewList');
 }
 
@@ -546,6 +558,40 @@ function _bindButtons() {
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && _chatOpen) closeChat(); });
 
+  // Gate de telefone
+  document.getElementById('phoneGateCloseBtn')
+    ?.addEventListener('click', closeChat);
+
+  document.getElementById('phoneGateInput')
+    ?.addEventListener('input', _maskPhone.bind(null, { target: document.getElementById('phoneGateInput') }));
+  document.getElementById('phoneGateInput')
+    ?.addEventListener('input', e => _maskPhone(e));
+
+  document.getElementById('phoneGateForm')
+    ?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const inp    = document.getElementById('phoneGateInput');
+      const errEl  = document.getElementById('phoneGateError');
+      const btn    = document.getElementById('phoneGateSubmit');
+      const raw    = inp?.value || '';
+      if (errEl) errEl.style.display = 'none';
+      if (btn)   { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...'; }
+      try {
+        await savePhoneNumber(raw);
+        // Atualiza exibição do telefone no perfil (settings)
+        const phoneEl = document.getElementById('settingsUserPhone');
+        if (phoneEl) phoneEl.textContent = inp.value;
+        // Entra no chat normalmente
+        if (!_convListListener) _initConvList();
+        initFCM().catch(() => {});
+        _showView('chatViewList');
+      } catch (err) {
+        if (errEl) { errEl.textContent = err.message; errEl.style.display = 'block'; }
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check"></i> Salvar e entrar no Chat'; }
+      }
+    });
+
   _btnBound = true;
 }
 
@@ -653,7 +699,7 @@ function _initEmojiPicker() {
 // VIEWS
 // ================================================================
 
-const VIEWS = ['chatViewList', 'chatViewSearch', 'chatViewMessages', 'chatViewArchived'];
+const VIEWS = ['chatViewPhoneGate', 'chatViewList', 'chatViewSearch', 'chatViewMessages', 'chatViewArchived'];
 
 function _showView(id) {
   VIEWS.forEach(v => {

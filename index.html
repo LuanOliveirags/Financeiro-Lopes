@@ -1648,6 +1648,42 @@
             </div>
         </div>
 
+        <!-- ── VIEW GATE: Cadastro de telefone obrigatório ── -->
+        <div id="chatViewPhoneGate" class="chat-view">
+            <div class="chat-header">
+                <button id="phoneGateCloseBtn" class="chat-back-btn" aria-label="Fechar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="chat-header-text" style="flex:1;margin-left:6px;">
+                    <h3 class="chat-title">Chat</h3>
+                </div>
+            </div>
+            <div class="phone-gate-body">
+                <div class="phone-gate-icon"><i class="fa-solid fa-phone-volume"></i></div>
+                <h2 class="phone-gate-title">Telefone necessário</h2>
+                <p class="phone-gate-desc">Para usar o chat, cadastre seu número de celular. Ele será usado para que outros membros possam te encontrar.</p>
+                <form id="phoneGateForm" class="phone-gate-form" novalidate>
+                    <div class="search-phone-wrap">
+                        <i class="fa-solid fa-phone search-phone-icon"></i>
+                        <input
+                            type="tel"
+                            id="phoneGateInput"
+                            placeholder="(XX) 9XXXX-XXXX"
+                            maxlength="16"
+                            class="search-phone-input"
+                            inputmode="numeric"
+                            autocomplete="tel"
+                            aria-label="Seu número de celular"
+                        >
+                    </div>
+                    <div id="phoneGateError" class="phone-gate-error" style="display:none"></div>
+                    <button type="submit" id="phoneGateSubmit" class="search-phone-submit">
+                        <i class="fa-solid fa-check"></i> Salvar e entrar no Chat
+                    </button>
+                </form>
+            </div>
+        </div>
+
         <!-- ── VIEW 3: Conversa individual ── -->
         <div id="chatViewMessages" class="chat-view">
             <div class="chat-header">
