@@ -32,5 +32,5 @@ export function getFamilyId() {
 export function getFamilyStorageKey() {
   const fid = getFamilyId();
   if (!fid) return null;
-  return `financeiro_data_${fid}`;
+  return `wolfsource_data_${fid}`;
 }

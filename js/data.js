@@ -191,7 +191,7 @@ export function exportData() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `financeiro-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.download = `wolfsource-backup-${new Date().toISOString().split('T')[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
   showAlert('Dados exportados com sucesso!', 'success');

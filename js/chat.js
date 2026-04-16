@@ -239,7 +239,7 @@ async function _doSearch() {
     if (snap.empty) {
       resultArea.innerHTML = `<div class="srm srm-warn">
         <i class="fa-solid fa-user-xmark"></i>
-        Nenhum usuario cadastrado com esse numero no Lopes Gestao Financeira.
+        Nenhum usuario cadastrado com esse numero no WolfSource.
       </div>`;
       return;
     }

@@ -1,6 +1,6 @@
-# Financeiro Lopes - Backend Python
+# WolfSource - Backend Python
 
-Este é o backend da aplicação Financeiro Lopes, desenvolvido com Python/Flask.
+Este é o backend da aplicação WolfSource, desenvolvido com Python/Flask.
 
 ## 🚀 Configuração
 
@@ -177,4 +177,4 @@ MIT License
 
 ---
 
-Desenvolvido com ❤️ para Financeiro Lopes
+Desenvolvido com ❤️ para WolfSource

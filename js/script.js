@@ -9,9 +9,9 @@ const CONFIG = {};
 // Substitua as credenciais abaixo pelas do seu projeto Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAMx-ZoL4cco2NmPzEfIe5yYC1WLHPc0vk",
-  authDomain: "financeiro-lopes.firebaseapp.com",
-  projectId: "financeiro-lopes",
-  storageBucket: "financeiro-lopes.firebasestorage.app",
+  authDomain: "wolfsource.firebaseapp.com",
+  projectId: "wolfsource",
+  storageBucket: "wolfsource.firebasestorage.app",
   messagingSenderId: "621443570583",
   appId: "1:621443570583:web:1a5ad0106d2606561482d2",
   measurementId: "G-7FHPEHP5G5"
@@ -75,7 +75,7 @@ function getFamilyId() {
 function getFamilyStorageKey() {
   const fid = getFamilyId();
   if (!fid) return null;
-  return `financeiro_data_${fid}`;
+  return `wolfsource_data_${fid}`;
 }
 
 async function loadFamily() {
@@ -323,7 +323,7 @@ const CATEGORY_MAP = {
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', () => {
   // Limpa chave global legada (pré-tenant) para evitar vazamento entre famílias
-  localStorage.removeItem('financeiro_data');
+  localStorage.removeItem('wolfsource_data');
 
   initFirebase();
   createDefaultAdmin();
@@ -447,7 +447,7 @@ function toDateStr(d) {
 
 // ===== INICIALIZAÇÃO DO APP =====
 function initializeApp() {
-  console.log('Inicializando Financeiro Lopes...');
+  console.log('Inicializando WolfSource...');
   
   // Check PWA Status
   if ('serviceWorker' in navigator) {
@@ -483,15 +483,15 @@ async function hashPassword(password) {
 async function createDefaultAdmin() {
   if (!firebaseReady) return;
   try {
-    // Criar família padrão "Lopes" se não existir
-    const familySnap = await db.collection('families').doc('family-lopes').get();
+    // Criar família padrão "WolfSource" se não existir
+    const familySnap = await db.collection('families').doc('family-wolfsource').get();
     if (!familySnap.exists) {
-      await db.collection('families').doc('family-lopes').set({
-        id: 'family-lopes',
-        name: 'Lopes',
+      await db.collection('families').doc('family-wolfsource').set({
+        id: 'family-wolfsource',
+        name: 'WolfSource',
         createdAt: new Date().toISOString()
       });
-      console.log('Família padrão "Lopes" criada com sucesso!');
+      console.log('Família padrão "WolfSource" criada com sucesso!');
     }
 
     const snap = await db.collection('users').where('login', '==', 'luangs').get();
@@ -504,7 +504,7 @@ async function createDefaultAdmin() {
         login: 'luangs',
         passwordHash: hash,
         role: 'superadmin',
-        familyId: 'family-lopes',
+        familyId: 'family-wolfsource',
         createdAt: new Date().toISOString()
       });
       console.log('Usuário admin padrão criado com sucesso!');
@@ -513,7 +513,7 @@ async function createDefaultAdmin() {
       const adminDoc = snap.docs[0];
       const adminData = adminDoc.data();
       const updates = {};
-      if (!adminData.familyId) updates.familyId = 'family-lopes';
+      if (!adminData.familyId) updates.familyId = 'family-wolfsource';
       if (adminData.role !== 'superadmin') updates.role = 'superadmin';
       if (Object.keys(updates).length > 0) {
         await db.collection('users').doc(adminDoc.id).update(updates);
@@ -882,11 +882,11 @@ function applyUserToUI() {
   const manageFamiliesBtn = document.getElementById('manageFamiliesBtn');
   if (manageFamiliesBtn) manageFamiliesBtn.style.display = isSuperAdmin() ? '' : 'none';
 
-  // Botão Tarefas só para família Lopes, Config para outras famílias
-  const isLopes = getFamilyId() === 'family-lopes';
+  // Botão Tarefas só para família WolfSource, Config para outras famílias
+  const isWolfSource = getFamilyId() === 'family-wolfsource';
   const choresBtn = document.getElementById('choresNavBtn');
   const settingsNavBtn = document.getElementById('settingsNavBtn');
-  if (choresBtn) choresBtn.style.display = isLopes ? '' : 'none';
+  if (choresBtn) choresBtn.style.display = isWolfSource ? '' : 'none';
   if (settingsNavBtn) settingsNavBtn.style.display = 'none';
 }
 
@@ -1187,7 +1187,7 @@ async function handleSendResetCode() {
       to_email: email,
       to_name: userData.fullName || userData.login,
       reset_code: code,
-      app_name: 'Lopes - Gestão Financeira'
+      app_name: 'WolfSource'
     }, EMAILJS_CONFIG.publicKey);
 
     _resetState.email = email;
@@ -3825,9 +3825,9 @@ window.addEventListener('resize', () => {
   }
 });
 
-console.log('Aplicação Financeiro Lopes iniciada com sucesso! 💰');
+console.log('Aplicação WolfSource iniciada com sucesso! 💰');
 
-// ===== TAREFAS DA CASA (Família Lopes) =====
+// ===== TAREFAS DA CASA (Família WolfSource) =====
 const CHORES_DEFAULT = {
   1: { luan: ['Fazer comida','Tirar o lixo','Levar o lixo','Lavar louça'], bianca: ['Limpar o fogão','Dobrar e guardar roupas','Organizar bagunças'] },
   2: { luan: ['Fazer comida','Passar pano','Limpar o microondas','Limpar gordura do armário'], bianca: ['Lavar louça','Limpar o fogão','Varrer','Organizar bagunças'] },

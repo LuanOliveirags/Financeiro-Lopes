@@ -1,4 +1,4 @@
-# Financeiro Lopes - Gerenciamento de Despesas
+# WolfSource - Gerenciamento de Despesas
 
 Este repositório contém uma aplicação web completa para gestão de despesas financeiras, desenvolvida com HTML, CSS, JavaScript (frontend) e Python/Flask (backend), com suporte a PWA e sincronização com Firebase.
 

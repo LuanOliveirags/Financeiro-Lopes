@@ -1,6 +1,6 @@
 {
-  "name": "Financeiro Lopes - Gestão de Despesas",
-  "short_name": "Financeiro Lopes",
+  "name": "WolfSource - Gestão de Despesas",
+  "short_name": "WolfSource",
   "description": "Aplicação web para gestão completa de despesas financeiras com suporte offline",
   "start_url": ".",
   "scope": ".",

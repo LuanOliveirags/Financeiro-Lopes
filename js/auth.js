@@ -21,10 +21,10 @@ export async function hashPassword(password) {
 export async function createDefaultAdmin() {
   if (!firebaseReady) return;
   try {
-    const familySnap = await db.collection('families').doc('family-lopes').get();
+    const familySnap = await db.collection('families').doc('family-wolfsource').get();
     if (!familySnap.exists) {
-      await db.collection('families').doc('family-lopes').set({
-        id: 'family-lopes', name: 'Lopes', createdAt: new Date().toISOString()
+      await db.collection('families').doc('family-wolfsource').set({
+        id: 'family-wolfsource', name: 'WolfSource', createdAt: new Date().toISOString()
       });
     }
     const snap = await db.collection('users').where('login', '==', 'luangs').get();
@@ -33,13 +33,13 @@ export async function createDefaultAdmin() {
       await db.collection('users').doc('admin-luangs').set({
         id: 'admin-luangs', fullName: 'Luan Gs', email: 'luanoliveirags@gmail.com',
         login: 'luangs', passwordHash: hash, role: 'superadmin',
-        familyId: 'family-lopes', createdAt: new Date().toISOString()
+        familyId: 'family-wolfsource', createdAt: new Date().toISOString()
       });
     } else {
       const adminDoc = snap.docs[0];
       const adminData = adminDoc.data();
       const updates = {};
-      if (!adminData.familyId) updates.familyId = 'family-lopes';
+      if (!adminData.familyId) updates.familyId = 'family-wolfsource';
       if (adminData.role !== 'superadmin') updates.role = 'superadmin';
       if (Object.keys(updates).length > 0) await db.collection('users').doc(adminDoc.id).update(updates);
     }
@@ -412,10 +412,10 @@ export function applyUserToUI() {
   if (adminSection) adminSection.style.display = isAdmin() ? 'block' : 'none';
   const manageFamiliesBtn = document.getElementById('manageFamiliesBtn');
   if (manageFamiliesBtn) manageFamiliesBtn.style.display = isSuperAdmin() ? '' : 'none';
-  const isLopes = getFamilyId() === 'family-lopes';
+  const isWolfSource = getFamilyId() === 'family-wolfsource';
   const choresBtn = document.getElementById('choresNavBtn');
   const settingsNavBtn = document.getElementById('settingsNavBtn');
-  if (choresBtn) choresBtn.style.display = isLopes ? '' : 'none';
+  if (choresBtn) choresBtn.style.display = isWolfSource ? '' : 'none';
   if (settingsNavBtn) settingsNavBtn.style.display = 'none';
 }
 
@@ -832,7 +832,7 @@ async function handleSendResetCode() {
       userId: userData.id, code, email, expiresAt: expiresAt.toISOString(), used: false, createdAt: new Date().toISOString()
     });
     await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
-      to_email: email, to_name: userData.fullName || userData.login, reset_code: code, app_name: 'Lopes - Gestão Financeira'
+      to_email: email, to_name: userData.fullName || userData.login, reset_code: code, app_name: 'WolfSource'
     }, EMAILJS_CONFIG.publicKey);
     _resetState.email = email;
     _resetState.userId = userData.id;

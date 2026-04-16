@@ -1,4 +1,4 @@
-# Dockerfile - Financeiro Lopes Backend
+# Dockerfile - WolfSource Backend
 
 # Build stage
 FROM python:3.11-slim as builder

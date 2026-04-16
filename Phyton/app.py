@@ -1,6 +1,6 @@
 """
 app.py - Aplicação Flask Principal
-Financeiro Lopes Backend
+WolfSource Backend
 """
 
 import os
@@ -17,7 +17,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # Configurações
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///financeiro.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///wolfsource.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSON_SORT_KEYS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
@@ -163,7 +163,7 @@ def delete_family_route(family_id):
 @app.route('/')
 def index():
     return jsonify({
-        'message': 'Financeiro Lopes API',
+        'message': 'WolfSource API',
         'version': '1.0.0',
         'status': 'ok'
     })

@@ -1,4 +1,4 @@
-# 💰 Financeiro Lopes - Gestão de Despesas PWA
+# 💰 WolfSource - Gestão de Despesas PWA
 
 Uma aplicação web moderna e responsiva para gestão completa de despesas financeiras, funcionando tanto online quanto offline com suporte a PWA (Progressive Web App).
 
@@ -206,7 +206,7 @@ MIT License - Sinta-se livre para usar, modificar e distribuir
 ## 📞 Contato
 
 Desenvolvido por: Luan e Bianca
-GitHub: [Financeiro-Lopes](https://github.com)
+GitHub: [WolfSource](https://github.com)
 
 ---
 

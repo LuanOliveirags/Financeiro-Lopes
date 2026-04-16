@@ -1,5 +1,5 @@
 // ============================================================
-// APP.JS — Entry point da aplicação Financeiro Lopes
+// APP.JS — Entry point da aplicação WolfSource
 // ============================================================
 
 import { initFirebase, setRefreshCallback } from './data.js';
@@ -41,5 +41,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   initResetPasswordUI();
   await checkLoginStatus();
 
-  console.log('Aplicação Financeiro Lopes iniciada com sucesso! 💰');
+  console.log('Aplicação WolfSource iniciada com sucesso! 💰');
 });

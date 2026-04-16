@@ -4,13 +4,13 @@ services:
   # Backend API
   api:
     build: .
-    container_name: financeiro-api
+    container_name: wolfsource-api
     ports:
       - "5000:5000"
     environment:
       - FLASK_ENV=development
       - FLASK_APP=app.py
-      - DATABASE_URL=postgresql://postgres:password@db:5432/financeiro
+      - DATABASE_URL=postgresql://postgres:password@db:5432/wolfsource
     volumes:
       - .:/app
     depends_on:

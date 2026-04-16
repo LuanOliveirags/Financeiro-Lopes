@@ -1,4 +1,4 @@
-# 🎯 Roteiro de Funcionalidades - Financeiro Lopes
+# 🌟 Roteiro de Funcionalidades - WolfSource
 
 ## ✅ Implementado
 

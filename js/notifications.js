@@ -9,7 +9,7 @@ import { formatCurrency } from './utils.js';
 const SETTINGS_KEY  = 'notif_settings_v1';
 const LAST_CHECK_KEY = 'notif_last_check';
 
-const IDB_NAME  = 'financeiro-notif-db';
+const IDB_NAME  = 'wolfsource-notif-db';
 const IDB_VER   = 1;
 const IDB_STORE = 'debtSummary';
 

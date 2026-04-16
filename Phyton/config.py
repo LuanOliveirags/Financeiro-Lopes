@@ -15,7 +15,7 @@ class Config:
     # Database
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DATABASE_URL',
-        'sqlite:///financeiro.db'
+        'sqlite:///wolfsource.db'
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False

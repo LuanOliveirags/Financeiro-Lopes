@@ -1,6 +1,6 @@
 /* ============================================================
    STYLE.CSS — DESIGN SYSTEM & BASE STYLES
-   Lopes - Gestão Financeira · Navy Blue & Gold Theme · Inter Font
+   WolfSource - Gestão Financeira · Navy Blue & Gold Theme · Inter Font
    ============================================================ */
 
 /* ─── RESET ─── */
@@ -12,13 +12,13 @@
 
 /* ─── DESIGN TOKENS ─── */
 :root {
-  /* Primary — Navy Blue (from Lopes logo) */
+  /* Primary — Navy Blue (from WolfSource logo) */
   --primary:        #3D6A8E;
   --primary-dark:   #2B4D68;
   --primary-light:  #6D9ABE;
   --primary-rgb:    61, 106, 142;
 
-  /* Accent — Gold (from Lopes logo) */
+  /* Accent — Gold (from WolfSource logo) */
   --accent-gold:    #C9A84C;
   --accent-gold-dark: #A68A35;
 

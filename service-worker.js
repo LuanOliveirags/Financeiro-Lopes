@@ -7,7 +7,7 @@ try {
 
   firebase.initializeApp({
     apiKey:            'AIzaSyAMx-ZoL4cco2NmPzEfIe5yYC1WLHPc0vk',
-    projectId:         'financeiro-lopes',
+    projectId:         'wolfsource',
     messagingSenderId: '621443570583',
     appId:             '1:621443570583:web:1a5ad0106d2606561482d2',
   });
@@ -35,7 +35,7 @@ try {
 }
 // ===== FIM FIREBASE MESSAGING =====
 
-const CACHE_NAME = 'financeiro-lopes-v11';
+const CACHE_NAME = 'wolfsource-v11';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -158,7 +158,7 @@ async function syncTransactions() {
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {};
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Financeiro Lopes', {
+    self.registration.showNotification(data.title || 'WolfSource', {
       body:    data.body  || 'Você tem uma notificação.',
       icon:    'img/icon-any-192.png',
       badge:   'img/icon-any-96.png',
@@ -209,7 +209,7 @@ self.addEventListener('periodicsync', (event) => {
 
 function swOpenIDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open('financeiro-notif-db', 1);
+    const req = indexedDB.open('wolfsource-notif-db', 1);
     req.onupgradeneeded = (e) => {
       if (!e.target.result.objectStoreNames.contains('debtSummary')) {
         e.target.result.createObjectStore('debtSummary', { keyPath: 'id' });
