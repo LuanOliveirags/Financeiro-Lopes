@@ -6,7 +6,10 @@
 import { EMAILJS_CONFIG } from './config.js';
 import { state, isSuperAdmin, isAdmin, getFamilyId } from './state.js';
 import { esc, showAlert, generateId } from './utils.js';
-import { db, firebaseReady, storage as fbStorage, saveDataToStorage, loadDataFromStorage, cleanupFirebaseListeners } from './data.js';
+import { db, firebaseReady, storage as fbStorage, saveDataToStorage, loadDataFromStorage, cleanupFirebaseListeners, allowRefresh } from './data.js';
+
+// ===== FLAG PARA EVITAR MÚLTIPLAS EXECUÇÕES =====
+let _checkingLogin = false;
 
 // ===== HASH DE SENHA =====
 export async function hashPassword(password) {
@@ -19,52 +22,131 @@ export async function hashPassword(password) {
 
 // ===== CRIAR ADMIN PADRÃO =====
 export async function createDefaultAdmin() {
-  if (!firebaseReady) return;
+  if (!firebaseReady) {
+    console.warn('⚠️ Firebase não disponível. Admin padrão não será criado.');
+    return;
+  }
+  
   try {
+    console.log('🔧 Verificando admin padrão...');
     const familySnap = await db.collection('families').doc('family-wolfsource').get();
     if (!familySnap.exists) {
+      console.log('📁 Criando família padrão...');
       await db.collection('families').doc('family-wolfsource').set({
         id: 'family-wolfsource', name: 'WolfSource', createdAt: new Date().toISOString()
       });
+      console.log('✅ Família criada');
+    } else {
+      console.log('✅ Família já existe');
     }
+    
     const snap = await db.collection('users').where('login', '==', 'luangs').get();
     if (snap.empty) {
+      console.log('👤 Usuário "luangs" não existe, criando...');
       const hash = await hashPassword('Space@10');
       await db.collection('users').doc('admin-luangs').set({
-        id: 'admin-luangs', fullName: 'Luan Gs', email: 'luanoliveirags@gmail.com',
-        login: 'luangs', passwordHash: hash, role: 'superadmin',
-        familyId: 'family-wolfsource', createdAt: new Date().toISOString()
+        id: 'admin-luangs', 
+        fullName: 'Luan Gs', 
+        email: 'luanoliveirags@gmail.com',
+        login: 'luangs', 
+        passwordHash: hash, 
+        role: 'superadmin',
+        familyId: 'family-wolfsource', 
+        createdAt: new Date().toISOString()
       });
+      console.log('✅ Admin criado: luangs');
+      console.log('💡 Credenciais: luangs / Space@10');
     } else {
+      console.log('✅ Admin já existe (luangs)');
       const adminDoc = snap.docs[0];
       const adminData = adminDoc.data();
       const updates = {};
       if (!adminData.familyId) updates.familyId = 'family-wolfsource';
       if (adminData.role !== 'superadmin') updates.role = 'superadmin';
-      if (Object.keys(updates).length > 0) await db.collection('users').doc(adminDoc.id).update(updates);
+      if (Object.keys(updates).length > 0) {
+        await db.collection('users').doc(adminDoc.id).update(updates);
+        console.log('🔄 Admin atualizado');
+      }
     }
   } catch (error) {
-    console.error('Erro ao criar admin padrão:', error);
+    console.error('❌ Erro ao criar/verificar admin padrão:', error);
+    if (error.code === 'permission-denied') {
+      console.error('🔴 ERRO CRÍTICO: Sem permissão para escrever no Firestore!');
+      console.error('   As regras de segurança do Firebase precisam ser configuradas');
+    }
   }
 }
 
 // ===== LOGIN / REGISTRO =====
 export async function loginUser(login, password) {
-  const hash = await hashPassword(password);
-  if (firebaseReady) {
-    try {
-      const snap = await db.collection('users').where('login', '==', login).get();
-      if (!snap.empty) {
-        const userData = snap.docs[0].data();
-        if (userData.passwordHash === hash) return userData;
-      }
-      return null;
-    } catch (error) {
-      if (error.code === 'permission-denied') throw new Error('Sem permissão no Firestore.');
-      throw new Error('Erro ao conectar com o servidor.');
-    }
+  console.log(`🔐 Tentando login com usuário: ${login}`);
+  console.log(`📡 Firebase pronto? ${firebaseReady}`);
+  
+  if (!firebaseReady) {
+    console.error('❌ Firebase não está pronto');
+    throw new Error('Firebase não disponível. Verifique a conexão.');
   }
-  throw new Error('Firebase não disponível.');
+  
+  const hash = await hashPassword(password);
+  console.log(`🔒 Senha com hash de ${hash.length} caracteres`);
+  
+  try {
+    console.log('🔍 Buscando usuário no Firestore...');
+    
+    // Primeiro, vamos tentar buscar qualquer usuário para verificar permissões
+    try {
+      const testSnap = await db.collection('users').limit(1).get();
+      console.log(`✅ Permissão de leitura confirmada (encontrados ${testSnap.size} documentos)`);
+    } catch (testError) {
+      console.error('❌ Sem permissão de leitura no Firestore:', testError.message);
+      throw testError;
+    }
+    
+    // Agora busca o usuário específico
+    const snap = await db.collection('users').where('login', '==', login).get();
+    console.log(`📊 Encontrados ${snap.size} usuário(s) com login "${login}"`);
+    
+    if (snap.size > 0) {
+      const userData = snap.docs[0].data();
+      console.log('✅ Usuário encontrado:', userData.fullName);
+      console.log('📋 Dados:', { id: userData.id, fullName: userData.fullName, role: userData.role, familyId: userData.familyId });
+      
+      if (userData.passwordHash === hash) {
+        console.log('🔓 Senha correta!');
+        return userData;
+      } else {
+        console.warn('❌ Senha incorreta (hash não corresponde)');
+        return null;
+      }
+    } else {
+      console.warn(`❌ Nenhum usuário encontrado com login "${login}"`);
+      console.log('💡 Verifique se o usuário foi criado no Firestore');
+      
+      // Lista todos os usuários para debug
+      try {
+        const allSnap = await db.collection('users').get();
+        console.log(`📋 Total de usuários no Firestore: ${allSnap.size}`);
+        allSnap.docs.forEach((doc, idx) => {
+          const d = doc.data();
+          console.log(`  ${idx + 1}. ${d.fullName} (login: ${d.login})`);
+        });
+      } catch (e) {
+        console.warn('⚠️ Não foi possível listar usuários');
+      }
+      
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Erro ao fazer login:', error);
+    console.error('📍 Código de erro:', error.code);
+    console.error('📝 Mensagem:', error.message);
+    
+    if (error.code === 'permission-denied') {
+      throw new Error('❌ SEM PERMISSÃO no Firestore.\n\nVocê precisa:\n1. Acessar Firebase Console\n2. Ir em Firestore Database → Regras\n3. Definir regras públicas ou de autenticação');
+    }
+    
+    throw new Error(`Erro ao conectar com o servidor: ${error.message}`);
+  }
 }
 
 export async function registerUser(fullName, email, login, password, familyId) {
@@ -127,36 +209,70 @@ export async function saveRecado(text) {
 
 // ===== FAMÍLIA =====
 export async function loadFamily() {
+  console.log('📂 Iniciando carregamento de família...');
+  
   if (!firebaseReady || !state.currentUser || !state.currentUser.familyId) {
+    console.warn('⚠️ Não é possível carregar família: Firebase=' + firebaseReady + ', User=' + !!state.currentUser + ', FamilyId=' + (state.currentUser?.familyId || 'null'));
     state.currentFamily = null;
     state.familyMembers = [];
     return;
   }
+  
   try {
+    console.log(`🔍 Buscando dados da família: ${state.currentUser.familyId}`);
     const doc = await db.collection('families').doc(state.currentUser.familyId).get();
-    if (doc.exists) state.currentFamily = doc.data();
+    if (doc.exists) {
+      state.currentFamily = doc.data();
+      console.log(`✅ Família encontrada: ${state.currentFamily.name}`);
+    } else {
+      console.warn('⚠️ Documento de família não encontrado');
+      state.currentFamily = null;
+    }
+    
+    console.log('👥 Carregando membros da família...');
     await loadFamilyMembers();
+    console.log(`✅ ${state.familyMembers.length} membros carregados`);
   } catch (e) {
-    console.error('Erro ao carregar família:', e);
+    console.error('❌ Erro ao carregar família:', e);
+    state.currentFamily = null;
+    state.familyMembers = [];
+    throw e; // Re-lançar o erro para que o chamador saiba que houve problema
   }
 }
 
 export async function loadFamilyMembers() {
   state.familyMembers = [];
   const familyId = getFamilyId();
-  if (!familyId || !firebaseReady) return;
+  if (!familyId || !firebaseReady) {
+    console.warn('⚠️ Não é possível carregar membros: familyId=' + familyId + ', firebaseReady=' + firebaseReady);
+    return;
+  }
+  
   try {
+    console.log(`🔍 Buscando usuários da família: ${familyId}`);
     const snap = await db.collection('users').where('familyId', '==', familyId).get();
     state.familyMembers = snap.docs.map(doc => {
       const d = doc.data();
       return { id: d.id, name: d.fullName || d.login, login: d.login };
     });
+    console.log(`✅ ${state.familyMembers.length} usuários encontrados`);
   } catch (e) {
-    console.error('Erro ao carregar membros da família:', e);
+    console.error('❌ Erro ao carregar membros da família:', e);
+    state.familyMembers = [];
+    return;
   }
-  populateMemberSelects();
-  renderPersonIncomeCards();
-  renderCardDebtCards();
+  
+  try {
+    console.log('🎨 Atualizando seletores de membros...');
+    populateMemberSelects();
+    console.log('🎨 Renderizando cards de renda...');
+    renderPersonIncomeCards();
+    console.log('🎨 Renderizando cards de débito...');
+    renderCardDebtCards();
+    console.log('✅ UI da família atualizada');
+  } catch (e) {
+    console.error('❌ Erro ao atualizar UI da família:', e);
+  }
 }
 
 export function populateMemberSelects() {
@@ -485,11 +601,23 @@ export async function uploadAvatar(file) {
 
 // ===== CHECK LOGIN =====
 export function checkLoginStatus() {
+  if (_checkingLogin) {
+    console.log('⏳ Verificação de login já em andamento...');
+    return;
+  }
+  
+  console.log('🔍 Verificando status de login...');
   const userData = localStorage.getItem('user');
   if (userData) {
     try {
       const user = JSON.parse(userData);
       if (user && user.login) {
+        _checkingLogin = true;
+        console.log(`✅ Usuário encontrado no localStorage: ${user.fullName}`);
+        
+        // Desabilita refresh durante recuperação de login
+        allowRefresh(false);
+        
         state.isLoggedIn = true;
         state.user = user.login;
         state.currentUser = user;
@@ -497,37 +625,70 @@ export function checkLoginStatus() {
         document.getElementById('appContainer').classList.add('active');
         applyUserToUI();
 
+        // Revalidar dados do usuário no Firestore
         const refreshUser = firebaseReady
           ? db.collection('users').doc(user.id).get().then(doc => {
               if (doc.exists) {
+                console.log('🔄 Usuário revalidado no Firebase');
                 const freshData = doc.data();
                 state.currentUser = freshData;
                 state.user = freshData.login;
                 localStorage.setItem('user', JSON.stringify(freshData));
+                return { ok: true, data: freshData };
               } else {
+                console.warn('❌ Usuário não encontrado no Firebase. Deslogando.');
                 localStorage.removeItem('user');
                 state.isLoggedIn = false;
                 state.currentUser = null;
                 document.getElementById('appContainer').classList.remove('active');
                 document.getElementById('loginContainer').classList.add('active');
+                _checkingLogin = false;
+                allowRefresh(true);
+                return { ok: false };
               }
-            }).catch(err => console.warn('Erro ao revalidar usuário:', err))
-          : Promise.resolve();
+            }).catch(err => {
+              console.warn('⚠️ Erro ao revalidar usuário:', err);
+              // Se deu erro, apenas use os dados locais
+              return { ok: true, data: user };
+            })
+          : Promise.resolve({ ok: true, data: user });
 
-        refreshUser.then(() => loadFamily()).then(() => {
+        refreshUser.then(result => {
+          if (!result.ok) return;
+          
+          console.log('📂 Carregando família...');
+          return loadFamily().catch(err => {
+            console.warn('⚠️ Erro ao carregar família:', err);
+            // Não bloquear o login se família falhar
+          });
+        }).then(() => {
+          console.log('💾 Carregando dados do armazenamento...');
           loadDataFromStorage();
           applyUserToUI();
+          console.log('✅ Login concluído com sucesso! Habilitando refresh...');
+          allowRefresh(true); // Reabilita refresh
+          _checkingLogin = false;
+        }).catch(err => {
+          console.error('❌ Erro ao carregar dados de login:', err);
+          _checkingLogin = false;
+          allowRefresh(true); // Reabilita mesmo com erro
         });
         return;
       }
-    } catch (e) { /* formato corrompido */ }
+    } catch (e) {
+      console.warn('⚠️ Dados corrompidos no localStorage');
+    }
     localStorage.removeItem('user');
+  } else {
+    console.log('ℹ️ Nenhum usuário encontrado no localStorage');
+    allowRefresh(true); // Sempre habilita se não há usuário armazenado
   }
 }
 
 // ===== LOGOUT =====
 export function logout() {
   if (confirm('Tem certeza que deseja sair?')) {
+    _checkingLogin = false;
     cleanupFirebaseListeners();
     state.isLoggedIn = false;
     state.user = null;

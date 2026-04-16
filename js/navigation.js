@@ -4,7 +4,7 @@
 
 import { state, isSuperAdmin, getFamilyId } from './state.js';
 import { showAlert, toDateStr } from './utils.js';
-import { firebaseReady, saveDataToStorage, loadDataFromStorage, exportData, importData, syncData, clearCache, syncAllToFirebase } from './data.js';
+import { firebaseReady, saveDataToStorage, loadDataFromStorage, exportData, importData, syncData, clearCache, syncAllToFirebase, allowRefresh } from './data.js';
 import { uploadAvatar, loginUser, registerUser, changeUserPassword, savePhoneNumber, saveRecado, loadUsersList, saveUserEdit, loadFamiliesListUI, createFamily, populateFamilySelects, loadFamily, applyUserToUI, logout } from './auth.js';
 import { addTransaction, updateTransactionHistory } from './transactions.js';
 import { addDebt, resetDebtModal, setupDebtTypeListeners, setupDebtFilterListeners, updateDebtsList } from './debts.js';
@@ -227,6 +227,11 @@ export function setupEventListeners() {
   // Login form
   document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
+    console.log('🔐 Iniciando processo de login...');
+    
+    // Desabilita refresh durante login para evitar loops
+    allowRefresh(false);
+    
     const login = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     const errorDiv = document.getElementById('loginError');
@@ -236,26 +241,41 @@ export function setupEventListeners() {
     try {
       const user = await loginUser(login, password);
       if (user) {
+        console.log('✅ Login bem-sucedido!');
         errorDiv.classList.remove('show');
         state.isLoggedIn = true;
         state.user = user.login;
         state.currentUser = user;
         localStorage.setItem('user', JSON.stringify(user));
         localStorage.setItem('loginTime', new Date().toISOString());
+        
+        console.log('📂 Carregando família do usuário...');
         await loadFamily();
+        
+        console.log('💾 Carregando dados armazenados...');
+        await loadDataFromStorage();
+        
+        console.log('🎨 Atualizando UI...');
         document.getElementById('loginContainer').classList.remove('active');
         document.getElementById('appContainer').classList.add('active');
         applyUserToUI();
-        loadDataFromStorage();
         updateDashboard();
         this.reset();
+        
+        console.log('✨ Login finalizado! Habilitando refresh...');
+        allowRefresh(true); // Reabilita refresh após login completo
+        
+        console.log('✨ Login finalizado com sucesso!');
       } else {
         errorDiv.textContent = 'Usuário ou senha incorretos!';
         errorDiv.classList.add('show');
+        allowRefresh(true); // Reabilita se falhar
       }
     } catch (err) {
+      console.error('❌ Erro no login:', err);
       errorDiv.textContent = err.message || 'Erro ao fazer login.';
       errorDiv.classList.add('show');
+      allowRefresh(true); // Reabilita se falhar
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = '<span>Entrar</span><i class="fa-solid fa-arrow-right"></i>';

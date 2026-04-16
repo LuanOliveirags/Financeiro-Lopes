@@ -14,26 +14,62 @@ export let firebaseReady = false;
 
 let _fbSyncTimer = null;
 let _fbListeners = [];
+let _loadingData = false;
+let _listenersActive = false;
+let _allowRefresh = false;
 
 // ===== INICIALIZAÇÃO =====
 export function initFirebase() {
   try {
     if (typeof firebase !== 'undefined' && firebaseConfig.apiKey) {
+      console.log('🔥 Inicializando Firebase...');
       firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
       firebaseReady = true;
-      console.log('Firebase Firestore conectado!');
+      console.log('✅ Firebase Firestore conectado!');
+      console.log(`📊 Projeto: ${firebaseConfig.projectId}`);
+      
       try {
         storage = firebase.storage();
-        console.log('Firebase Storage conectado!');
+        console.log('✅ Firebase Storage conectado!');
       } catch (e) {
-        console.warn('Firebase Storage indisponível:', e);
+        console.warn('⚠️ Firebase Storage indisponível:', e);
       }
+      
+      // Testa conexão ao Firestore
+      testFirebaseConnection();
     } else {
-      console.warn('Firebase não configurado. Usando localStorage apenas.');
+      console.warn('⚠️ Firebase não configurado. Usando localStorage apenas.');
     }
   } catch (error) {
-    console.warn('Erro ao iniciar Firebase:', error);
+    console.error('❌ Erro ao iniciar Firebase:', error);
+  }
+}
+
+// ===== TESTE DE CONEXÃO =====
+async function testFirebaseConnection() {
+  try {
+    console.log('🧪 Testando conexão com Firestore...');
+    
+    // Tenta listar usuários
+    const snap = await db.collection('users').limit(1).get();
+    console.log(`✅ Conexão com Firestore OK! (${snap.size} documentos encontrados)`);
+    
+    // Verifica se admin existe
+    const adminSnap = await db.collection('users').where('login', '==', 'luangs').get();
+    if (adminSnap.empty) {
+      console.warn('⚠️ Usuário "luangs" não encontrado no Firestore');
+      console.log('💡 Tentando criar admin padrão...');
+    } else {
+      console.log('✅ Usuário "luangs" encontrado no Firestore');
+    }
+  } catch (error) {
+    console.error('❌ Erro ao testar conexão com Firestore:', error);
+    if (error.code === 'permission-denied') {
+      console.error('🔴 ERRO CRÍTICO: Sem permissão para acessar Firestore!');
+      console.error('   → Verifique as regras de segurança do Firebase Console');
+      console.error('   → As regras devem permitir leitura/escrita publicamente OU usar autenticação');
+    }
   }
 }
 
@@ -81,15 +117,16 @@ export function saveDataToStorage() {
 }
 
 export function loadDataFromStorage() {
+  console.log('📥 Carregando dados do armazenamento local...');
   state.transactions = [];
   state.debts = [];
   state.salaries = [];
 
   const key = getFamilyStorageKey();
   if (!key) {
-    console.warn('Sem familyId — dados não serão carregados.');
+    console.warn('⚠️ Sem familyId — dados não serão carregados.');
     _notifyRefresh();
-    return;
+    return Promise.resolve();
   }
 
   const data = localStorage.getItem(key);
@@ -99,17 +136,44 @@ export function loadDataFromStorage() {
       state.transactions = parsed.transactions || [];
       state.debts = parsed.debts || [];
       state.salaries = parsed.salaries || [];
+      console.log(`✅ Dados carregados: ${state.transactions.length} transações, ${state.debts.length} dívidas, ${state.salaries.length} salários`);
     } catch (e) {
-      console.error('Erro ao carregar dados locais:', e);
+      console.error('❌ Erro ao carregar dados locais:', e);
     }
-  }
-  if (firebaseReady) {
-    loadDataFromFirebase().then(() => {
-      listenFirebaseChanges();
-    });
   } else {
-    _notifyRefresh();
+    console.log('ℹ️ Nenhum dado local encontrado');
   }
+  
+  console.log('🔔 Notificando atualização de UI...');
+  _notifyRefresh();
+  
+  // Retorna promise para poder aguardar
+  return new Promise((resolve) => {
+    if (firebaseReady && !_loadingData && !_listenersActive) {
+      console.log('🔄 Iniciando sincronização com Firebase...');
+      _loadingData = true;
+      loadDataFromFirebase().then(() => {
+        _loadingData = false;
+        console.log('🎧 Ativando listeners de Firebase...');
+        _listenersActive = true;
+        listenFirebaseChanges();
+        resolve();
+      }).catch(err => {
+        _loadingData = false;
+        console.error('❌ Erro ao carregar do Firebase:', err);
+        resolve(); // Resolve mesmo com erro para não bloquear
+      });
+    } else {
+      if (!firebaseReady) {
+        console.warn('⚠️ Firebase não disponível. Usando apenas dados locais.');
+      } else if (_loadingData) {
+        console.log('⏳ Carregamento do Firebase já em andamento...');
+      } else if (_listenersActive) {
+        console.log('🎧 Listeners já estão ativos');
+      }
+      resolve();
+    }
+  });
 }
 
 // ===== CARREGAR DO FIREBASE =====
@@ -132,35 +196,65 @@ export async function loadDataFromFirebase() {
     console.log('Dados carregados do Firebase com sucesso!');
   } catch (error) {
     console.error('Erro ao carregar do Firebase:', error);
-    showAlert('Erro ao carregar dados do servidor. Usando dados locais.', 'warning');
+    if (error.code !== 'permission-denied') {
+      showAlert('Erro ao carregar dados do servidor. Usando dados locais.', 'warning');
+    }
   }
 }
 
 // ===== LISTENERS REALTIME =====
 export function listenFirebaseChanges() {
-  if (!firebaseReady) return;
+  if (!firebaseReady) {
+    console.warn('⚠️ Firebase não está pronto para listeners');
+    return;
+  }
+  
+  if (_listenersActive) {
+    console.log('🎧 Listeners já estão ativos, ignorando nova solicitação');
+    return;
+  }
+  
+  console.log('🎧 Ativando listeners de Firebase...');
   _fbListeners.forEach(unsub => unsub());
   _fbListeners = [];
 
   const familyId = getFamilyId();
-  if (!familyId) return;
+  if (!familyId) {
+    console.warn('⚠️ Sem familyId — listeners não serão ativados');
+    return;
+  }
 
   const debouncedLoad = () => {
+    if (_loadingData) {
+      console.log('⏳ Carregamento já em andamento, ignorando disparo');
+      return;
+    }
+    _loadingData = true;
     clearTimeout(_fbSyncTimer);
-    _fbSyncTimer = setTimeout(() => loadDataFromFirebase(), 500);
+    _fbSyncTimer = setTimeout(() => {
+      console.log('🔄 Sincronizando dados do Firebase...');
+      loadDataFromFirebase().finally(() => {
+        _loadingData = false;
+      });
+    }, 500);
   };
 
   ['transactions', 'debts', 'salaries'].forEach(col => {
     const unsub = db.collection(col)
       .where('familyId', '==', familyId)
-      .onSnapshot(debouncedLoad, err => console.error(`Erro no listener de ${col}:`, err));
+      .onSnapshot(debouncedLoad, err => console.error(`❌ Erro no listener de ${col}:`, err));
     _fbListeners.push(unsub);
   });
+  
+  console.log('✅ Listeners de Firebase ativados');
 }
 
 export function cleanupFirebaseListeners() {
   _fbListeners.forEach(unsub => unsub());
   _fbListeners = [];
+  _listenersActive = false;
+  _loadingData = false;
+  clearTimeout(_fbSyncTimer);
 }
 
 // ===== SYNC COMPLETO =====
@@ -258,6 +352,23 @@ export function setRefreshCallback(fn) {
   _refreshCallback = fn;
 }
 
+export function allowRefresh(allow = true) {
+  _allowRefresh = allow;
+  console.log(`🔄 Refresh ${allow ? 'habilitado' : 'desabilitado'}`);
+}
+
 function _notifyRefresh() {
-  if (_refreshCallback) _refreshCallback();
+  // Só notifica refresh se está permitido e o usuário está realmente logado
+  if (_refreshCallback && state.isLoggedIn && _allowRefresh) {
+    console.log('📢 Chamando callback de atualização...');
+    try {
+      _refreshCallback();
+    } catch (error) {
+      console.error('❌ Erro no callback de refresh:', error);
+    }
+  } else if (!state.isLoggedIn) {
+    console.log('ℹ️ Usuário não está logado, refresh não será chamado');
+  } else if (!_allowRefresh) {
+    console.log('ℹ️ Refresh está desabilitado temporariamente');
+  }
 }

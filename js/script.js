@@ -9,9 +9,9 @@ const CONFIG = {};
 // Substitua as credenciais abaixo pelas do seu projeto Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAMx-ZoL4cco2NmPzEfIe5yYC1WLHPc0vk",
-  authDomain: "wolfsource.firebaseapp.com",
-  projectId: "wolfsource",
-  storageBucket: "wolfsource.firebasestorage.app",
+  authDomain: "financeiro-lopes.firebaseapp.com",
+  projectId: "financeiro-lopes",
+  storageBucket: "financeiro-lopes.firebasestorage.app",
   messagingSenderId: "621443570583",
   appId: "1:621443570583:web:1a5ad0106d2606561482d2",
   measurementId: "G-7FHPEHP5G5"

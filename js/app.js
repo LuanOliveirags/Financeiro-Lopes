@@ -16,21 +16,28 @@ import './shopping.js';
 
 // Registra callback centralizado para refresh de UI após carregamento de dados
 setRefreshCallback(async () => {
-  updateDashboard();
-  updateTransactionHistory();
-  updateDebtsList();
-  updateSalaryDisplay();
-  // Inicializa chat em tempo real (seguro chamar múltiplas vezes)
-  initChat();
-  // Inicializa FCM para push notifications do chat no celular
-  initFCM().catch(() => {});
-  // Mantém IDB do SW atualizado e verifica notificações
-  await storeDebtSummaryForSW();
-  await initNotifications();
+  console.log('🔄 Atualizando UI com novos dados...');
+  try {
+    updateDashboard();
+    updateTransactionHistory();
+    updateDebtsList();
+    updateSalaryDisplay();
+    // Inicializa chat em tempo real (seguro chamar múltiplas vezes)
+    initChat();
+    // Inicializa FCM para push notifications do chat no celular
+    initFCM().catch(() => {});
+    // Mantém IDB do SW atualizado e verifica notificações
+    await storeDebtSummaryForSW();
+    await initNotifications();
+    console.log('✅ UI atualizada com sucesso');
+  } catch (error) {
+    console.error('❌ Erro ao atualizar UI:', error);
+  }
 });
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('🚀 Iniciando aplicação WolfSource...');
   initFirebase();
   await createDefaultAdmin();
   setupEventListeners();
@@ -41,5 +48,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   initResetPasswordUI();
   await checkLoginStatus();
 
-  console.log('Aplicação WolfSource iniciada com sucesso! 💰');
+  console.log('✅ Aplicação WolfSource iniciada com sucesso! 💰');
 });
