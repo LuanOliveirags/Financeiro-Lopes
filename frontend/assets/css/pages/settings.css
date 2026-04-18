@@ -1,0 +1,298 @@
+/* SETTINGS.CSS — Profile card, settings groups, admin panel */
+
+/* ─── SETTINGS PAGE ─── */
+.settings-profile-card {
+  margin: 20px 16px 0;
+  background: var(--grad-primary);
+  border-radius: var(--r-xl);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #fff;
+}
+.spc-avatar-wrap {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+}
+.spc-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.spc-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.1rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.spc-avatar-wrap:hover .spc-avatar-overlay { opacity: 1; }
+.spc-avatar-fallback {
+  position: absolute;
+  font-size: 1.5rem;
+  color: rgba(255,255,255,0.8);
+}
+.spc-text h3 { color: #fff; font-size: 1.125rem; margin-bottom: 2px; }
+.spc-text p { color: rgba(255,255,255,0.65); font-size: 0.8125rem; }
+
+.settings-groups { padding: 16px; display: flex; flex-direction: column; gap: 20px; }
+.settings-group {}
+.sg-label {
+  font-size: 0.6875rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 0 4px;
+  margin-bottom: 8px;
+}
+.sg-body {
+  background: var(--bg-card);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  text-align: left;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: var(--fw-medium);
+  border-bottom: 1px solid var(--border);
+  transition: background var(--ease);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row:hover { background: var(--bg-card-alt); }
+.settings-row.info-row { cursor: default; }
+.settings-row.info-row:hover { background: none; }
+.settings-row.danger-row { color: var(--danger); }
+.sr-icon {
+  width: 34px; height: 34px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+.sr-text { flex: 1; }
+.sr-arrow { color: var(--text-muted); font-size: 0.75rem; }
+.export-icon  { background: #EBF3FE; color: var(--info); }
+.import-icon  { background: #E6FBF6; color: var(--success); }
+.sync-icon      { background: #EAF8FE; color: var(--income-dark); }
+.sync2-icon     { background: #F0F0FF; color: #7C3AED; }
+.install-icon   { background: var(--primary-light); color: var(--primary-dark); background: rgba(var(--primary-rgb),0.1); }
+.danger-icon    { background: var(--danger-bg); color: var(--danger); }
+.pwa-icon       { background: #FEF3E6; color: var(--warning); }
+.notif-bell-icon { background: rgba(255, 159, 67, 0.15); color: #FF9F43; }
+
+/* ===== Toggle Switch (Notificações) ===== */
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  width: 46px;
+  height: 26px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  background: rgba(128,128,128,0.28);
+  border-radius: 26px;
+  transition: background 0.3s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  transition: transform 0.3s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--primary, #3D6A8E); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+[data-theme="dark"] .toggle-slider { background: rgba(255,255,255,0.18); }
+
+/* ─── Status Pills ─── */
+.status-pill {
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  font-size: 0.75rem;
+  font-weight: var(--fw-medium);
+}
+.status-pill.connected { background: var(--success-bg); color: var(--success); }
+.status-pill.disconnected { background: var(--danger-bg); color: var(--danger); }
+.status-pill:not(.connected):not(.disconnected) { background: var(--bg-card-alt); color: var(--text-muted); }
+
+.settings-footer-text {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 16px;
+  margin-bottom: 8px;
+}
+
+/* ─── USER MANAGEMENT (Admin) ─── */
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.users-list-loading {
+  color: var(--text-muted);
+  padding: 24px;
+  font-size: 0.9375rem;
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-card-alt);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+}
+.user-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.user-card-name {
+  font-size: 0.9375rem;
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-card-detail {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 2px 0 6px;
+}
+.user-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.user-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  border: 1px solid var(--border);
+  transition: all var(--ease);
+  cursor: pointer;
+}
+.user-action-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.08);
+}
+.user-action-btn.danger:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+/* ─── Settings Phone Field ─── */
+.spc-phone-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 6px 0 4px;
+}
+.spc-phone-icon {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+.spc-phone-val {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  flex: 1;
+}
+.spc-btn-edit-phone {
+  background: rgba(var(--primary-rgb,61,106,142), 0.12);
+  border: none;
+  color: var(--primary);
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.spc-btn-edit-phone:hover { background: rgba(var(--primary-rgb,61,106,142), 0.22); }
+
+/* Recado — reutiliza estilos do telefone */
+.spc-recado-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 2px 0 4px;
+}
+.spc-recado-val {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  flex: 1;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Textarea no modal de recado */
+.recado-input-wrap {
+  align-items: flex-start !important;
+  border-radius: 14px !important;
+  padding: 12px 16px !important;
+}
+.recado-textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  outline: none;
+  resize: none;
+  line-height: 1.5;
+  font-family: inherit;
+}
+.recado-textarea::placeholder { color: var(--text-muted); }
+.recado-char-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: -8px;
+}

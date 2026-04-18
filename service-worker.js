@@ -20,8 +20,8 @@ try {
     if (d.type !== 'chat') return;
     return self.registration.showNotification(`💬 ${d.senderName || 'Nova mensagem'}`, {
       body:     (d.text || '').substring(0, 100),
-      icon:     'img/icon-any-192.png',
-      badge:    'img/icon-any-96.png',
+      icon:     'frontend/assets/images/icon-any-192.png',
+      badge:    'frontend/assets/images/icon-any-96.png',
       tag:      'chat-incoming',
       renotify: true,
       vibrate:  [200, 100, 200],
@@ -35,36 +35,64 @@ try {
 }
 // ===== FIM FIREBASE MESSAGING =====
 
-const CACHE_NAME = 'wolfsource-v11';
+const CACHE_NAME = 'wolfsource-v18';
 const URLS_TO_CACHE = [
   './',
   './index.html',
-  './css/style.css',
-  './css/app-style.css',
-  './css/sections.css',
-  './css/calendar-style.css',
-  './css/animations.css',
-  './css/base/responsive.css',
-  './js/app.js',
-  './js/config.js',
-  './js/state.js',
-  './js/utils.js',
-  './js/data.js',
-  './js/auth.js',
-  './js/transactions.js',
-  './js/debts.js',
-  './js/salaries.js',
-  './js/dashboard.js',
-  './js/navigation.js',
-  './js/notifications.js',
-  './js/chat.js',
-  './js/fcm.js',
-  './js/chores.js',
-  './js/shopping.js',
+  // Pages (HTML fragments)
+  './frontend/pages/login.html',
+  './frontend/pages/dashboard.html',
+  './frontend/pages/transactions.html',
+  './frontend/pages/debts.html',
+  './frontend/pages/salaries.html',
+  './frontend/pages/settings.html',
+  './frontend/pages/chores.html',
+  './frontend/pages/shopping.html',
+  './frontend/pages/chat.html',
+  // CSS — Global
+  './frontend/assets/css/global/base.css',
+  './frontend/assets/css/global/animations.css',
+  './frontend/assets/css/global/responsive.css',
+  // CSS — Components
+  './frontend/assets/css/components/forms.css',
+  './frontend/assets/css/components/navigation.css',
+  './frontend/assets/css/components/modal.css',
+  './frontend/assets/css/components/calendar.css',
+  // CSS — Pages
+  './frontend/assets/css/pages/login.css',
+  './frontend/assets/css/pages/dashboard.css',
+  './frontend/assets/css/pages/transactions.css',
+  './frontend/assets/css/pages/debts.css',
+  './frontend/assets/css/pages/salaries.css',
+  './frontend/assets/css/pages/settings.css',
+  './frontend/assets/css/pages/chores.css',
+  './frontend/assets/css/pages/shopping.css',
+  './frontend/assets/css/pages/chat.css',
+  // JS — Core & Entry
+  './frontend/assets/js/app.js',
+  './frontend/assets/js/core/page-loader.js',
+  // JS — Modules
+  './frontend/assets/js/modules/dashboard.js',
+  './frontend/assets/js/modules/debts.js',
+  './frontend/assets/js/modules/salaries.js',
+  './frontend/assets/js/modules/chores.js',
+  './frontend/assets/js/modules/shopping.js',
+  './frontend/assets/js/modules/notifications.js',
+  // Services & Utils
+  './frontend/services/firebase/config.js',
+  './frontend/utils/state.js',
+  './frontend/utils/helpers.js',
+  './frontend/services/firebase/collections.js',
+  './frontend/services/auth/authService.js',
+  './frontend/services/transactions/transactionService.js',
+  './frontend/components/navigation.js',
+  './frontend/chat-app/chat.js',
+  './frontend/chat-app/fcm.js',
+  // Assets
   './manifest.json',
-  './img/icon-any-192.png',
-  './img/icon-maskable-192.png',
-  './img/apple-touch-icon.png'
+  './frontend/assets/images/icon-any-192.png',
+  './frontend/assets/images/icon-maskable-192.png',
+  './frontend/assets/images/apple-touch-icon.png'
 ];
 
 // Install Event
@@ -160,8 +188,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || 'WolfSource', {
       body:    data.body  || 'Você tem uma notificação.',
-      icon:    'img/icon-any-192.png',
-      badge:   'img/icon-any-96.png',
+      icon:    'frontend/assets/images/icon-any-192.png',
+      badge:   'frontend/assets/images/icon-any-96.png',
       tag:     data.tag  || 'push',
       data:    { tab: data.tab || 'debts' },
       actions: [
@@ -251,8 +279,8 @@ async function swBackgroundDebtCheck() {
     const notify = (title, body, tag) =>
       self.registration.showNotification(title, {
         body, tag,
-        icon:    'img/icon-any-192.png',
-        badge:   'img/icon-any-96.png',
+        icon:    'frontend/assets/images/icon-any-192.png',
+        badge:   'frontend/assets/images/icon-any-96.png',
         renotify: true,
         data:    { tab: 'debts' },
         actions: [

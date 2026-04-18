@@ -1,0 +1,283 @@
+/* BASE.CSS — Design System, Resets, Tokens, Layout Shell */
+
+/* ============================================================
+   STYLE.CSS — DESIGN SYSTEM & BASE STYLES
+   WolfSource - Gestão Financeira · Navy Blue & Gold Theme · Inter Font
+   ============================================================ */
+
+/* ─── RESET ─── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ─── DESIGN TOKENS ─── */
+:root {
+  /* Primary — Navy Blue (from WolfSource logo) */
+  --primary:        #3D6A8E;
+  --primary-dark:   #2B4D68;
+  --primary-light:  #6D9ABE;
+  --primary-rgb:    61, 106, 142;
+
+  /* Accent — Gold (from WolfSource logo) */
+  --accent-gold:    #C9A84C;
+  --accent-gold-dark: #A68A35;
+
+  /* Income — Cyan / Teal */
+  --income:         #4CC9F0;
+  --income-dark:    #0096C7;
+  --income-bg:      #EAF8FE;
+
+  /* Expense — warm red-orange */
+  --expense:        #E74C3C;
+  --expense-bg:     #FDECEB;
+
+  /* Semantic */
+  --success:        #06D6A0;
+  --success-bg:     #E6FBF6;
+  --danger:         #EF233C;
+  --danger-bg:      #FDE8EB;
+  --warning:        #F8961E;
+  --warning-bg:     #FEF3E6;
+  --info:           #4895EF;
+  --info-bg:        #EBF3FE;
+
+  /* Neutrals */
+  --text-primary:   #1A1A2E;
+  --text-secondary: #6B7280;
+  --text-muted:     #9CA3AF;
+  --text-white:     #FFFFFF;
+
+  /* Surfaces */
+  --bg:             #F0F2F8;
+  --bg-card:        #FFFFFF;
+  --bg-card-alt:    #F8F9FF;
+  --border:         #E5E7EB;
+  --border-focus:   var(--primary);
+
+  /* Shadows */
+  --shadow-xs:   0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-lg:   0 8px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.07);
+  --shadow-xl:   0 16px 48px rgba(0,0,0,0.14), 0 8px 20px rgba(0,0,0,0.08);
+  --shadow-brand: 0 8px 32px rgba(61, 106, 142, 0.30);
+
+  /* Border Radius */
+  --r-xs:  4px;
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-xl:  20px;
+  --r-2xl: 28px;
+  --r-full: 9999px;
+
+  /* Spacing */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+
+  /* Typography */
+  --font:  'Inter', system-ui, -apple-system, sans-serif;
+  --fw-light:   300;
+  --fw-normal:  400;
+  --fw-medium:  500;
+  --fw-semi:    600;
+  --fw-bold:    700;
+  --fw-black:   800;
+
+  /* Transitions */
+  --ease:      200ms ease;
+  --ease-med:  350ms ease;
+  --ease-slow: 500ms ease;
+
+  /* Z-index layers */
+  --z-base:    1;
+  --z-sticky:  50;
+  --z-nav:     100;
+  --z-overlay: 500;
+  --z-modal:   1000;
+  --z-toast:   1100;
+
+  /* Gradients */
+  --grad-primary: linear-gradient(135deg, #3D6A8E 0%, #2B4D68 100%);
+  --grad-income:  linear-gradient(135deg, #4CC9F0 0%, #0077B6 100%);
+  --grad-bg:      linear-gradient(160deg, #F0F2F8 0%, #E8EAF6 100%);
+  --grad-card:    linear-gradient(145deg, #FFFFFF 0%, #F8F9FF 100%);
+}
+
+/* ─── DARK THEME ─── */
+[data-theme="dark"] {
+  --text-primary:   #F0F2F8;
+  --text-secondary: #9CA3AF;
+  --text-muted:     #6B7280;
+  --bg:             #0D0D1A;
+  --bg-card:        #1A1A2E;
+  --bg-card-alt:    #16213E;
+  --border:         #2D2D3F;
+  --border-focus:   var(--primary);
+  --shadow-sm:      0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md:      0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg:      0 8px 32px rgba(0,0,0,0.5);
+  --grad-bg:        linear-gradient(160deg, #0D0D1A 0%, #16213E 100%);
+  --grad-card:      linear-gradient(145deg, #1A1A2E 0%, #16213E 100%);
+}
+
+/* ─── BASE ─── */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  font-size: 16px;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  inset: 0;
+}
+
+/* ─── SCROLLBAR (mobile: hidden, desktop: see responsive.css) ─── */
+@media (max-width: 1023px) {
+  ::-webkit-scrollbar { width: 0; height: 0; background: transparent; }
+  * { scrollbar-width: none; }
+}
+
+/* ─── BUTTONS ─── */
+button { border: none; cursor: pointer; background: none; }
+
+/* ─── CARDS ─── */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-sm);
+  padding: var(--sp-5);
+  transition: box-shadow var(--ease);
+}
+.card:hover { box-shadow: var(--shadow-md); }
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 12px;
+  color: var(--text-muted);
+}
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  background: var(--bg-card-alt);
+  border-radius: var(--r-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  margin-bottom: 4px;
+}
+.empty-state-text {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+}
+
+/* ─── BADGES / PILLS ─── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  font-size: 0.75rem;
+  font-weight: var(--fw-medium);
+}
+.badge.success { background: var(--success-bg); color: var(--success); }
+.badge.danger  { background: var(--danger-bg);  color: var(--danger); }
+.badge.warning { background: var(--warning-bg); color: var(--warning); }
+.badge.info    { background: var(--info-bg);    color: var(--info); }
+
+/* ─── UTILITIES ─── */
+.text-primary   { color: var(--primary); }
+.text-income    { color: var(--income-dark); }
+.text-expense   { color: var(--expense); }
+.text-success   { color: var(--success); }
+.text-danger    { color: var(--danger); }
+.text-muted     { color: var(--text-muted); }
+.text-center    { text-align: center; }
+
+.mt-1 { margin-top: var(--sp-1); }
+.mt-2 { margin-top: var(--sp-2); }
+.mt-4 { margin-top: var(--sp-4); }
+.mb-4 { margin-bottom: var(--sp-4); }
+
+/* ─── ALERT (TOAST) ─── */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: var(--r-md);
+  margin-bottom: var(--sp-4);
+  font-size: 0.9rem;
+  font-weight: var(--fw-medium);
+  animation: slideDown 300ms ease;
+  box-shadow: var(--shadow-sm);
+  transition: opacity 300ms ease;
+}
+.alert.success { background: var(--success-bg); color: var(--success); border-left: 3px solid var(--success); }
+.alert.danger  { background: var(--danger-bg);  color: var(--danger);  border-left: 3px solid var(--danger); }
+.alert.warning { background: var(--warning-bg); color: var(--warning); border-left: 3px solid var(--warning); }
+.alert.info    { background: var(--info-bg);    color: var(--info);    border-left: 3px solid var(--info); }
+
+/* ─── APP CONTAINER (from app-style.css) ─── */
+.app-container {
+  display: none;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+}
+.app-container.active { display: flex; }
+
+/* ─── MAIN CONTENT ─── */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: clip;
+  padding: 64px 0 96px 0;
+  scroll-behavior: smooth;
+  background: var(--grad-bg);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: none;
+}
+.main-content > .alert {
+  margin: 16px 20px 0;
+}
+
+/* ─── TAB CONTENT ─── */
+.tab-content {
+  display: none;
+  padding: 0;
+  animation: fadeIn 250ms ease;
+  overflow-x: clip;
+  overflow-y: visible;
+  max-width: 100%;
+}
+.tab-content.active { display: block; }
