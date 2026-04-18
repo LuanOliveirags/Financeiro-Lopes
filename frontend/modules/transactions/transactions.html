@@ -1,0 +1,111 @@
+<!-- ====== TRANSACTIONS TAB ====== --> <!-- Aba de transações -->
+<section id="transactions" class="tab-content">
+    <div class="page-header">
+        <h2 class="page-title">Transações</h2>
+        <div class="page-header-actions">
+            <input type="month" id="historyMonth" class="month-filter-hidden">
+            <select id="historyFilter" class="filter-chip">
+                <option value="all">Todas</option>
+                <option value="entrada">Receitas</option>
+                <option value="saida">Despesas</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Week Day Scroller --> <!-- Rolagem de dias da semana -->
+    <div class="week-scroller-wrap">
+        <div class="week-scroller" id="weekScroller">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Add Transaction Panel (collapsible) --> <!-- Painel para adicionar nova transação -->
+    <div class="add-panel" id="addTransactionPanel">
+        <button class="add-panel-toggle" id="togglePanelBtn">
+            <div class="apt-left">
+                <div class="apt-icon"><i class="fa-solid fa-plus"></i></div>
+                <span>Nova Transação</span>
+            </div>
+            <i class="fa-solid fa-chevron-down apt-chevron"></i>
+        </button>
+        <div class="add-panel-body" id="transactionPanelBody">
+            <form id="transactionForm" class="form-container">
+                <!-- Type Toggle -->
+                <div class="type-toggle-group">
+                    <button type="button" class="type-toggle-btn expense-toggle active" data-value="saida" id="btnSaida">
+                        <i class="fa-solid fa-arrow-up"></i> Despesa
+                    </button>
+                    <button type="button" class="type-toggle-btn income-toggle" data-value="entrada" id="btnEntrada">
+                        <i class="fa-solid fa-arrow-down"></i> Receita
+                    </button>
+                </div>
+                <input type="hidden" id="transType" value="saida">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tranAmount">Valor (R$)</label>
+                        <input type="number" id="tranAmount" placeholder="0,00" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tranDate">Data</label>
+                        <input type="date" id="tranDate" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tranCategory">Categoria</label>
+                        <select id="tranCategory" required>
+                            <option value="">Selecione...</option>
+                            <option value="alimentacao">🍽️ Alimentação</option>
+                            <option value="transporte">🚗 Transporte</option>
+                            <option value="saude">💊 Saúde</option>
+                            <option value="educacao">📚 Educação</option>
+                            <option value="moradia">🏠 Moradia</option>
+                            <option value="lazer">🎮 Lazer</option>
+                            <option value="utilidades">⚡ Utilidades</option>
+                            <option value="beleza">💅 Beleza</option>
+                            <option value="pets">🐾 Pets</option>
+                            <option value="assinaturas">📺 Assinaturas</option>
+                            <option value="investimentos">📈 Investimentos</option>
+                            <option value="academia">🏋️ Academia</option>
+                            <option value="outros">📁 Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tranResponsible">Responsável</label>
+                        <select id="tranResponsible" required>
+                            <option value="">Selecione...</option>
+                            <!-- Populado dinamicamente por JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Forma de pagamento</label>
+                    <div class="shop-payment-methods" id="tranPaymentMethods">
+                        <button type="button" class="shop-pay-btn active" data-method="dinheiro"><i class="fa-solid fa-money-bill"></i> Dinheiro</button>
+                        <button type="button" class="shop-pay-btn" data-method="cartao"><i class="fa-solid fa-credit-card"></i> Cartão</button>
+                        <button type="button" class="shop-pay-btn" data-method="pix"><i class="fa-brands fa-pix"></i> Pix</button>
+                        <button type="button" class="shop-pay-btn shop-pay-vr" data-method="vr"><i class="fa-solid fa-utensils"></i> VR/VA</button>
+                    </div>
+                    <input type="hidden" id="tranPaymentMethod" value="dinheiro">
+                </div>
+
+                <div class="form-group">
+                    <label for="tranDescription">Descrição (opcional)</label>
+                    <input type="text" id="tranDescription" placeholder="Ex: Almoço no restaurante">
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-check"></i> Registrar Transação
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transaction History List --> <!-- Lista de histórico de transações -->
+    <div class="list-section">
+        <div id="transactionHistoryList" class="transactions-list"></div>
+    </div>
+</section>

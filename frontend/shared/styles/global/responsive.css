@@ -1,0 +1,1191 @@
+﻿/* ============================================================
+   RESPONSIVE.CSS — MEDIA QUERIES
+   Mobile-first → Tablet → Desktop → Wide Desktop
+   ============================================================ */
+
+/* ─── Fluid Typography Base ─── */
+html {
+  font-size: clamp(14px, 0.875rem + 0.25vw, 17px);
+}
+
+/* ─── Tablet & larger (640px+) ─── */
+@media (min-width: 640px) {
+  .ie-grid            { gap: 16px; }
+  .kpi-mini-row       { gap: 16px; }
+  .person-cards-grid  { gap: 16px; }
+  .charts-grid        { display: grid; grid-template-columns: repeat(2, 1fr); }
+  .summary-cards-row  { gap: 16px; }
+  .debt-overview-panel { gap: 16px; }
+}
+
+/* ─── Tablet centered (768px+) ─── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .header-content, .main-content > * { max-width: 700px; margin-left: auto; margin-right: auto; }
+  .bottom-nav          { max-width: 700px; left: 50%; transform: translateX(-50%); border-radius: 20px 20px 0 0; width: 100%; }
+  .balance-card        { margin: 0 auto 16px; max-width: 680px; }
+  .ie-grid, .kpi-mini-row, .person-cards-grid, .charts-grid, .summary-cards-row, .debt-summary-strip { max-width: 680px; margin-left: auto; margin-right: auto; }
+  .debt-overview-panel { max-width: 680px; margin-left: auto; margin-right: auto; }
+  .list-section, .debts-list, .add-panel, .week-scroller-wrap, .months-scroll-wrap, .page-header { max-width: 700px; margin-left: auto; margin-right: auto; }
+  .debt-alerts { max-width: 700px; margin-left: auto; margin-right: auto; }
+  .settings-profile-card, .settings-groups { max-width: 680px; margin-left: auto; margin-right: auto; }
+  .debt-alerts-wrap { max-width: 700px; margin-left: auto; margin-right: auto; }
+  .debt-filter-bar { max-width: 668px; margin-left: auto; margin-right: auto; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   DESKTOP — SIDEBAR NAVIGATION + EXPANDED LAYOUT (1024px+)
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 1024px) {
+
+  /* ── CSS Variable for sidebar width ── */
+  :root {
+    --sidebar-w: 68px;
+  }
+
+  /* ── Bottom Nav → Left Sidebar (collapsed icon-only) ── */
+  .bottom-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-w);
+    height: 100vh;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 12px 6px;
+    gap: 2px;
+    border-top: none;
+    border-right: 1px solid var(--border);
+    border-radius: 0;
+    box-shadow: 2px 0 16px rgba(0,0,0,0.04);
+    overflow: visible;
+    z-index: var(--z-nav);
+    display: flex;
+  }
+
+  /* Sidebar nav brand area */
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 10px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+    flex-shrink: 0;
+    order: 0;
+    width: 100%;
+  }
+  .sidebar-brand-logo {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    border-radius: var(--r-sm);
+  }
+  .sidebar-brand span {
+    display: none;
+  }
+  .bottom-nav::before {
+    display: none;
+  }
+
+  /* Nav items → icon-only centered */
+  .bottom-nav-item {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 0;
+    border-radius: var(--r-md);
+    gap: 0;
+    min-width: unset;
+    width: 48px;
+    height: 50px;
+    transition: all var(--ease);
+  }
+  .bottom-nav-item:nth-of-type(1),
+  .bottom-nav-item:nth-of-type(2) {
+    order: 1;
+  }
+  .bottom-nav-item:nth-of-type(3),
+  .bottom-nav-item:nth-of-type(4) {
+    order: 2;
+  }
+  .bottom-nav-item:hover {
+    background: rgba(var(--primary-rgb), 0.06);
+  }
+  .bottom-nav-item.active {
+    background: rgba(var(--primary-rgb), 0.10);
+  }
+  .bottom-nav-item.active .nav-icon-wrap {
+    background: var(--grad-primary);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+  }
+
+  .nav-label {
+    display: none;
+  }
+
+  .nav-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--r-md);
+    font-size: 1rem;
+    transition: all var(--ease);
+  }
+
+  /* FAB in sidebar */
+  .fab-container {
+    margin-top: auto;
+    margin-bottom: 8px;
+    padding: 0;
+    align-items: center;
+    position: relative;
+    order: 3;
+    width: 100%;
+  }
+  .fab-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    bottom: 0;
+    font-size: 0;
+    gap: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+  }
+  .fab-btn::after {
+    content: none;
+  }
+  .fab-plus {
+    font-size: 1.125rem;
+    flex-shrink: 0;
+  }
+  .fab-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(61, 106, 142, 0.3);
+  }
+  .fab-btn:active {
+    transform: translateY(0);
+  }
+
+  /* Quick actions → open to the right of the FAB */
+  .quick-actions-menu {
+    bottom: auto;
+    top: auto;
+    bottom: 0;
+    left: calc(100% + 8px);
+    transform: translateY(0) scale(0.85);
+    transform-origin: left bottom;
+    gap: 6px;
+    padding: 6px 0;
+  }
+  .quick-actions-menu.active {
+    transform: translateY(0) scale(1);
+  }
+  
+  .quick-action-item {
+    padding: 10px 14px 10px 10px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    gap: 10px;
+    border-radius: var(--r-md);
+  }
+  .quick-action-item:hover {
+    transform: translateX(2px);
+  }
+  
+  .qa-icon-wrap {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .action-label {
+    font-size: 0.8125rem;
+  }
+
+  /* ── Header offset ── */
+  .header {
+    left: var(--sidebar-w);
+    width: calc(100% - var(--sidebar-w));
+  }
+  .header-content {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ── Main content offset ── */
+  .main-content {
+    margin-left: var(--sidebar-w);
+    padding: 64px 0 40px 0;
+    width: calc(100% - var(--sidebar-w));
+  }
+
+  /* ── Content containers → wider ── */
+  .main-content > * {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .balance-card { margin: 0 auto 20px; max-width: 1060px; }
+
+  .ie-grid,
+  .kpi-mini-row,
+  .person-cards-grid,
+  .charts-grid,
+  .summary-cards-row,
+  .debt-summary-strip,
+  .debt-overview-panel,
+  .vr-dashboard-card,
+  .vr-kpi-summary {
+    max-width: 1060px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .vr-kpi-summary-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .list-section,
+  .debts-list,
+  .add-panel,
+  .week-scroller-wrap,
+  .months-scroll-wrap,
+  .page-header,
+  .debt-alerts,
+  .debt-alerts-wrap,
+  .debt-filter-bar {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .settings-profile-card,
+  .settings-groups {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ── Grids expand to 3+ columns ── */
+  .kpi-mini-row {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .debt-overview-panel {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    padding: 0 24px 20px;
+  }
+  #cardDebtCardsContainer {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .summary-cards-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .ie-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .person-cards-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 0 24px 24px;
+  }
+  .combined-card { grid-column: 1 / -1; }
+  .person-income-card {
+    padding: 28px;
+  }
+  .person-income-card::before {
+    width: 120px; height: 120px;
+    top: -40px; right: -40px;
+  }
+  .pic-header {
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .pic-avatar {
+    width: 48px; height: 48px;
+    font-size: 1.1rem;
+  }
+  .combined-avatar {
+    width: 52px; height: 52px;
+    font-size: 1.15rem;
+  }
+  .pic-name {
+    font-size: 1.1rem;
+  }
+  .pic-salaries {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .pic-salary-row {
+    padding: 12px 16px;
+  }
+  .pic-salary-label {
+    font-size: 0.8rem;
+    gap: 10px;
+  }
+  .pic-salary-val {
+    font-size: 1.2rem;
+  }
+  .person-income-card .salary-annual {
+    font-size: 0.8rem;
+  }
+  .pic-combined-grid {
+    gap: 0;
+  }
+  .pic-combined-item {
+    padding: 18px 16px;
+    gap: 8px;
+  }
+  .pic-combined-label {
+    font-size: 0.8rem;
+  }
+  .pic-combined-val {
+    font-size: 1.6rem;
+  }
+  .pic-combined-sub {
+    font-size: 0.78rem;
+  }
+  .pic-combined-divider {
+    height: 65px;
+    margin: 0 16px;
+  }
+
+  /* ── Debts list 2 columns ── */
+  .debts-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  /* ── Debt overview better spacing ── */
+  .debt-overview-card {
+    padding: 24px;
+    gap: 14px;
+  }
+  .debt-ov-amount {
+    font-size: 1.625rem;
+  }
+  .debt-ov-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--r-md);
+    font-size: 1rem;
+  }
+  .debt-ov-title {
+    font-size: 0.95rem;
+  }
+  .debt-ov-subtitle {
+    font-size: 0.7rem;
+  }
+  .debt-ov-count {
+    font-size: 0.75rem;
+  }
+  .debt-ov-badge,
+  .debt-ov-remaining {
+    font-size: 0.65rem;
+    padding: 4px 12px;
+  }
+  .debt-ov-footer {
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+  .summary-mini {
+    padding: 20px 22px;
+    gap: 16px;
+  }
+  .sm-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.1rem;
+  }
+  .sm-value {
+    font-size: 1.25rem;
+  }
+  .sm-label {
+    font-size: 0.8rem;
+  }
+  .debt-summary-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 0 24px 20px;
+  }
+
+  /* ── Transaction day groups: grid ── */
+  .transactions-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* ── Balance card → larger typography ── */
+  .balance-amount { font-size: 2.75rem; }
+  .balance-label { font-size: 0.9rem; }
+
+  /* ── Page header spacing ── */
+  .page-header {
+    padding: 24px 24px 14px;
+  }
+  .page-title {
+    font-size: 1.75rem;
+  }
+
+  /* ── Modal → centered, not bottom-aligned ── */
+  .modal {
+    align-items: center;
+    padding: 40px;
+  }
+  .modal-content {
+    max-width: 560px;
+    border-radius: var(--r-2xl);
+    max-height: 85vh;
+    box-shadow: var(--shadow-xl), 0 0 0 1px rgba(0,0,0,0.05);
+  }
+
+  /* ── Login page → two-column feel ── */
+  .login-wrapper {
+    padding: 48px 44px;
+    width: min(460px, 92vw);
+    box-shadow: 0 32px 96px rgba(0,0,0,0.22);
+  }
+  .profile-logo {
+    width: 180px;
+    height: auto;
+  }
+  .login-logo h1 {
+    font-size: 2rem;
+  }
+
+  /* ── Desktop scrollbar (visible, styled) ── */
+  .main-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--primary-rgb), 0.25) transparent;
+  }
+  .main-content::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+  .main-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .main-content::-webkit-scrollbar-thumb {
+    background: rgba(var(--primary-rgb), 0.2);
+    border-radius: 10px;
+  }
+  .main-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--primary-rgb), 0.4);
+  }
+
+  /* ── Wider form rows ── */
+  .form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* ── Better spacing for cards ── */
+  .ie-card { padding: 20px 24px; gap: 16px; }
+  .ie-circle { width: 52px; height: 52px; font-size: 1.25rem; }
+  .ie-value { font-size: 1.25rem; }
+  .ie-label { font-size: 0.8125rem; }
+
+  .kpi-mini-card { padding: 18px; gap: 14px; }
+  .kpi-mini-icon { width: 42px; height: 42px; font-size: 1rem; border-radius: var(--r-md); }
+  .kpi-mini-val { font-size: 1.0625rem; }
+  .kpi-mini-label { font-size: 0.75rem; white-space: normal; }
+
+  .debt-item { padding: 24px; }
+  .debt-type-icon { width: 48px; height: 48px; font-size: 1.125rem; }
+  .debt-creditor { font-size: 1.0625rem; }
+  .debt-amount-badge { font-size: 1.25rem; }
+
+  /* ── Chores desktop layout ── */
+  .chores-dashboard {
+    padding: 28px;
+    gap: 28px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .chores-progress-ring-wrap {
+    width: 120px;
+    height: 120px;
+  }
+  .chores-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .chores-person-section {
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .chores-day-strip {
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .chore-task-item {
+    padding: 14px 18px;
+  }
+
+  /* ── Shopping panel desktop ── */
+  .shopping-body {
+    padding: 20px 32px 100px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .shop-items-groups {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .shop-stats-row {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .shop-list-card {
+    padding: 20px;
+  }
+  .shopping-header {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px 32px;
+  }
+  .shopping-add-bar {
+    max-width: 600px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* ── Settings desktop ── */
+  .settings-groups {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .settings-profile-card {
+    padding: 28px 32px;
+  }
+  .settings-group {
+    padding: 20px;
+  }
+  .setting-item {
+    padding: 14px 0;
+  }
+
+  /* ── Wider month scroller ── */
+  .months-scroll-wrap { padding: 0 24px 16px; }
+  .month-btn { padding: 8px 22px; font-size: 0.9rem; }
+
+  /* ── Transaction items spacing ── */
+  .transaction-item { padding: 16px 20px; gap: 16px; }
+  .trans-icon-wrap { width: 50px; height: 50px; font-size: 1.25rem; }
+  .trans-name { font-size: 1rem; }
+  .trans-amount { font-size: 1.0625rem; }
+
+  /* ── Add panel wider ── */
+  .add-panel { max-width: 600px; }
+
+  /* ── Safe area reset for desktop ── */
+  .bottom-nav {
+    padding-bottom: 24px;
+    height: auto;
+  }
+
+  /* ── Chat — Desktop split-panel (lista + mensagens lado a lado) ── */
+  .chat-panel {
+    flex-direction: row;
+    inset: 0 0 0 var(--sidebar-w);
+  }
+
+  /* Lista sempre visível como sidebar esquerda */
+  #chatViewList {
+    display: flex !important;
+    width: 360px;
+    min-width: 320px;
+    max-width: 400px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+  }
+
+  /* Mensagens ocupam o resto */
+  #chatViewMessages {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Busca e Arquivadas sobrepõem a lista */
+  #chatViewSearch,
+  #chatViewArchived {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 360px;
+    min-width: 320px;
+    max-width: 400px;
+    height: 100%;
+    z-index: 2;
+    background: var(--bg);
+  }
+
+  /* Esconder seta voltar no painel de mensagens no desktop */
+  #chatMsgBackBtn {
+    display: none;
+  }
+
+  /* Placeholder quando nenhuma conversa está aberta */
+  .chat-desktop-placeholder {
+    display: flex;
+  }
+  .chat-panel .chat-view#chatViewMessages.active ~ .chat-desktop-placeholder {
+    display: none;
+  }
+
+  /* Conv item ativa destaque */
+  .conv-item.conv-active {
+    background: rgba(var(--primary-rgb), 0.08);
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   WIDE DESKTOP (1440px+)
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 1440px) {
+
+  :root {
+    --sidebar-w: 68px;
+  }
+
+  .main-content > * {
+    max-width: 1280px;
+  }
+
+  .balance-card { max-width: 1240px; }
+
+  .ie-grid,
+  .kpi-mini-row,
+  .person-cards-grid,
+  .charts-grid,
+  .summary-cards-row,
+  .debt-summary-strip,
+  .debt-overview-panel,
+  .vr-dashboard-card,
+  .vr-kpi-summary {
+    max-width: 1240px;
+  }
+
+  .list-section,
+  .debts-list,
+  .add-panel,
+  .week-scroller-wrap,
+  .months-scroll-wrap,
+  .page-header,
+  .debt-alerts,
+  .debt-alerts-wrap {
+    max-width: 1280px;
+  }
+
+  /* 3-col debts */
+  .debts-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Wider charts */
+  .charts-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* ── Debt cards extra spacing on wide ── */
+  .debt-overview-panel {
+    gap: 24px;
+    padding: 0 28px 24px;
+  }
+  .debt-overview-card {
+    padding: 28px;
+    gap: 16px;
+  }
+  .debt-ov-amount {
+    font-size: 1.75rem;
+  }
+  .debt-ov-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.1rem;
+  }
+  .debt-ov-title {
+    font-size: 1rem;
+  }
+  .debt-summary-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .summary-mini {
+    padding: 22px 26px;
+  }
+  .sm-icon {
+    width: 52px;
+    height: 52px;
+  }
+  .sm-value {
+    font-size: 1.375rem;
+  }
+
+  /* Wider person cards */
+  .person-cards-grid {
+    gap: 28px;
+    padding: 0 28px 28px;
+  }
+  .person-income-card {
+    padding: 32px;
+  }
+  .pic-avatar {
+    width: 52px; height: 52px;
+    font-size: 1.2rem;
+  }
+  .pic-name {
+    font-size: 1.15rem;
+  }
+  .pic-salary-row {
+    padding: 14px 18px;
+  }
+  .pic-salary-val {
+    font-size: 1.3rem;
+  }
+  .pic-combined-val {
+    font-size: 1.8rem;
+  }
+  .pic-combined-item {
+    padding: 20px 20px;
+    gap: 10px;
+  }
+  .pic-combined-divider {
+    height: 70px;
+    margin: 0 20px;
+  }
+
+  /* Chores wider */
+  .chores-dashboard {
+    max-width: 1100px;
+  }
+  .chores-person-section {
+    max-width: 1100px;
+  }
+  .chores-day-strip {
+    max-width: 1100px;
+  }
+
+  /* Sidebar nav items */
+  .bottom-nav-item {
+    padding: 14px 20px;
+  }
+  .nav-label {
+    font-size: 0.9375rem;
+  }
+
+  /* Bigger balance */
+  .balance-amount { font-size: 3rem; }
+
+  /* Modal wider */
+  .modal-content {
+    max-width: 640px;
+  }
+
+  /* Shopping 3-col */
+  .shop-items-groups {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   ULTRA-WIDE (1920px+)
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 1920px) {
+  .main-content > * { max-width: 1440px; }
+  .balance-card { max-width: 1400px; }
+  .ie-grid, .kpi-mini-row, .person-cards-grid, .charts-grid,
+  .summary-cards-row, .debt-summary-strip, .debt-overview-panel,
+  .vr-dashboard-card, .vr-kpi-summary { max-width: 1400px; }
+  .list-section, .debts-list, .week-scroller-wrap,
+  .months-scroll-wrap, .page-header { max-width: 1440px; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   DESKTOP HOVER EFFECTS — pointer: fine (mouse/trackpad)
+   ═══════════════════════════════════════════════════════════ */
+@media (hover: hover) and (pointer: fine) {
+
+  /* Card lift effects */
+  .ie-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+  .kpi-mini-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .debt-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .chart-card:hover { box-shadow: var(--shadow-md); }
+  .person-income-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
+  .debt-overview-card:hover { transform: translateY(-3px); }
+  .summary-mini:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .transaction-item:hover { background: var(--bg-card-alt); }
+  .chore-task-item:hover { border-color: var(--primary-light); transform: translateX(3px); }
+
+  /* Smooth cursor transitions */
+  .ie-card,
+  .kpi-mini-card,
+  .debt-item,
+  .chart-card,
+  .person-income-card,
+  .debt-overview-card,
+  .summary-mini,
+  .transaction-item,
+  .chore-task-item {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Button hover glow */
+  .btn-primary:hover {
+    box-shadow: 0 12px 40px rgba(var(--primary-rgb), 0.35);
+    transform: translateY(-2px);
+  }
+  .fab-btn:hover {
+    box-shadow: 0 12px 40px rgba(var(--primary-rgb), 0.4);
+  }
+
+  /* Delete icon visible on hover only */
+  .shop-item-delete { opacity: 0; }
+  .shop-item:hover .shop-item-delete { opacity: 0.7; }
+
+  /* Settings row hover */
+  .settings-row:hover {
+    background: var(--bg-card-alt);
+    padding-left: 20px;
+    transition: all 0.2s ease;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE ≤ 480px
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  /* Debt type toggle: 5 columns → 3+2 on small */
+  .debt-type-group {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .debt-type-group .type-toggle-btn {
+    font-size: 0.7rem;
+    padding: 9px 6px;
+  }
+
+  /* Cartão sub-mode buttons */
+  .cartao-mode-group .type-toggle-btn {
+    font-size: 0.7rem;
+    padding: 8px 4px;
+  }
+
+  /* Modal adjustments */
+  .modal { padding: 10px; }
+  .modal-content { padding: 18px; }
+  .modal-header h3 { font-size: 1rem; }
+
+  /* Chart cards */
+  .chart-card { padding: 16px; }
+  .chart-card-header h3 { font-size: 0.875rem; }
+
+  /* Debt items */
+  .debt-item { padding: 16px; }
+  .debt-item-header { gap: 10px; }
+  .debt-type-icon { width: 38px; height: 38px; font-size: 0.9rem; }
+  .debt-amount-badge { font-size: 1rem; }
+  .debt-detail-item { font-size: 0.75rem; }
+
+  /* Debt actions */
+  .debt-btn-edit,
+  .debt-btn-delete { width: 38px; height: 38px; font-size: 0.8rem; }
+  .debt-btn-pay { height: 38px; font-size: 0.8125rem; }
+
+  /* Debt overview cards */
+  .debt-overview-card { padding: 14px; }
+  .debt-ov-amount { font-size: 1.1rem; }
+  .debt-ov-title { font-size: 0.7rem; }
+
+  /* KPI cards */
+  .kpi-mini-card { padding: 12px; gap: 10px; }
+  .kpi-mini-icon { width: 34px; height: 34px; font-size: 0.8125rem; }
+  .kpi-mini-val { font-size: 0.875rem; }
+  .kpi-mini-label { font-size: 0.65rem; }
+  .kpi-mini-sub { font-size: 0.6rem; }
+
+  /* Balance card */
+  .balance-card { padding: 20px 18px 12px; margin: 0 12px 14px; }
+  .balance-amount { font-size: 2rem; }
+
+  /* Income/Expense grid */
+  .ie-grid { padding: 0 12px 14px; gap: 10px; }
+  .ie-card { padding: 12px; gap: 10px; }
+  .ie-circle { width: 40px; height: 40px; font-size: 1rem; }
+  .ie-value { font-size: 0.9375rem; }
+
+  /* Person income cards (salaries) */
+  .person-cards-grid { padding: 0 12px 14px; }
+  .person-income-card { padding: 14px; }
+  .person-income-card .salary-current { font-size: 1.2rem; }
+  .pic-avatar { width: 30px; height: 30px; font-size: 0.8125rem; }
+
+  /* Page header */
+  .page-header { padding: 16px 16px 10px; }
+  .page-title { font-size: 1.3rem; }
+
+  /* Transaction items */
+  .transaction-item { padding: 12px 14px; gap: 12px; }
+  .trans-icon-wrap { width: 40px; height: 40px; font-size: 1rem; }
+  .trans-name { font-size: 0.875rem; }
+  .trans-amount { font-size: 0.9375rem; }
+
+  /* Debt alerts */
+  .debt-alerts { padding: 0 12px; }
+  .debt-alert { font-size: 0.8rem; padding: 8px 12px; }
+
+  /* Summary cards */
+  .summary-cards-row { padding: 0 12px 14px; }
+
+  /* Deductions / additions */
+  .deduction-add-row { flex-wrap: wrap; }
+  .deduction-add-row .form-group { flex: 1; min-width: 0; }
+}
+
+/* ─── Small mobile ≤ 400px ─── */
+@media (max-width: 400px) {
+  /* Nav */
+  .bottom-nav-item { padding: 4px 8px; min-width: 40px; }
+  .nav-label { font-size: 0.625rem; }
+  .fab-btn { width: 50px; height: 50px; }
+  .nav-icon-wrap { width: 32px; height: 32px; font-size: 0.875rem; }
+
+  /* Balance */
+  .balance-amount { font-size: 1.875rem; }
+  .balance-card { padding: 18px 14px 10px; margin: 0 10px 12px; }
+
+  /* IE grid */
+  .ie-card { padding: 10px; gap: 8px; }
+  .ie-circle { width: 36px; height: 36px; font-size: 0.875rem; }
+  .ie-value { font-size: 0.8125rem; }
+  .ie-label { font-size: 0.6875rem; }
+
+  /* KPI: 2 columns still but tighter */
+  .kpi-mini-row { gap: 8px; padding: 0 10px 16px; }
+  .kpi-mini-card { padding: 10px 8px; gap: 8px; }
+  .kpi-mini-icon { width: 30px; height: 30px; font-size: 0.75rem; }
+  .kpi-mini-val { font-size: 0.8125rem; }
+  .kpi-mini-label { font-size: 0.6rem; }
+
+  /* Debt overview panel: stack to 1 column */
+  .debt-overview-panel {
+    grid-template-columns: 1fr;
+  }
+  .debt-overview-card { padding: 12px; }
+  .debt-ov-amount { font-size: 1rem; }
+
+  /* Summary cards: stack to 1 column */
+  .summary-cards-row {
+    grid-template-columns: 1fr;
+    padding: 0 10px 12px;
+  }
+
+  /* Debt items */
+  .debt-item { padding: 14px; }
+  .debt-type-icon { width: 36px; height: 36px; font-size: 0.85rem; }
+  .debt-creditor { font-size: 0.9rem; }
+  .debt-amount-badge { font-size: 0.9375rem; }
+
+  /* Debt actions: row with full-width pay */
+  .debt-item-actions { gap: 8px; }
+  .debt-btn-edit,
+  .debt-btn-delete { width: 36px; height: 36px; font-size: 0.8rem; }
+  .debt-btn-pay { height: 36px; font-size: 0.8rem; }
+
+  /* Person cards (salary) */
+  .person-cards-grid {
+    grid-template-columns: 1fr;
+    padding: 0 10px 14px;
+  }
+  .luan-card, .bianca-card { grid-column: span 1; }
+  .combined-card { grid-column: span 1; }
+  .person-income-card .salary-current { font-size: 1.1rem; }
+
+  /* Charts */
+  .charts-grid { padding: 0 10px 12px; gap: 10px; }
+  .chart-card { padding: 14px; }
+
+  /* Month scroller */
+  .months-scroll-wrap { padding: 0 10px 10px; }
+  .month-btn { padding: 6px 14px; font-size: 0.8125rem; }
+
+  /* Modal */
+  .modal { padding: 6px; }
+  .modal-content { padding: 16px; border-radius: 18px 18px 10px 10px; }
+  .modal-header { margin-bottom: 14px; }
+  .modal-header h3 { font-size: 0.9375rem; gap: 8px; }
+
+  /* Transactions */
+  .transaction-item { padding: 10px 12px; gap: 10px; }
+  .trans-icon-wrap { width: 36px; height: 36px; font-size: 0.9375rem; }
+  .trans-name { font-size: 0.8125rem; }
+  .trans-amount { font-size: 0.875rem; }
+
+  /* Debt alerts */
+  .debt-alert { font-size: 0.75rem; padding: 8px 10px; gap: 8px; }
+  .debt-alert i { font-size: 0.875rem; }
+
+  /* Page header */
+  .page-header { padding: 14px 12px 8px; }
+  .page-title { font-size: 1.2rem; }
+
+  /* Add panel */
+  .add-panel { margin: 0 10px 14px; }
+  .add-panel-toggle { padding: 14px 14px; font-size: 0.875rem; }
+  .form-container { padding: 0 14px 14px; padding-top: 14px; }
+
+  /* Week scroller */
+  .week-scroller-wrap { padding: 0 10px 14px; }
+  .week-day-btn { padding: 8px 10px; min-width: 48px; }
+  .wday-num { font-size: 1rem; }
+}
+
+/* ─── Very small mobile ≤ 360px ─── */
+@media (max-width: 360px) {
+  /* Balance */
+  .balance-amount { font-size: 1.625rem; }
+  .balance-label { font-size: 0.75rem; }
+
+  /* IE grid: stack to 1 column */
+  .ie-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 0 10px 12px;
+  }
+
+  /* KPI: stack to 1 column */
+  .kpi-mini-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 0 10px 14px;
+  }
+
+  /* Debt type toggle stays 2×2 but smaller text */
+  .debt-type-group .type-toggle-btn {
+    font-size: 0.65rem;
+    padding: 7px 4px;
+  }
+
+  /* Cartão sub-mode: stack to full width if too tight */
+  .cartao-mode-group {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .cartao-mode-group .type-toggle-btn {
+    font-size: 0.7rem;
+    padding: 8px 10px;
+  }
+
+  /* Smaller page title */
+  .page-title { font-size: 1.1rem; }
+
+  /* Modal even tighter */
+  .modal-content { padding: 14px; }
+  .modal-header h3 { font-size: 0.875rem; }
+
+  /* Transaction items */
+  .trans-icon-wrap { width: 32px; height: 32px; font-size: 0.8125rem; }
+  .trans-name { font-size: 0.75rem; }
+  .trans-meta { font-size: 0.6875rem; }
+  .trans-amount { font-size: 0.8125rem; }
+
+  /* Debt items further size reduction */
+  .debt-detail-item { font-size: 0.7rem; }
+  .debt-amount-badge { font-size: 0.85rem; }
+  .debt-type-icon { width: 32px; height: 32px; font-size: 0.8rem; }
+
+  /* Salary cards */
+  .person-income-card { padding: 12px; }
+  .person-income-card .salary-current { font-size: 1rem; }
+  .pic-name { font-size: 0.8125rem; }
+  .pic-avatar { width: 28px; height: 28px; font-size: 0.75rem; }
+
+  /* Chart card titles */
+  .chart-card { padding: 12px; }
+  .chart-card-header h3 { font-size: 0.8125rem; }
+  .chart-card-header { gap: 8px; margin-bottom: 12px; }
+}
+
+/* ─── Safe area (notch handling) ─── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  @media (max-width: 1023px) {
+    .bottom-nav { padding-bottom: calc(12px + env(safe-area-inset-bottom)); height: calc(76px + env(safe-area-inset-bottom)); }
+    .main-content { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  }
+}
+
+/* ─── Touch-friendly tap targets (mobile only) ─── */
+@media (pointer: coarse) {
+  .debt-action-btn { min-height: 44px; }
+  .btn-remove-deduction { min-height: 36px; min-width: 36px; }
+  .modal-close-btn { width: 40px; height: 40px; }
+  .ph-icon-btn { width: 44px; height: 44px; }
+  .month-btn { min-height: 40px; }
+  .week-day-btn { min-height: 52px; }
+  .settings-row { min-height: 52px; padding: 16px; }
+  .bottom-nav-item { min-height: 44px; }
+}
+
+/* ─── Reduced motion preference ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Print styles ─── */
+@media print {
+  .bottom-nav,
+  .header,
+  .fab-container,
+  .modal { display: none !important; }
+  .main-content {
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    width: 100%;
+  }
+  .app-container {
+    position: static;
+    overflow: visible;
+  }
+  body {
+    position: static;
+    overflow: visible;
+  }
+}

@@ -1,0 +1,397 @@
+<!-- ====== CHAT PANEL ====== -->
+<div id="chatPanel" class="chat-panel" role="dialog" aria-modal="true" aria-label="Chat">
+
+    <!-- ── VIEW 1: Lista de conversas ── -->
+    <div id="chatViewList" class="chat-view active">
+        <div class="chat-header">
+            <button id="chatCloseBtn" class="chat-back-btn" aria-label="Fechar chat">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="chat-header-text" style="flex:1;margin-left:6px;">
+                <h3 class="chat-title">Chat</h3>
+            </div>
+            <button id="newChatBtn" class="chat-back-btn" aria-label="Nova conversa" title="Nova conversa">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
+        <div id="convListEl" class="conv-list">
+            <div id="convListEmpty" class="chat-empty-state">
+                <div class="chat-empty-icon"><i class="fa-solid fa-comments"></i></div>
+                <p class="chat-empty-title">Nenhuma conversa</p>
+                <p class="chat-empty-sub">Toque em <strong>+</strong> para iniciar uma conversa</p>
+            </div>
+        </div>
+        <button id="convArchivedBtn" class="conv-archived-btn" style="display:none" aria-label="Conversas arquivadas">
+            <i class="fa-solid fa-box-archive"></i>
+            <span>Arquivadas</span>
+            <span class="archived-count">0</span>
+        </button>
+
+        <!-- Barra inferior: perfil do próprio usuário -->
+        <button id="chatMyProfileBtn" class="chat-list-footer" aria-label="Meu perfil">
+            <div class="clf-avatar-wrap">
+                <img id="chatMyAvatar" src="" alt="" class="clf-avatar" onerror="this.style.display='none'">
+                <div id="chatMyAvatarFallback" class="clf-avatar-fallback"><i class="fa-solid fa-user"></i></div>
+            </div>
+            <div class="clf-info">
+                <span id="chatMyName" class="clf-name">Carregando...</span>
+                <span id="chatMyRecado" class="clf-recado">Meu perfil</span>
+            </div>
+            <i class="fa-solid fa-chevron-right clf-arrow"></i>
+        </button>
+    </div>
+
+    <!-- ── VIEW 2: Buscar contato por telefone ── -->
+    <div id="chatViewSearch" class="chat-view">
+        <div class="chat-header">
+            <button id="searchBackBtn" class="chat-back-btn" aria-label="Voltar">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div style="flex:1;margin-left:6px;">
+                <h3 class="chat-title">Nova conversa</h3>
+            </div>
+        </div>
+        <div class="search-contact-body">
+            <p class="search-contact-hint">
+                <i class="fa-solid fa-circle-info"></i>
+                Digite o telefone do contato cadastrado no WolfSource
+            </p>
+            <div class="search-phone-wrap">
+                <i class="fa-solid fa-phone search-phone-icon"></i>
+                <input
+                    type="tel"
+                    id="searchPhoneInput"
+                    placeholder="(XX) 9XXXX-XXXX"
+                    maxlength="16"
+                    class="search-phone-input"
+                    inputmode="numeric"
+                    autocomplete="tel"
+                    aria-label="Número de telefone"
+                >
+            </div>
+            <button id="searchPhoneBtn" class="search-phone-submit">
+                <i class="fa-solid fa-magnifying-glass"></i> Buscar contato
+            </button>
+            <div id="searchPhoneResult" class="search-result-area" style="display:none"></div>
+        </div>
+    </div>
+
+    <!-- ── VIEW GATE: Cadastro de telefone obrigatório ── -->
+    <div id="chatViewPhoneGate" class="chat-view">
+        <div class="chat-header">
+            <button id="phoneGateCloseBtn" class="chat-back-btn" aria-label="Fechar">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="chat-header-text" style="flex:1;margin-left:6px;">
+                <h3 class="chat-title">Chat</h3>
+            </div>
+        </div>
+        <div class="phone-gate-body">
+            <div class="phone-gate-icon"><i class="fa-solid fa-phone-volume"></i></div>
+            <h2 class="phone-gate-title">Telefone necessário</h2>
+            <p class="phone-gate-desc">Para usar o chat, cadastre seu número de celular. Ele será usado para que outros membros possam te encontrar.</p>
+            <form id="phoneGateForm" class="phone-gate-form" novalidate>
+                <div class="search-phone-wrap">
+                    <i class="fa-solid fa-phone search-phone-icon"></i>
+                    <input
+                        type="tel"
+                        id="phoneGateInput"
+                        placeholder="(XX) 9XXXX-XXXX"
+                        maxlength="16"
+                        class="search-phone-input"
+                        inputmode="numeric"
+                        autocomplete="tel"
+                        aria-label="Seu número de celular"
+                    >
+                </div>
+                <div id="phoneGateError" class="phone-gate-error" style="display:none"></div>
+                <button type="submit" id="phoneGateSubmit" class="search-phone-submit">
+                    <i class="fa-solid fa-check"></i> Salvar e entrar no Chat
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── VIEW 3: Conversa individual ── -->
+    <div id="chatViewMessages" class="chat-view">
+        <div class="chat-header">
+            <button id="chatMsgBackBtn" class="chat-back-btn" aria-label="Voltar">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="chat-header-info" id="chatHeaderInfo" role="button" tabindex="0" title="Ver perfil do contato">
+                <div class="chat-header-avatars">
+                    <img id="chatHdrAvatar" src="" alt="" class="chat-hdr-avatar"
+                         onerror="this.style.display='none'">
+                </div>
+                <div class="chat-header-text">
+                    <h3 class="chat-title">Chat</h3>
+                    <span id="chatHdrSubtitle" class="chat-subtitle">toque aqui para ver o perfil</span>
+                </div>
+            </div>
+            <button id="chatOptionsBtn" class="chat-back-btn" aria-label="Opções da conversa" title="Opções">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+            </button>
+        </div>
+
+        <!-- Mensagens -->
+        <div id="chatMessagesList" class="chat-messages-list" role="log" aria-live="polite" aria-relevant="additions">
+            <div id="chatEmptyState" class="chat-empty-state">
+                <div class="chat-empty-icon"><i class="fa-solid fa-comments"></i></div>
+                <p class="chat-empty-title">Nenhuma mensagem ainda</p>
+                <p class="chat-empty-sub">Diga olá para começar a conversa! 👋</p>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <!-- Emoji Picker -->
+        <div id="emojiPicker" class="emoji-picker" style="display:none">
+            <div class="emoji-picker-tabs">
+                <button class="emoji-tab active" data-cat="smileys" title="Smileys">😀</button>
+                <button class="emoji-tab" data-cat="gestos" title="Gestos">👋</button>
+                <button class="emoji-tab" data-cat="coracoes" title="Corações">❤️</button>
+                <button class="emoji-tab" data-cat="animais" title="Animais">🐶</button>
+                <button class="emoji-tab" data-cat="comida" title="Comida">🍕</button>
+                <button class="emoji-tab" data-cat="objetos" title="Objetos">⚽</button>
+            </div>
+            <div class="emoji-picker-grid" id="emojiGrid"></div>
+        </div>
+
+        <form id="chatForm" class="chat-input-bar" autocomplete="off" novalidate>
+            <button type="button" id="emojiToggleBtn" class="emoji-toggle-btn" aria-label="Emojis">
+                <i class="fa-regular fa-face-smile"></i>
+            </button>
+            <input
+                type="text"
+                id="chatInput"
+                class="chat-input"
+                placeholder="Mensagem..."
+                maxlength="1000"
+                autocomplete="off"
+                autocorrect="on"
+                aria-label="Escrever mensagem"
+            >
+            <button type="button" id="chatImageBtn" class="emoji-toggle-btn" aria-label="Enviar imagem">
+                <i class="fa-solid fa-image"></i>
+            </button>
+            <input type="file" id="chatImageInput" accept="image/*" style="display:none">
+            <button type="submit" id="chatSendBtn" class="chat-send-btn" aria-label="Enviar">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+
+    <!-- ── VIEW 4: Conversas arquivadas ── -->
+    <div id="chatViewArchived" class="chat-view">
+        <div class="chat-header">
+            <button id="archivedBackBtn" class="chat-back-btn" aria-label="Voltar">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div style="flex:1;margin-left:6px;">
+                <h3 class="chat-title">Arquivadas</h3>
+            </div>
+        </div>
+        <div id="archivedListEl" class="conv-list">
+            <div id="archivedListEmpty" class="chat-empty-state" style="display:none">
+                <div class="chat-empty-icon"><i class="fa-solid fa-box-archive"></i></div>
+                <p class="chat-empty-title">Nenhuma conversa arquivada</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Desktop: placeholder quando nenhuma conversa está aberta ── -->
+    <div id="chatDesktopPlaceholder" class="chat-desktop-placeholder">
+        <div class="chat-empty-icon"><i class="fa-solid fa-comments"></i></div>
+        <p class="chat-empty-title">WolfSource</p>
+        <p class="chat-empty-sub">Selecione uma conversa para começar</p>
+    </div>
+
+    <!-- Opções da conversa (bottom sheet) -->
+    <div id="chatOptionsSheet" class="chat-options-overlay" style="display:none">
+        <div class="chat-options-panel">
+            <div class="chat-options-handle"></div>
+            <button id="chatOptClear" class="chat-options-btn chat-options-btn--danger">
+                <i class="fa-solid fa-broom"></i>
+                <span>Limpar mensagens</span>
+            </button>
+            <button id="chatOptArchive" class="chat-options-btn">
+                <i class="fa-solid fa-box-archive"></i>
+                <span>Arquivar conversa</span>
+            </button>
+            <button id="chatOptDelete" class="chat-options-btn chat-options-btn--danger">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Excluir conversa</span>
+            </button>
+            <button id="chatOptCancel" class="chat-options-btn chat-options-btn--cancel">
+                Cancelar
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: editar mensagem -->
+    <div id="chatEditMsgModal" class="chat-edit-overlay" style="display:none">
+        <div class="chat-edit-modal">
+            <div class="chat-edit-header">
+                <h4>Editar mensagem</h4>
+                <button id="chatEditCloseBtn" class="phone-modal-close" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <textarea
+                id="chatEditMsgInput"
+                class="chat-edit-input"
+                maxlength="1000"
+                rows="3"
+                placeholder="Mensagem..."
+                aria-label="Editar mensagem"
+            ></textarea>
+            <p class="chat-edit-hint"><i class="fa-solid fa-eye-slash"></i> Só pode editar se o outro ainda não visualizou</p>
+            <div class="chat-edit-actions">
+                <button id="chatEditCancelBtn" class="chat-edit-btn chat-edit-btn--cancel">Cancelar</button>
+                <button id="chatEditSaveBtn" class="chat-edit-btn chat-edit-btn--save">
+                    <i class="fa-solid fa-check"></i> Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /.chat-panel -->
+
+<!-- ====== PAINEL MEU PERFIL (overlay) ====== -->
+<div id="chatMyProfilePanel" class="chat-profile-overlay" style="display:none">
+    <div class="chat-profile-panel">
+        <div class="chat-profile-header">
+            <button id="myProfileCloseBtn" class="chat-back-btn" aria-label="Fechar">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="chat-profile-header-title">Meu Perfil</h3>
+        </div>
+        <div class="chat-profile-body">
+            <div class="chat-profile-avatar-wrap" id="myProfileAvatarUploadBtn" title="Alterar foto" style="cursor:pointer;position:relative;">
+                <img id="myProfileAvatar" src="" alt="" class="chat-profile-avatar"
+                     onerror="this.style.display='none'; document.getElementById('myProfileAvatarFallback').style.display='flex'">
+                <div id="myProfileAvatarFallback" class="chat-profile-avatar-fallback" style="display:none">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="my-profile-avatar-overlay">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>Alterar</span>
+                </div>
+            </div>
+            <h2 id="myProfileName" class="chat-profile-name">—</h2>
+        </div>
+
+        <!-- Recado -->
+        <div class="chat-profile-section">
+            <div class="chat-profile-section-title">
+                <i class="fa-solid fa-quote-left"></i>
+                <span>Recado</span>
+            </div>
+            <div class="my-profile-editable-row">
+                <p id="myProfileRecado" class="chat-profile-bio">Nenhum recado</p>
+                <button class="my-profile-edit-btn" id="myProfileEditRecadoBtn" aria-label="Editar recado" title="Editar recado">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Telefone -->
+        <div class="chat-profile-section">
+            <div class="chat-profile-section-title">
+                <i class="fa-solid fa-phone"></i>
+                <span>Telefone</span>
+            </div>
+            <div class="my-profile-editable-row">
+                <p id="myProfilePhone" class="chat-profile-bio">Não cadastrado</p>
+                <button class="my-profile-edit-btn" id="myProfileEditPhoneBtn" aria-label="Editar telefone" title="Editar telefone">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ====== PAINEL DE PERFIL DO CONTATO (overlay) ====== -->
+<div id="chatProfilePanel" class="chat-profile-overlay" style="display:none">
+    <div class="chat-profile-panel">
+        <div class="chat-profile-header">
+            <button id="profileCloseBtn" class="chat-back-btn" aria-label="Fechar">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="chat-profile-header-title">Dados do contato</h3>
+        </div>
+        <div class="chat-profile-body">
+            <div class="chat-profile-avatar-wrap">
+                <img id="profileAvatar" src="" alt="" class="chat-profile-avatar"
+                     onerror="this.style.display='none'; document.getElementById('profileAvatarFallback').style.display='flex'">
+                <div id="profileAvatarFallback" class="chat-profile-avatar-fallback" style="display:none">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            </div>
+            <h2 id="profileName" class="chat-profile-name">Contato</h2>
+            <p id="profilePhone" class="chat-profile-phone"></p>
+        </div>
+        <div class="chat-profile-actions">
+            <button id="profileBtnSearch" class="chat-profile-action-btn">
+                <div class="chat-profile-action-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                <span>Pesquisar</span>
+            </button>
+        </div>
+        <div class="chat-profile-section">
+            <div class="chat-profile-section-title">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Recado</span>
+            </div>
+            <p id="profileBio" class="chat-profile-bio">Olá! Eu uso o WolfSource.</p>
+        </div>
+        <div class="chat-profile-section">
+            <button id="profileBtnClear" class="chat-profile-option chat-profile-option--danger">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Limpar conversa</span>
+            </button>
+            <button id="profileBtnArchive" class="chat-profile-option">
+                <i class="fa-solid fa-box-archive"></i>
+                <span>Arquivar conversa</span>
+            </button>
+            <button id="profileBtnBlock" class="chat-profile-option chat-profile-option--danger">
+                <i class="fa-solid fa-ban"></i>
+                <span>Bloquear contato</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: editar recado -->
+<div id="recadoEditModal" class="phone-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Editar recado">
+    <div class="phone-modal">
+        <div class="phone-modal-header">
+            <h3>Meu recado</h3>
+            <button id="recadoModalClose" class="phone-modal-close" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="phone-modal-hint">Seu recado aparece no seu perfil e fica visível para outros usuários no chat.</p>
+        <div class="phone-modal-input-wrap recado-input-wrap">
+            <i class="fa-solid fa-quote-left"></i>
+            <textarea id="profileRecadoInput" class="recado-textarea" placeholder="Ex: Disponível apenas à noite" maxlength="120" rows="3"></textarea>
+        </div>
+        <div id="recadoCharCount" class="recado-char-count">0 / 120</div>
+        <div id="recadoModalError" class="phone-modal-error" style="display:none"></div>
+        <button id="saveRecadoBtn" class="phone-modal-save">
+            <i class="fa-solid fa-floppy-disk"></i> Salvar
+        </button>
+    </div>
+</div>
+
+<div id="phoneEditModal" class="phone-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Editar telefone">
+    <div class="phone-modal">
+        <div class="phone-modal-header">
+            <h3>Editar telefone</h3>
+            <button id="phoneModalClose" class="phone-modal-close" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="phone-modal-hint">Este número será usado para que outros usuários possam encontrá-lo no chat pelo número de telefone.</p>
+        <div class="phone-modal-input-wrap">
+            <i class="fa-solid fa-phone"></i>
+            <input type="tel" id="profilePhoneInput" placeholder="(XX) 9XXXX-XXXX" maxlength="16" inputmode="numeric" autocomplete="tel">
+        </div>
+        <div id="phoneModalError" class="phone-modal-error" style="display:none"></div>
+        <button id="savePhoneBtn" class="phone-modal-save">
+            <i class="fa-solid fa-floppy-disk"></i> Salvar
+        </button>
+    </div>
+</div>

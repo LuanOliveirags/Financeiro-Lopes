@@ -20,25 +20,25 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
     
     <!-- CSS Files — Global -->
-    <link rel="stylesheet" href="frontend/assets/css/global/base.css">
-    <link rel="stylesheet" href="frontend/assets/css/global/animations.css">
+    <link rel="stylesheet" href="frontend/shared/styles/global/base.css">
+    <link rel="stylesheet" href="frontend/shared/styles/global/animations.css">
     <!-- CSS Files — Components -->
-    <link rel="stylesheet" href="frontend/assets/css/components/forms.css">
-    <link rel="stylesheet" href="frontend/assets/css/components/navigation.css">
-    <link rel="stylesheet" href="frontend/assets/css/components/modal.css">
-    <link rel="stylesheet" href="frontend/assets/css/components/calendar.css">
-    <!-- CSS Files — Pages -->
-    <link rel="stylesheet" href="frontend/assets/css/pages/login.css">
-    <link rel="stylesheet" href="frontend/assets/css/pages/dashboard.css">
-    <link rel="stylesheet" href="frontend/assets/css/pages/transactions.css">
-    <link rel="stylesheet" href="frontend/assets/css/pages/debts.css">
-    <link rel="stylesheet" href="frontend/assets/css/pages/salaries.css">
-    <link rel="stylesheet" href="frontend/assets/css/pages/settings.css">
-    <link rel="stylesheet" href="frontend/assets/css/pages/chores.css">
-    <link rel="stylesheet" href="frontend/assets/css/pages/shopping.css">
-    <link rel="stylesheet" href="frontend/assets/css/pages/chat.css">
+    <link rel="stylesheet" href="frontend/shared/styles/components/forms.css">
+    <link rel="stylesheet" href="frontend/shared/styles/components/navigation.css">
+    <link rel="stylesheet" href="frontend/shared/styles/components/modal.css">
+    <link rel="stylesheet" href="frontend/shared/styles/components/calendar.css">
+    <!-- CSS Files — Modules -->
+    <link rel="stylesheet" href="frontend/modules/login/login.css">
+    <link rel="stylesheet" href="frontend/modules/dashboard/dashboard.css">
+    <link rel="stylesheet" href="frontend/modules/transactions/transactions.css">
+    <link rel="stylesheet" href="frontend/modules/debts/debts.css">
+    <link rel="stylesheet" href="frontend/modules/salaries/salaries.css">
+    <link rel="stylesheet" href="frontend/modules/settings/settings.css">
+    <link rel="stylesheet" href="frontend/modules/chores/chores.css">
+    <link rel="stylesheet" href="frontend/modules/shopping/shopping.css">
+    <link rel="stylesheet" href="frontend/modules/chat/chat.css">
     <!-- CSS Files — Responsive (must be last to override) -->
-    <link rel="stylesheet" href="frontend/assets/css/global/responsive.css">
+    <link rel="stylesheet" href="frontend/shared/styles/global/responsive.css">
     
     <title>WolfSource</title>
 </head>
@@ -76,7 +76,7 @@
         <!-- Bottom Navigation --> <!-- Navegação inferior para alternar entre abas principais -->
         <nav class="bottom-nav">
             <div class="sidebar-brand">
-                <img src="frontend/assets/images/lopes-logo-opt.png" alt="WolfSource" class="sidebar-brand-logo" style="width: 70px; height: 70px;">
+                <img src="frontend/assets/images/lopes-logo-opt.png" alt="WolfSource" class="sidebar-brand-logo">
             </div>
             <button class="bottom-nav-item active" data-tab="dashboard">
                 <span class="nav-icon-wrap"><i class="fa-solid fa-chart-pie"></i></span>
@@ -162,6 +162,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
     <!-- Main Script --> <!-- Aplicação modular ES Modules -->
-    <script type="module" src="frontend/assets/js/app.js"></script>
+    <script type="module" src="frontend/app/bootstrap.js"></script>
 </body>
 </html>

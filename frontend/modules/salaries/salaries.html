@@ -1,0 +1,132 @@
+<!-- ====== SALARIES TAB ====== --> <!-- Aba de salários/entradas -->
+<section id="salaries" class="tab-content">
+    <div class="page-header">
+        <h2 class="page-title">WolfSource</h2>
+        <button id="addSalaryBtn" class="add-new-btn">
+            <i class="fa-solid fa-plus"></i> Nova entrada
+        </button>
+    </div>
+
+    <!-- Salary Modal --> <!-- Modal para adicionar novo salário/entrada -->
+    <div id="salaryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-sack-dollar"></i> Nova Entrada</h3>
+                <button class="close modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="salaryForm">
+                <div class="form-group">
+                    <label>Tipo de entrada</label>
+                    <div class="salary-type-toggle">
+                        <button type="button" class="salary-type-btn active" data-type="salario" id="btnSalario">
+                            <i class="fa-solid fa-sack-dollar"></i> Salário
+                        </button>
+                        <button type="button" class="salary-type-btn" data-type="vr" id="btnVR">
+                            <i class="fa-solid fa-utensils"></i> VR / VA
+                        </button>
+                    </div>
+                    <input type="hidden" id="salaryType" value="salario">
+                </div>
+                <div class="form-group">
+                    <label for="salaryPerson">Pessoa</label>
+                    <select id="salaryPerson" required>
+                        <!-- Populado dinamicamente por JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="salaryAmount">Valor Bruto (R$)</label>
+                    <input type="number" id="salaryAmount" placeholder="0,00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="salaryDate">Data</label>
+                    <input type="date" id="salaryDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="salaryDescription">Descrição</label>
+                    <input type="text" id="salaryDescription" placeholder="Ex: Salário mês de março">
+                </div>
+
+                <!-- Acréscimos do Salário -->
+                <div class="deductions-section additions-section">
+                    <div class="deductions-header additions-header" id="toggleAdditionsBtn">
+                        <span><i class="fa-solid fa-plus-circle"></i> Acréscimos</span>
+                        <i class="fa-solid fa-chevron-down deductions-chevron"></i>
+                    </div>
+                    <div class="deductions-body" id="additionsBody">
+                        <div id="additionsList"></div>
+                        <div class="form-row deduction-add-row">
+                            <div class="form-group" style="flex:2">
+                                <input type="text" id="additionName" placeholder="Ex: Auxílio creche, HE...">
+                            </div>
+                            <div class="form-group" style="flex:1">
+                                <input type="number" id="additionValue" placeholder="0,00" step="0.01">
+                            </div>
+                            <button type="button" class="btn-add-deduction btn-add-addition" id="addAdditionBtn" title="Adicionar acréscimo">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="deduction-total-row">
+                            <span>Total Acréscimos:</span>
+                            <span id="totalAdditions" class="addition-total-value">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Descontos do Salário -->
+                <div class="deductions-section">
+                    <div class="deductions-header" id="toggleDeductionsBtn">
+                        <span><i class="fa-solid fa-minus-circle"></i> Descontos</span>
+                        <i class="fa-solid fa-chevron-down deductions-chevron"></i>
+                    </div>
+                    <div class="deductions-body" id="deductionsBody">
+                        <div id="deductionsList"></div>
+                        <div class="form-row deduction-add-row">
+                            <div class="form-group" style="flex:2">
+                                <input type="text" id="deductionName" placeholder="Ex: INSS, IRRF, VT...">
+                            </div>
+                            <div class="form-group" style="flex:1">
+                                <input type="number" id="deductionValue" placeholder="0,00" step="0.01">
+                            </div>
+                            <button type="button" class="btn-add-deduction" id="addDeductionBtn" title="Adicionar desconto">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="deduction-total-row">
+                            <span>Total Descontos:</span>
+                            <span id="totalDeductions" class="deduction-total-value">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumo Líquido -->
+                <div class="salary-net-summary">
+                    <div class="deduction-total-row net-salary-row">
+                        <span><strong>Salário Líquido:</strong></span>
+                        <span id="netSalaryPreview" class="net-salary-value">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-check"></i> Registrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Person Income Cards --> <!-- Cartões de salário por pessoa -->
+    <div class="person-cards-grid">
+        <!-- Populado dinamicamente por JS (renderPersonIncomeCards) -->
+    </div>
+
+    <div class="list-section">
+        <div class="list-section-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <h3>Histórico de Entradas</h3>
+            <div class="salary-month-filter">
+                <select id="salaryMonthFilter" class="salary-month-select">
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+        </div>
+        <div id="salaryHistoryList" class="transactions-list"></div>
+    </div>
+</section>

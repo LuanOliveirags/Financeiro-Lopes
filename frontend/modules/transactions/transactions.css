@@ -1,0 +1,288 @@
+/* TRANSACTIONS.CSS — Transaction list, weekly scroller, categories */
+
+/* ═══════════════════════════════
+   TRANSACTIONS SECTION
+═══════════════════════════════ */
+
+/* Week Day Scroller */
+.week-scroller-wrap {
+  padding: 0 20px 16px;
+  overflow: hidden;
+  max-width: 100%;
+  width: 100%;
+}
+.week-scroller {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+.week-scroller::-webkit-scrollbar { display: none; }
+.week-day-btn {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: all var(--ease);
+  min-width: 54px;
+}
+.week-day-btn:hover { border-color: var(--primary); }
+.week-day-btn.active {
+  background: var(--grad-primary);
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+}
+.wday-name {
+  font-size: 0.6875rem;
+  font-weight: var(--fw-medium);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.wday-num {
+  font-size: 1.125rem;
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+.week-day-btn.active .wday-name,
+.week-day-btn.active .wday-num { color: #fff; }
+
+/* Add Transaction Panel */
+.add-panel {
+  margin: 0 16px 16px;
+  background: var(--bg-card);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+}
+.add-panel-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 16px 18px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+  font-size: 0.9375rem;
+  transition: background var(--ease);
+}
+.add-panel-toggle:hover { background: var(--bg-card-alt); }
+.apt-left { display: flex; align-items: center; gap: 12px; }
+.apt-icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--grad-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+}
+.apt-chevron {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  transition: transform var(--ease-med);
+}
+.add-panel-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 400ms ease;
+}
+.add-panel-body.open { max-height: 700px; }
+
+.form-container {
+  padding: 0 18px 18px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+/* Type Toggle */
+.type-toggle-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.type-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  font-size: 0.875rem;
+  font-weight: var(--fw-medium);
+  background: var(--bg-card-alt);
+  color: var(--text-secondary);
+  border: 2px solid var(--border);
+  transition: all var(--ease);
+  cursor: pointer;
+}
+.expense-toggle.active {
+  background: var(--expense-bg);
+  color: var(--expense);
+  border-color: var(--expense);
+}
+.income-toggle.active {
+  background: var(--income-bg);
+  color: var(--income-dark);
+  border-color: var(--income);
+}
+
+/* ─── TRANSACTION ITEMS ─── */
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.day-group-label {
+  font-size: 0.8125rem;
+  font-weight: var(--fw-semi);
+  color: var(--text-secondary);
+  padding: 8px 4px 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.transaction-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-card);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
+  transition: all var(--ease);
+}
+.transaction-item:hover { box-shadow: var(--shadow-sm); transform: translateX(3px); }
+
+.trans-icon-wrap {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  flex-shrink: 0;
+  font-style: normal;
+}
+/* Category colors */
+.cat-alimentacao { background: #FFF3E0; color: #F57C00; }
+.cat-transporte  { background: #E3F2FD; color: #1565C0; }
+.cat-saude       { background: #F3E5F5; color: #7B1FA2; }
+.cat-educacao    { background: #EDE7F6; color: #4527A0; }
+.cat-moradia     { background: #E8F5E9; color: #2E7D32; }
+.cat-lazer       { background: #FCE4EC; color: #C62828; }
+.cat-utilidades  { background: #E0F7FA; color: #00838F; }
+.cat-outros      { background: #F5F5F5; color: #616161; }
+.cat-entrada     { background: var(--income-bg); color: var(--income-dark); }
+.cat-saida       { background: var(--expense-bg); color: var(--expense); }
+.cat-salario     { background: var(--income-bg); color: var(--income-dark); }
+
+.trans-info { flex: 1; min-width: 0; }
+.trans-name {
+  font-size: 0.9375rem;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.trans-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.trans-cat-badge {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: var(--fw-medium);
+}
+.trans-amount {
+  font-size: 1rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.trans-amount.entrada { color: var(--income-dark); }
+.trans-amount.saida   { color: var(--expense); }
+.trans-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Daily total row */
+.daily-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--bg-card);
+  border-radius: var(--r-md);
+  margin-top: 8px;
+  font-weight: var(--fw-semi);
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  border-top: 1.5px solid var(--border);
+}
+
+/* Day group wrapper */
+.transaction-day-group {
+  background: var(--bg-card);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.trans-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--bg-card-alt);
+  border-bottom: 1px solid var(--border);
+}
+.trans-day-label {
+  font-size: 0.8125rem;
+  font-weight: var(--fw-semi);
+  color: var(--text-secondary);
+}
+.trans-day-total {
+  font-size: 0.8125rem;
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+.transaction-day-group .transaction-item {
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+}
+.transaction-day-group .transaction-item:last-child { border-bottom: none; }
+.transaction-day-group .transaction-item:hover { transform: none; background: var(--bg-card-alt); }
+
+/* New category colors */
+.cat-beleza       { background: rgba(201,168,76,0.15); color: #C9A84C; }
+.cat-pets         { background: rgba(255,165,0,0.15);   color: #FFA500; }
+.cat-assinaturas  { background: rgba(138,43,226,0.15);  color: #8A2BE2; }
+.cat-investimentos{ background: rgba(0,128,0,0.15);     color: #008000; }
+.cat-academia     { background: rgba(255,87,34,0.15);   color: #FF5722; }
