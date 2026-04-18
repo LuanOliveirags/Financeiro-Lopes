@@ -35,7 +35,7 @@ try {
 }
 // ===== FIM FIREBASE MESSAGING =====
 
-const CACHE_NAME = 'wolfsource-v20';
+const CACHE_NAME = 'wolfsource-v21';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -130,44 +130,54 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Event - Network First, falling back to Cache
+// Fetch Event - Cache First (stale-while-revalidate) para recursos locais
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') {
     return;
   }
 
+  const url = new URL(event.request.url);
+
+  // Cross-origin (Firebase, CDNs, APIs): deixa o browser resolver normalmente
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   event.respondWith(
-    // Try network first
-    fetch(event.request)
-      .then((response) => {
-        // Clone the response
-        const responseClone = response.clone();
+    caches.match(event.request).then((cachedResponse) => {
+      // Atualiza o cache em background (stale-while-revalidate)
+      const networkFetch = fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse.ok) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => null);
 
-        // Cache the new response
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
+      // Cache first: retorna imediatamente se disponível
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      // Sem cache: aguarda a rede
+      return networkFetch.then((networkResponse) => {
+        if (networkResponse) {
+          return networkResponse;
+        }
+        // Fallback para navegação: retorna o shell principal
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+        return new Response('Sem conexão. Tente novamente mais tarde.', {
+          status: 503,
+          statusText: 'Serviço Indisponível',
+          headers: new Headers({ 'Content-Type': 'text/plain' })
         });
-
-        return response;
-      })
-      .catch(() => {
-        // Network failed, try cache
-        return caches.match(event.request)
-          .then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            // Return a generic offline page if available
-            return new Response('Sem conexão. Tente novamente mais tarde.', {
-              status: 503,
-              statusText: 'Serviço Indisponível',
-              headers: new Headers({
-                'Content-Type': 'text/plain'
-              })
-            });
-          });
-      })
+      });
+    })
   );
 });
 
