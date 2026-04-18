@@ -5,7 +5,7 @@
 import { loadPages } from './router.js';
 import { initFirebase, setRefreshCallback } from './providers/firebase-provider.js';
 import { createDefaultAdmin, checkLoginStatus, initResetPasswordUI } from './providers/auth-provider.js';
-import { setupEventListeners, setupOnlineOfflineListeners } from '../shared/components/navigation.js';
+import { setupEventListeners, setupOnlineOfflineListeners } from '../shared/components/navigation/navigation.js';
 import { updateDashboard, setupDashboardToggle, setupKpiClickListeners, setupValuesToggle } from '../modules/dashboard/dashboard.js';
 import { updateTransactionHistory } from '../modules/transactions/transactions.service.js';
 import { updateDebtsList } from '../modules/debts/debts.js';

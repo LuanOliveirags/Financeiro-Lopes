@@ -35,7 +35,7 @@ try {
 }
 // ===== FIM FIREBASE MESSAGING =====
 
-const CACHE_NAME = 'wolfsource-v19';
+const CACHE_NAME = 'wolfsource-v20';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -53,11 +53,11 @@ const URLS_TO_CACHE = [
   './frontend/shared/styles/global/base.css',
   './frontend/shared/styles/global/animations.css',
   './frontend/shared/styles/global/responsive.css',
-  // CSS — Components (shared/styles)
-  './frontend/shared/styles/components/forms.css',
-  './frontend/shared/styles/components/navigation.css',
-  './frontend/shared/styles/components/modal.css',
-  './frontend/shared/styles/components/calendar.css',
+  // CSS — Shared Components
+  './frontend/shared/components/forms/forms.css',
+  './frontend/shared/components/navigation/navigation.css',
+  './frontend/shared/components/modal/modal.css',
+  './frontend/shared/components/calendar/calendar.css',
   // CSS — Modules
   './frontend/modules/login/login.css',
   './frontend/modules/dashboard/dashboard.css',
@@ -87,7 +87,7 @@ const URLS_TO_CACHE = [
   './frontend/modules/chat/fcm.js',
   // JS — Shared
   './frontend/shared/utils/helpers.js',
-  './frontend/shared/components/navigation.js',
+  './frontend/shared/components/navigation/navigation.js',
   './frontend/shared/services/notifications.js',
   // Assets
   './manifest.json',

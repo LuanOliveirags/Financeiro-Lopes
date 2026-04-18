@@ -2,18 +2,18 @@
 // NAVIGATION.JS — Navegação, scrollers, tema, eventos de UI
 // ============================================================
 
-import { state, isSuperAdmin, getFamilyId } from '../utils/state.js';
-import { showAlert, toDateStr } from '../utils/helpers.js';
-import { firebaseReady, saveDataToStorage, loadDataFromStorage, exportData, importData, syncData, clearCache, syncAllToFirebase, allowRefresh } from '../services/firebase/collections.js';
-import { uploadAvatar, loginUser, registerUser, changeUserPassword, savePhoneNumber, saveRecado, loadUsersList, saveUserEdit, loadFamiliesListUI, createFamily, populateFamilySelects, loadFamily, applyUserToUI, logout } from '../services/auth/authService.js';
-import { addTransaction, updateTransactionHistory } from '../services/transactions/transactionService.js';
-import { addDebt, resetDebtModal, setupDebtTypeListeners, setupDebtFilterListeners, updateDebtsList } from '../assets/js/modules/debts.js';
-import { addSalary, setupDeductionListeners, updateSalaryDisplay, updateSalaryHistory } from '../assets/js/modules/salaries.js';
-import { updateDashboard, updateCharts, setupKpiClickListeners } from '../assets/js/modules/dashboard.js';
-import { openChoresTab, setupChoresListeners } from '../assets/js/modules/chores.js';
-import { openShoppingPanel, setupShoppingListeners } from '../assets/js/modules/shopping.js';
-import { getNotifSettings, saveNotifSettings, enableNotifications, disableNotifications, checkAndNotify, isNotifSupported } from '../assets/js/modules/notifications.js';
-import { openChat, initChat, cleanupChat } from '../chat-app/chat.js';
+import { state, isSuperAdmin, getFamilyId } from '../../../app/state/store.js';
+import { showAlert, toDateStr } from '../../utils/helpers.js';
+import { firebaseReady, saveDataToStorage, loadDataFromStorage, exportData, importData, syncData, clearCache, syncAllToFirebase, allowRefresh } from '../../../app/providers/firebase-provider.js';
+import { uploadAvatar, loginUser, registerUser, changeUserPassword, savePhoneNumber, saveRecado, loadUsersList, saveUserEdit, loadFamiliesListUI, createFamily, populateFamilySelects, loadFamily, applyUserToUI, logout } from '../../../app/providers/auth-provider.js';
+import { addTransaction, updateTransactionHistory } from '../../../modules/transactions/transactions.service.js';
+import { addDebt, resetDebtModal, setupDebtTypeListeners, setupDebtFilterListeners, updateDebtsList } from '../../../modules/debts/debts.js';
+import { addSalary, setupDeductionListeners, updateSalaryDisplay, updateSalaryHistory } from '../../../modules/salaries/salaries.js';
+import { updateDashboard, updateCharts, setupKpiClickListeners } from '../../../modules/dashboard/dashboard.js';
+import { openChoresTab, setupChoresListeners } from '../../../modules/chores/chores.js';
+import { openShoppingPanel, setupShoppingListeners } from '../../../modules/shopping/shopping.js';
+import { getNotifSettings, saveNotifSettings, enableNotifications, disableNotifications, checkAndNotify, isNotifSupported } from '../../services/notifications.js';
+import { openChat, initChat, cleanupChat } from '../../../modules/chat/chat.js';
 
 // ===== THEME =====
 function initializeTheme() {
