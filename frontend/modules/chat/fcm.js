@@ -11,6 +11,7 @@
 import { state }              from '../../app/state/store.js';
 import { db, firebaseReady } from '../../app/providers/firebase-provider.js';
 import { FCM_VAPID_KEY, FCM_SERVER_KEY } from '../../app/providers/firebase-config.js';
+import { isNative, getPlugin } from '../../app/providers/capacitor-bridge.js';
 
 let _messaging = null;
 let _fcmToken  = null;
@@ -24,6 +25,12 @@ let _fcmToken  = null;
  * em foreground. Deve ser chamado após login.
  */
 export async function initFCM() {
+  // APK: usa plugin nativo do Capacitor (mais confiável que Service Worker no Android)
+  if (isNative()) {
+    await _initNativeFCM();
+    return;
+  }
+
   if (!_fcmSdkLoaded())   return;
   if (!_keysConfigured()) return;
   if (!('serviceWorker' in navigator)) return;
@@ -150,6 +157,52 @@ export function getCurrentFCMToken() {
 
 // ================================================================
 // PRIVADO
+// ================================================================
+
+// ================================================================
+// NATIVO (Capacitor APK)
+// ================================================================
+
+async function _initNativeFCM() {
+  const FCM = getPlugin('FirebaseMessaging');
+  if (!FCM) { console.warn('[FCM Native] Plugin FirebaseMessaging não encontrado.'); return; }
+
+  try {
+    const { receive } = await FCM.requestPermissions();
+    if (receive !== 'granted') { console.warn('[FCM Native] Permissão negada.'); return; }
+
+    const { token } = await FCM.getToken({ vapidKey: FCM_VAPID_KEY });
+    _fcmToken = token;
+
+    if (_fcmToken && firebaseReady && state.currentUser) {
+      await db.collection('users').doc(state.currentUser.id)
+        .set({ fcmToken: _fcmToken }, { merge: true });
+      console.log('[FCM Native] Token salvo no Firestore.');
+    }
+
+    // Mensagens com app em foreground (APK)
+    FCM.addListener('notificationReceived', (ev) => {
+      const d = ev.notification?.data || {};
+      if (d.type !== 'chat') return;
+      navigator.serviceWorker?.ready.then(reg => {
+        reg.showNotification(`💬 ${d.senderName || 'Nova mensagem'}`, {
+          body:    (d.text || '').substring(0, 100),
+          icon:    'frontend/assets/images/icon-any-192.png',
+          badge:   'frontend/assets/images/icon-any-96.png',
+          tag:     'chat-incoming',
+          renotify: true,
+          vibrate: [200, 100, 200],
+        });
+      });
+    });
+
+  } catch (err) {
+    console.warn('[FCM Native] Falha:', err);
+  }
+}
+
+// ================================================================
+// PRIVADO (Web)
 // ================================================================
 
 function _fcmSdkLoaded() {

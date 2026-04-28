@@ -1,31 +1,22 @@
 // ============================================================
-// CONFIG.JS — Constantes e configurações da aplicação
+// firebase-config.js — Configurações públicas da aplicação
+// Credenciais Firebase client-side são públicas por design.
+// Segredos (FCM keys, EmailJS) ficam em firebase-secrets.local.js
 // ============================================================
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyAMx-ZoL4cco2NmPzEfIe5yYC1WLHPc0vk",
-  authDomain: "financeiro-lopes.firebaseapp.com",
-  projectId: "financeiro-lopes",
-  storageBucket: "financeiro-lopes.firebasestorage.app",
-  messagingSenderId: "621443570583",
-  appId: "1:621443570583:web:1a5ad0106d2606561482d2",
-  measurementId: "G-7FHPEHP5G5"
+  apiKey:            'AIzaSyAMx-ZoL4cco2NmPzEfIe5yYC1WLHPc0vk',
+  authDomain:        'financeiro-lopes.firebaseapp.com',
+  projectId:         'financeiro-lopes',
+  storageBucket:     'financeiro-lopes.firebasestorage.app',
+  messagingSenderId: '621443570583',
+  appId:             '1:621443570583:web:1a5ad0106d2606561482d2',
+  measurementId:     'G-7FHPEHP5G5'
 };
 
-// ===== FIREBASE CLOUD MESSAGING (notificações push do chat no celular) =====
-// Como obter:
-//   FCM_VAPID_KEY  → Firebase Console → Configurações → Cloud Messaging
-//                    → Web Push certificates → Gerar par de chaves → copiar a "Chave pública"
-//   FCM_SERVER_KEY → Firebase Console → Configurações → Cloud Messaging
-//                    → APIs de mensagens Cloud → Chave do servidor (Legacy)
-export const FCM_VAPID_KEY  = 'YOUR_VAPID_KEY_HERE';  // começa com "BK..." ou "BA..."
-export const FCM_SERVER_KEY = 'YOUR_SERVER_KEY_HERE'; // começa com "AAAA..."
-
-export const EMAILJS_CONFIG = {
-  serviceId: 'YOUR_SERVICE_ID',
-  templateId: 'YOUR_TEMPLATE_ID',
-  publicKey: 'YOUR_PUBLIC_KEY'
-};
+// Segredos — carregados do arquivo local (gitignored).
+// Se o arquivo não existir, as features de push e email ficam desativadas.
+export { FCM_VAPID_KEY, FCM_SERVER_KEY, EMAILJS_CONFIG } from './firebase-secrets.local.js';
 
 export const CATEGORY_MAP = {
   alimentacao:    { icon: '🍽️', label: 'Alimentação',    css: 'cat-alimentacao'    },
@@ -54,8 +45,8 @@ export const BANK_IMG = {
 };
 
 export const CREDITOR_IMG = {
-  'Recrearte':       'frontend/assets/images/recrearte.jpeg',
-  'Enel':            'frontend/assets/images/enel.png',
-  'Perua Escolar':   'frontend/assets/images/escolar.png',
-  'Condomínio':      'frontend/assets/images/condominio.png'
+  'Recrearte':     'frontend/assets/images/recrearte.jpeg',
+  'Enel':          'frontend/assets/images/enel.png',
+  'Perua Escolar': 'frontend/assets/images/escolar.png',
+  'Condomínio':    'frontend/assets/images/condominio.png'
 };
