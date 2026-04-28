@@ -1,11 +1,11 @@
 // ============================================================
 // FCM.JS — Firebase Cloud Messaging para o chat
 // Cobertura:
-//   • App aberto + chat fechado  → reg.showNotification() via onMessage
-//   • App em background/fechado  → SW onBackgroundMessage (FCM push)
-// Pré-requisitos (Firebase Console):
-//   1. FCM_VAPID_KEY  → Configurações → Cloud Messaging → Web Push certificates
-//   2. FCM_SERVER_KEY → Configurações → Cloud Messaging → Chaves do servidor
+//   • Web: foreground → onMessage; background → SW onBackgroundMessage
+//   • APK: foreground → plugin notificationReceived; background → FCM nativo automático
+// Pré-requisitos:
+//   FCM_VAPID_KEY  → Firebase Console → Cloud Messaging → Web Push certificates
+//   FCM_SERVER_KEY → Firebase Console → Cloud Messaging → Chave do servidor
 // ============================================================
 
 import { state }              from '../../app/state/store.js';
@@ -20,12 +20,7 @@ let _fcmToken  = null;
 // PÚBLICO
 // ================================================================
 
-/**
- * Pede permissão, registra o token FCM e configura o handler de mensagens
- * em foreground. Deve ser chamado após login.
- */
 export async function initFCM() {
-  // APK: usa plugin nativo do Capacitor (mais confiável que Service Worker no Android)
   if (isNative()) {
     await _initNativeFCM();
     return;
@@ -36,7 +31,6 @@ export async function initFCM() {
   if (!('serviceWorker' in navigator)) return;
 
   try {
-    // Pede permissão se ainda não decidida
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') {
       console.warn('[FCM] Permissão de notificação não concedida.');
@@ -45,7 +39,6 @@ export async function initFCM() {
 
     _messaging = firebase.messaging();
 
-    // Registra token usando o service worker já ativo
     const sw = await navigator.serviceWorker.ready;
     _fcmToken = await _messaging.getToken({
       vapidKey: FCM_VAPID_KEY,
@@ -53,13 +46,11 @@ export async function initFCM() {
     });
 
     if (_fcmToken && firebaseReady && state.currentUser) {
-      // Salva o token no Firestore para que o outro usuário possa usá-lo
       await db.collection('users').doc(state.currentUser.id)
         .set({ fcmToken: _fcmToken }, { merge: true });
       console.log('[FCM] Token registrado no Firestore.');
     }
 
-    // Handler de mensagens com app em foreground
     _messaging.onMessage((payload) => {
       const d = payload.data || {};
       if (d.type !== 'chat') return;
@@ -83,12 +74,15 @@ export async function initFCM() {
 }
 
 /**
- * Envia push notification para o destinatário via FCM Legacy HTTP API.
- * Chamado pelo remetente ao enviar uma mensagem.
+ * Envia push para o destinatário. Inclui objeto `notification` para que o
+ * Android FCM SDK exiba a notificação automaticamente em background/fechado.
  */
 export async function sendFCMPush(recipientToken, senderName, text) {
   if (!recipientToken) return;
   if (!FCM_SERVER_KEY || FCM_SERVER_KEY.startsWith('YOUR_')) return;
+
+  const title = `💬 ${senderName || 'Nova mensagem'}`;
+  const body  = (text || '').substring(0, 100);
 
   try {
     await fetch('https://fcm.googleapis.com/fcm/send', {
@@ -100,11 +94,28 @@ export async function sendFCMPush(recipientToken, senderName, text) {
       body: JSON.stringify({
         to:       recipientToken,
         priority: 'high',
-        // Usar "data" para acionar onBackgroundMessage no SW (sem notification nativa)
+        // notification → Android exibe automaticamente quando app está em background/fechado
+        notification: {
+          title,
+          body,
+          icon:  'ic_launcher',
+          sound: 'default',
+          tag:   'chat-incoming',
+        },
+        // data → disponível para o app processar quando aberto
         data: {
           type:       'chat',
           senderName: senderName,
           text:       text.substring(0, 200),
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            channel_id:    'chat_messages',
+            notification_priority: 'PRIORITY_HIGH',
+            default_sound: true,
+            default_vibrate_timings: true,
+          },
         },
       }),
     });
@@ -113,33 +124,25 @@ export async function sendFCMPush(recipientToken, senderName, text) {
   }
 }
 
-/**
- * Obtém o token FCM do destinatário.
- * Aceita { id } ou { login } do membro para buscar no Firestore.
- */
 export async function getRecipientFCMToken(recipientIdOrMember) {
   if (!firebaseReady) return null;
   try {
-    // Se for um objeto de membro (com id ou login)
     if (recipientIdOrMember && typeof recipientIdOrMember === 'object') {
       const member = recipientIdOrMember;
       if (member.id) {
         const doc = await db.collection('users').doc(member.id).get();
         if (doc.exists && doc.data().fcmToken) return doc.data().fcmToken;
       }
-      // Fallback: busca por login
       if (member.login) {
         const snap = await db.collection('users').where('login', '==', member.login).limit(1).get();
         if (!snap.empty) return snap.docs[0].data().fcmToken || null;
       }
-      // Fallback: busca por fullName
       if (member.fullName) {
         const snap = await db.collection('users').where('fullName', '==', member.fullName).limit(1).get();
         if (!snap.empty) return snap.docs[0].data().fcmToken || null;
       }
       return null;
     }
-    // Se for uma string (id direto)
     if (typeof recipientIdOrMember === 'string') {
       const doc = await db.collection('users').doc(recipientIdOrMember).get();
       return doc.exists ? (doc.data().fcmToken || null) : null;
@@ -150,14 +153,9 @@ export async function getRecipientFCMToken(recipientIdOrMember) {
   }
 }
 
-/** Retorna o token FCM do usuário atual. */
 export function getCurrentFCMToken() {
   return _fcmToken;
 }
-
-// ================================================================
-// PRIVADO
-// ================================================================
 
 // ================================================================
 // NATIVO (Capacitor APK)
@@ -171,29 +169,40 @@ async function _initNativeFCM() {
     const { receive } = await FCM.requestPermissions();
     if (receive !== 'granted') { console.warn('[FCM Native] Permissão negada.'); return; }
 
-    const { token } = await FCM.getToken({ vapidKey: FCM_VAPID_KEY });
+    // Android nativo não usa VAPID key — isso é exclusivo do Web Push Protocol
+    const { token } = await FCM.getToken();
     _fcmToken = token;
 
     if (_fcmToken && firebaseReady && state.currentUser) {
       await db.collection('users').doc(state.currentUser.id)
         .set({ fcmToken: _fcmToken }, { merge: true });
-      console.log('[FCM Native] Token salvo no Firestore.');
+      console.log('[FCM Native] Token salvo no Firestore:', _fcmToken.substring(0, 20) + '...');
     }
 
-    // Mensagens com app em foreground (APK)
+    // Foreground: app aberto → exibe notificação via Service Worker
     FCM.addListener('notificationReceived', (ev) => {
       const d = ev.notification?.data || {};
       if (d.type !== 'chat') return;
+      const title = ev.notification?.title || `💬 ${d.senderName || 'Nova mensagem'}`;
+      const body  = ev.notification?.body  || (d.text || '').substring(0, 100);
+
       navigator.serviceWorker?.ready.then(reg => {
-        reg.showNotification(`💬 ${d.senderName || 'Nova mensagem'}`, {
-          body:    (d.text || '').substring(0, 100),
-          icon:    'frontend/assets/images/icon-any-192.png',
-          badge:   'frontend/assets/images/icon-any-96.png',
-          tag:     'chat-incoming',
+        reg.showNotification(title, {
+          body,
+          icon:     'frontend/assets/images/icon-any-192.png',
+          badge:    'frontend/assets/images/icon-any-96.png',
+          tag:      'chat-incoming',
           renotify: true,
-          vibrate: [200, 100, 200],
+          vibrate:  [200, 100, 200],
         });
       });
+    });
+
+    // Background/fechado: o FCM SDK nativo exibe automaticamente
+    // quando o payload contém o objeto "notification" (tratado em sendFCMPush)
+    FCM.addListener('notificationActionPerformed', () => {
+      // Usuário tocou na notificação → garante que o app abre na tab de chat
+      if (typeof switchTab === 'function') switchTab('chat');
     });
 
   } catch (err) {
@@ -216,7 +225,7 @@ function _fcmSdkLoaded() {
 
 function _keysConfigured() {
   if (!FCM_VAPID_KEY || FCM_VAPID_KEY.startsWith('YOUR_')) {
-    console.warn('[FCM] FCM_VAPID_KEY não configurada. Adicione em js/config.js');
+    console.warn('[FCM] FCM_VAPID_KEY não configurada.');
     return false;
   }
   return true;
