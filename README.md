@@ -1,447 +1,296 @@
-# 💰 WolfSource - Sistema de Gestão Financeira
+# 💰 WolfSource — Sistema de Gestão Financeira
 
-Uma aplicação web moderna e completa para gestão financeira familiar, desenvolvida como PWA (Progressive Web App) com arquitetura modular, suporte offline e sincronização em tempo real com Firebase.
+Aplicação web e Android para gestão financeira familiar. Desenvolvida como PWA com arquitetura modular vanilla JS, suporte offline, sincronização em tempo real com Firestore e empacotamento Android via Capacitor — web e APK compartilham o mesmo código e backend.
 
 ## 🎯 Características Principais
 
-- ✅ **Autenticação Firebase**: Login seguro com Firebase Authentication
-- 📊 **Dashboard Interativo**: Visualização de KPIs, gráficos e análises financeiras
-- 💬 **Chat em Tempo Real**: Sistema de mensagens com notificações push
-- 🛒 **Lista de Compras**: Gerenciamento colaborativo de compras
-- 📝 **Gestão de Tarefas**: Sistema de tarefas domésticas compartilhadas
-- 💳 **Controle de Transações**: Registro completo de entradas e saídas
-- 💰 **Gestão de Salários**: Acompanhamento de rendas e orçamento
-- 📉 **Controle de Dívidas**: Gerenciamento de dívidas e vencimentos
-- 📱 **PWA**: Instalável como app nativo em qualquer dispositivo
-- 🔄 **Modo Offline**: Funciona sem conexão com sincronização automática
-- 🎨 **Interface Moderna**: Design responsivo e intuitivo
-- 🔔 **Notificações Push**: Alertas em tempo real via Firebase Cloud Messaging
+- 🔐 **Autenticação Customizada**: Login com roles (superadmin / admin / user) e controle por família
+- 📊 **Dashboard Interativo**: KPIs, gráficos Chart.js e análise financeira mensal
+- 💳 **Controle de Transações**: Registro completo de entradas e saídas com categorias
+- 📉 **Gestão de Dívidas**: Controle de vencimentos, status automático e alertas
+- 💰 **Gestão de Salários**: Acompanhamento de rendas por membro da família
+- 🛒 **Lista de Compras**: Colaborativa e sincronizada em tempo real
+- 📝 **Tarefas Domésticas**: Sistema compartilhado de tarefas com responsáveis
+- 💬 **Chat em Tempo Real**: Mensagens com notificações push via FCM
+- 📱 **PWA + APK Android**: Instalável no browser ou como app nativo via Capacitor
+- 🔄 **Modo Offline**: Cache-first com sincronização automática ao reconectar
+- 🔔 **Notificações Push**: FCM web (Service Worker) + FCM nativo (Android)
 
 ## 🚀 Início Rápido
 
 ### Pré-requisitos
+
 - Navegador moderno (Chrome, Firefox, Edge, Safari)
-- Servidor web local (para desenvolvimento) ou hospedagem web
-- Conta Firebase (opcional, mas recomendado)
+- Servidor web local para desenvolvimento
 
-### Instalação Frontend
+### Rodar no Browser
 
-1. **Clone o repositório**:
 ```bash
-git clone https://github.com/seu-usuario/financeiro-lopes.git
-cd financeiro-lopes
-```
+# Clone o repositório
+git clone https://github.com/LuanGs1/Financeiro-Lopes.git
+cd Financeiro-Lopes
 
-2. **Abra no navegador**:
-- Abra o arquivo `index.html` em um navegador moderno
-- Ou use um servidor local:
-```bash
-# Python
+# Qualquer servidor estático serve — exemplos:
 python -m http.server 8000
-
-# Node.js
 npx http-server
+npx serve .
 ```
 
-3. **Instale como PWA** (opcional):
-- Acesse a aplicação no navegador
-- Clique no ícone de instalação na barra de endereços
-- Ou use "Menu" → "Instalar WolfSource"
+Acesse `http://localhost:8000` e instale como PWA pelo ícone na barra de endereços.
 
-### Configuração Firebase
+### Configurar Firebase
 
-O projeto já vem com Firebase configurado. Para usar sua própria instância:
+O projeto já vem com uma instância configurada. Para usar a sua própria:
 
-1. **Crie um projeto no [Firebase Console](https://console.firebase.google.com)**
+1. Crie um projeto no [Firebase Console](https://console.firebase.google.com)
+2. Habilite **Cloud Firestore** e **Firebase Storage**
+3. Atualize as credenciais em `frontend/app/providers/firebase-config.js`:
 
-2. **Habilite os serviços**:
-   - Firebase Authentication (Email/Password)
-   - Firestore Database
-   - Firebase Cloud Messaging (para notificações push)
-
-3. **Atualize as credenciais** em `frontend/app/providers/firebase-config.js`:
-```javascript
+```js
 export const firebaseConfig = {
-  apiKey: "sua-api-key",
-  authDomain: "seu-projeto.firebaseapp.com",
-  projectId: "seu-projeto-id",
-  storageBucket: "seu-projeto.appspot.com",
-  messagingSenderId: "seu-messaging-id",
-  appId: "seu-app-id",
-  measurementId: "seu-measurement-id"
+  apiKey:            'sua-api-key',
+  authDomain:        'seu-projeto.firebaseapp.com',
+  projectId:         'seu-projeto-id',
+  storageBucket:     'seu-projeto.appspot.com',
+  messagingSenderId: 'seu-messaging-id',
+  appId:             'seu-app-id'
 };
 ```
 
-4. **Configure FCM** (para notificações push):
-   - No Firebase Console → Configurações → Cloud Messaging
-   - Gere um par de chaves Web Push
-   - Atualize `FCM_VAPID_KEY` e `FCM_SERVER_KEY` no mesmo arquivo
+### Configurar Segredos (FCM + EmailJS)
 
-### Instalação Backend (Opcional)
-
-O backend Flask fornece APIs REST adicionais:
+Copie o template e preencha com suas chaves reais:
 
 ```bash
-cd backend
-
-# Criar ambiente virtual
-python -m venv venv
-source venv/bin/activate  # No Windows: venv\Scripts\activate
-
-# Instalar dependências
-pip install -r requirements.txt
-
-# Executar servidor
-python app.py
+cp frontend/app/providers/firebase-secrets.example.js \
+   frontend/app/providers/firebase-secrets.local.js
 ```
 
-**Com Docker**:
+Edite `firebase-secrets.local.js` com suas chaves. Esse arquivo está no `.gitignore` e nunca deve ser commitado.
+
+## 📱 Build Android (APK)
+
+O frontend é empacotado com **Capacitor 6** — zero mudança no código, mesma lógica, mesmo Firebase.
+
+### Pré-requisitos
+
+- [Node.js 18+](https://nodejs.org)
+- [Android Studio](https://developer.android.com/studio) (com SDK Android 34 / API 34)
+- `google-services.json` do Firebase Console → coloque em `android/app/`
+
+### Gerar APK de Debug (testes)
+
 ```bash
-cd backend
-docker-compose up
+npm install
+npm run sync          # copia www/ + sincroniza plugins no Android
+
+# APK via terminal (sem precisar do Android Studio)
+JAVA_HOME="C:/Program Files/Android/Android Studio/jbr" \
+  ./android/gradlew -p android assembleDebug
 ```
 
-O backend estará disponível em `http://localhost:5000`
+O APK ficará em `android/app/build/outputs/apk/debug/app-debug.apk`.
 
-## 📚 Módulos e Funcionalidades
+### Abrir no Android Studio (APK de Release)
 
-### 🔐 Login
-- Autenticação via Firebase Authentication
-- Interface moderna e responsiva
-- Recuperação de senha
-- Validação de formulários
+```bash
+npm run open:android
+```
 
-### 📊 Dashboard
-- **KPIs Principais**: Total de despesas, saldos, estatísticas mensais
-- **Gráficos Interativos**: 
-  - Despesas por categoria
-  - Gastos por responsável
-  - Evolução mensal
-- **Transações Recentes**: Últimas movimentações financeiras
-- **Filtros Avançados**: Por período, categoria e responsável
+No Android Studio: **Build → Generate Signed App Bundle / APK → APK**.
 
-### 💳 Transações
-- Registro de receitas e despesas
-- Categorização automática
-- Anexos e comprovantes
-- Histórico completo
-- Busca e filtros
-- Exportação de dados
+### Atualizar o app após mudanças no frontend
 
-### 💰 Salários
-- Gestão de rendas mensais
-- Múltiplas fontes de renda
-- Histórico anual
-- Cálculo de renda combinada
-- Planejamento orçamentário
+```bash
+npm run sync   # recopia www/ e sincroniza com o projeto Android
+```
 
-### 📉 Dívidas
-- Controle de dívidas ativas
-- Status automático: Ativas, Atrasadas, Próximas do vencimento, Pagas
-- Alertas de vencimento
-- Histórico de pagamentos
-- Cálculo de juros
-
-### 🛒 Lista de Compras (Shopping)
-- Criação de listas compartilhadas
-- Marcação de itens comprados
-- Categorização de produtos
-- Sincronização em tempo real
-- Histórico de compras
-
-### 📝 Tarefas Domésticas (Chores)
-- Sistema de tarefas compartilhadas
-- Atribuição de responsáveis
-- Definição de prioridades
-- Status de conclusão
-- Recorrência de tarefas
-
-### 💬 Chat
-- Mensagens em tempo real via Firebase
-- Notificações push (FCM)
-- Histórico de conversas
-- Indicadores de mensagens não lidas
-- Suporte para dispositivos móveis
-
-### ⚙️ Configurações
-- Gerenciamento de perfil
-- Preferências da aplicação
-- Exportação/Importação de dados
-- Sincronização manual
-- Limpeza de cache
-- Informações de versão
-
-## 🏗️ Arquitetura do Projeto
+## 🏗️ Arquitetura
 
 ```
-financeiro-lopes/
-├── index.html                 # Ponto de entrada da aplicação
-├── manifest.json             # Configuração PWA
-├── service-worker.js         # Service Worker para modo offline
-├── README.md                 # Documentação principal
+Financeiro-Lopes/
+├── index.html                        # Entrada da aplicação
+├── manifest.json                     # Manifest PWA
+├── service-worker.js                 # Cache offline + FCM background
+├── capacitor.config.json             # Config Capacitor (appId, webDir, plugins)
+├── package.json                      # Dependências Node / scripts de build
+├── scripts/
+│   └── copy-web.js                   # Copia assets para www/ antes do cap sync
 │
-├── frontend/                 # Aplicação Frontend
+├── frontend/
 │   ├── app/
-│   │   ├── bootstrap.js      # Inicialização da aplicação
-│   │   ├── router.js         # Sistema de roteamento SPA
+│   │   ├── bootstrap.js              # Entry point — init Firebase, auth, UI
+│   │   ├── router.js                 # Carrega fragmentos HTML dos módulos
 │   │   ├── providers/
-│   │   │   ├── auth-provider.js      # Provider de autenticação
-│   │   │   ├── firebase-config.js    # Configuração Firebase
-│   │   │   └── firebase-provider.js  # Provider Firebase
+│   │   │   ├── firebase-config.js    # Config pública + re-export de segredos
+│   │   │   ├── firebase-secrets.example.js  # Template (commitar)
+│   │   │   ├── firebase-secrets.local.js    # Chaves reais (gitignored)
+│   │   │   ├── firebase-provider.js  # CRUD Firestore + listeners realtime
+│   │   │   ├── auth-provider.js      # Autenticação, roles, família
+│   │   │   └── capacitor-bridge.js   # Detecção de ambiente nativo (APK)
 │   │   └── state/
-│   │       ├── session.js    # Gerenciamento de sessão
-│   │       └── store.js      # Estado global da aplicação
+│   │       ├── store.js              # Estado global (transações, dívidas, user)
+│   │       └── session.js            # Persistência de sessão
 │   │
-│   ├── modules/              # Módulos da aplicação
-│   │   ├── login/           # Tela de login
-│   │   ├── dashboard/       # Dashboard principal
-│   │   ├── transactions/    # Gestão de transações
-│   │   ├── salaries/        # Controle de salários
-│   │   ├── debts/           # Gerenciamento de dívidas
-│   │   ├── shopping/        # Lista de compras
-│   │   ├── chores/          # Tarefas domésticas
-│   │   ├── chat/            # Sistema de chat + FCM
-│   │   └── settings/        # Configurações
+│   ├── modules/
+│   │   ├── login/                    # Tela de login + reset de senha
+│   │   ├── dashboard/                # KPIs, gráficos, resumo mensal
+│   │   ├── transactions/             # CRUD de transações
+│   │   ├── salaries/                 # Controle de salários
+│   │   ├── debts/                    # Gestão de dívidas
+│   │   ├── shopping/                 # Lista de compras colaborativa
+│   │   ├── chores/                   # Tarefas domésticas
+│   │   ├── chat/                     # Chat realtime + FCM (web e nativo)
+│   │   └── settings/                 # Perfil, usuários, família, preferências
 │   │
-│   ├── shared/              # Componentes e recursos compartilhados
+│   ├── shared/
 │   │   ├── components/
-│   │   │   ├── calendar/    # Componente de calendário
-│   │   │   ├── forms/       # Componentes de formulários
-│   │   │   ├── modal/       # Sistema de modais
-│   │   │   └── navigation/  # Navegação e menu
+│   │   │   ├── navigation/           # Header, bottom nav, FAB
+│   │   │   ├── modal/                # Sistema de modais
+│   │   │   ├── forms/                # Estilos de formulários
+│   │   │   └── calendar/             # Seletor de data
 │   │   ├── services/
-│   │   │   └── notifications.js  # Serviço de notificações
-│   │   ├── styles/
-│   │   │   └── global/      # Estilos globais (base, animações, responsivo)
-│   │   └── utils/
-│   │       └── helpers.js   # Funções auxiliares
+│   │   │   └── notifications.js      # Notificações locais + debt alerts
+│   │   ├── styles/global/            # base.css, animations.css, responsive.css
+│   │   └── utils/helpers.js          # Formatação, IDs, utilitários
 │   │
-│   └── assets/              # Recursos estáticos
-│       └── images/          # Ícones e imagens
+│   └── assets/images/                # Logos, ícones PWA, avatares
 │
-├── backend/                 # Backend Python/Flask
-│   ├── app.py              # Aplicação Flask principal
-│   ├── config.py           # Configurações do backend
-│   ├── requirements.txt    # Dependências Python
-│   ├── Dockerfile          # Container Docker
-│   ├── docker-compose.yml  # Orquestração Docker
-│   └── README.md           # Documentação do backend
+├── backend/                          # API Flask (opcional)
+│   ├── app.py                        # Rotas REST
+│   ├── config.py                     # Configurações por ambiente
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   └── docker-compose.yml
 │
-└── docs/                   # Documentação adicional
-    ├── INSTALACAO.md       # Guia de instalação
-    └── ROADMAP.md          # Roadmap do projeto
+└── docs/                             # Documentação adicional
 ```
 
 ### Padrões de Arquitetura
 
-- **SPA (Single Page Application)**: Navegação sem recarregamento
-- **Modular**: Cada módulo é independente e reutilizável
-- **Provider Pattern**: Gerenciamento centralizado de serviços
-- **State Management**: Estado global com store centralizado
-- **Service Layer**: Camada de serviços para lógica de negócio
-- **Component-Based**: Componentes reutilizáveis e isolados
+| Padrão | Aplicação |
+|---|---|
+| SPA sem framework | Navegação via `router.js` + fragmentos HTML |
+| Provider pattern | Firebase, Auth e estado encapsulados em `providers/` |
+| Module-based | Cada feature tem seu HTML, CSS e JS isolados |
+| Dual-environment | `capacitor-bridge.js` detecta APK vs browser em runtime |
+| Secrets gitignored | `firebase-secrets.local.js` nunca entra no repositório |
 
-## 💻 Stack Tecnológica
+## 💻 Stack
 
 ### Frontend
-- **HTML5** - Estrutura semântica
-- **CSS3** - Estilos modernos (Grid, Flexbox, Custom Properties)
-- **JavaScript (ES6+)** - Lógica e interatividade
-  - Módulos ES6
-  - Async/Await
-  - Classes e OOP
-- **Chart.js** - Gráficos e visualizações
-- **Firebase SDK** - Integração completa
-  - Firebase Authentication
-  - Cloud Firestore
-  - Firebase Cloud Messaging (FCM)
-  - Firebase Analytics
-- **PWA** - Progressive Web App
-  - Service Worker
-  - Web App Manifest
-  - Cache API
-  - IndexedDB
+| Tecnologia | Uso |
+|---|---|
+| HTML5 / CSS3 / JS ES2022 | Vanilla — sem framework |
+| ES Modules | Módulos nativos do browser |
+| Chart.js 4 | Gráficos do dashboard |
+| Firebase SDK 10 (compat) | Firestore, Storage, FCM |
+| Capacitor 6 | Empacotamento Android (APK) |
+| Service Worker + Cache API | Modo offline PWA |
+| IndexedDB | Persistência local de notificações |
 
-### Backend
-- **Python 3.8+** - Linguagem principal
-- **Flask** - Framework web minimalista
-- **Flask-CORS** - Suporte CORS
-- **SQLAlchemy** - ORM para banco de dados
-- **Docker** - Containerização
-- **Docker Compose** - Orquestração
+### Backend (opcional)
+| Tecnologia | Uso |
+|---|---|
+| Python 3.8+ / Flask | API REST complementar |
+| SQLAlchemy | ORM — SQLite local ou PostgreSQL |
+| Docker / Docker Compose | Containerização |
+| firebase-admin | Acesso admin ao Firestore |
 
 ### Banco de Dados
-- **Cloud Firestore** - Banco NoSQL em tempo real
-- **IndexedDB** - Armazenamento local do navegador
-- **SQLite/PostgreSQL** - Backend (opcional)
-
-### Ferramentas e Serviços
-- **Git** - Controle de versão
-- **Firebase Console** - Gerenciamento Firebase
-- **VS Code** - IDE recomendada
-
-## 📱 Responsividade e PWA
-
-### Design Responsivo
-A aplicação utiliza abordagem **mobile-first** com breakpoints otimizados:
-
-- **Mobile** (320px - 768px): Layout vertical, navegação inferior
-- **Tablet** (769px - 1024px): Layout híbrido, 2 colunas
-- **Desktop** (1025px+): Layout completo, múltiplas colunas
-
-### Recursos PWA
-- ✅ **Instalável**: Adicione à tela inicial
-- ✅ **Offline-First**: Funciona sem internet
-- ✅ **Cache Inteligente**: Recursos essenciais sempre disponíveis
-- ✅ **Atualizações Automáticas**: Service Worker gerencia versões
-- ✅ **Notificações Push**: Alertas mesmo com app fechado
-- ✅ **Ícones Adaptáveis**: Maskable icons para Android
+- **Cloud Firestore** — dados em tempo real (transações, dívidas, salários, chat, usuários)
+- **Firebase Storage** — fotos de perfil e anexos
+- **IndexedDB** — cache local de notificações de dívidas para o Service Worker
 
 ## 🔐 Segurança
 
-### Autenticação
-- **Firebase Authentication**: Autenticação robusta e segura
-- **Sessões**: Tokens JWT gerenciados pelo Firebase
-- **Proteção de Rotas**: Middleware de autenticação no router
-- **Logout Automático**: Timeout de sessão configurável
-
-### Dados
-- **Firestore Rules**: Regras de segurança no banco de dados
-- **Validação**: Client-side e server-side validation
-- **Sanitização**: Prevenção contra XSS e SQL Injection
-- **HTTPS**: Recomendado para produção
-
-### Boas Práticas
-- Não armazenar credenciais no código
-- Variáveis de ambiente para configurações sensíveis
-- Auditoria de dependências
-- Content Security Policy (CSP)
+| Área | Abordagem |
+|---|---|
+| Autenticação | Customizada com hash SHA-256, roles e controle por família no Firestore |
+| Credenciais Firebase | Config de cliente é pública por design (Firebase SDK) |
+| Segredos (FCM, EmailJS) | Em `firebase-secrets.local.js` — gitignored |
+| Regras Firestore | Acesso restrito por `familyId` via Firestore Security Rules |
+| Android Keystore | `.jks` e `*.keystore` no `.gitignore` |
 
 ## 🔌 API Backend (Flask)
 
-O backend fornece endpoints REST complementares:
+O backend é opcional — a aplicação funciona completamente via Firebase. Quando rodando:
 
-### Endpoints de Transações
 ```
-GET    /api/transactions           # Listar todas as transações
-POST   /api/transactions           # Criar nova transação
-GET    /api/transactions/:id       # Obter transação específica
-PUT    /api/transactions/:id       # Atualizar transação
-DELETE /api/transactions/:id       # Deletar transação
-```
+GET  /api/transactions        POST /api/transactions
+GET  /api/transactions/:id    PUT  /api/transactions/:id    DELETE /api/transactions/:id
 
-### Endpoints de Dívidas
-```
-GET    /api/debts                  # Listar dívidas
-POST   /api/debts                  # Criar dívida
-GET    /api/debts/:id              # Obter dívida específica
-PUT    /api/debts/:id              # Atualizar dívida
-DELETE /api/debts/:id              # Deletar dívida
+GET  /api/debts               POST /api/debts
+GET  /api/debts/:id           PUT  /api/debts/:id           DELETE /api/debts/:id
+
+GET  /api/salaries            POST /api/salaries
+GET  /api/salaries/:id        DELETE /api/salaries/:id
+
+GET  /api/stats
+GET  /health
 ```
 
-### Endpoints de Salários
-```
-GET    /api/salaries               # Listar salários
-POST   /api/salaries               # Registrar salário
-GET    /api/salaries/:id           # Obter salário específico
-DELETE /api/salaries/:id           # Deletar salário
+### Rodar o Backend
+
+```bash
+cd backend
+python -m venv venv && source venv/bin/activate   # venv\Scripts\activate no Windows
+pip install -r requirements.txt
+python app.py
 ```
 
-### Endpoints de Usuários
-```
-POST   /api/auth/register          # Registrar usuário
-POST   /api/auth/login             # Login de usuário
-GET    /api/users/profile          # Obter perfil
-PUT    /api/users/profile          # Atualizar perfil
+Com Docker:
+
+```bash
+cd backend && docker-compose up
 ```
 
-**Nota**: A aplicação funciona completamente com Firebase. O backend Flask é opcional e fornece funcionalidades extras.
+## 📱 PWA
 
-## �️ Roadmap e Melhorias Futuras
+| Recurso | Status |
+|---|---|
+| Instalável (Add to Home Screen) | ✅ |
+| Offline-first (cache-first SW) | ✅ |
+| Notificações push background | ✅ FCM Service Worker |
+| Ícones maskable | ✅ 48px → 512px |
+| Theme color | ✅ `#3D6A8E` |
+
+## 🗺️ Roadmap
+
+### Concluído ✅
+- [x] Autenticação customizada com roles e família
+- [x] Dashboard com gráficos (Chart.js)
+- [x] CRUD de transações, dívidas e salários
+- [x] Lista de compras e tarefas domésticas
+- [x] Chat em tempo real com FCM
+- [x] PWA com modo offline
+- [x] Backend Flask + Docker
+- [x] **APK Android via Capacitor** (web e app no mesmo Firebase)
+- [x] Notificações push nativas Android
 
 ### Em Desenvolvimento
 - [ ] Relatórios PDF exportáveis
-- [ ] Gráficos avançados de análise financeira
-- [ ] Sistema de metas e orçamentos mensais
-- [ ] Alertas personalizados de gastos
+- [ ] Metas e orçamentos mensais
+- [ ] Alertas personalizados de gastos por categoria
 
 ### Planejado
-- [ ] Múltiplos usuários e permissões
-- [ ] Compartilhamento de despesas entre famílias
-- [ ] Integração com bancos (Open Banking)
-- [ ] Reconhecimento de recibos via OCR
-- [ ] Dashboard com IA para insights financeiros
+- [ ] Integração Open Banking
 - [ ] Categorização automática com ML
-- [ ] Modo escuro/claro personalizado
-- [ ] Temas customizáveis
+- [ ] Reconhecimento de recibos via OCR
+- [ ] Dashboard com insights de IA
+- [ ] Exportação Excel / CSV
 - [ ] Multi-idioma (i18n)
-- [ ] Exportação para Excel/CSV
-- [ ] Backup automático em nuvem
-- [ ] Aplicativo mobile nativo (React Native)
-
-### Concluído ✅
-- [x] Autenticação Firebase
-- [x] Sistema de roteamento SPA
-- [x] Dashboard com gráficos
-- [x] Gestão de transações
-- [x] Controle de dívidas
-- [x] Lista de compras
-- [x] Sistema de tarefas
-- [x] Chat em tempo real
-- [x] Notificações push
-- [x] PWA com modo offline
-- [x] Backend Flask com Docker
-- [x] Sincronização Firestore
-
-## 🧪 Testes
-
-Para executar os testes (quando disponíveis):
-
-```bash
-# Frontend (planejado)
-npm test
-
-# Backend
-cd backend
-pytest
-```
 
 ## 📖 Documentação Adicional
 
-- [Guia de Instalação](docs/INSTALACAO.md) - Instruções detalhadas de instalação
-- [Roadmap Completo](docs/ROADMAP.md) - Planejamento e features futuras
-- [Backend README](backend/README.md) - Documentação do backend Flask
-
-## 🤝 Contribuindo
-
-Contribuições são bem-vindas! Siga estas etapas:
-
-1. **Fork** o repositório
-2. **Crie** uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
-3. **Commit** suas mudanças (`git commit -m 'Adiciona MinhaFeature'`)
-4. **Push** para a branch (`git push origin feature/MinhaFeature`)
-5. Abra um **Pull Request**
-
-### Diretrizes
-- Siga os padrões de código existentes
-- Adicione comentários quando necessário
-- Teste suas alterações antes de enviar
-- Atualize a documentação se necessário
+- [Guia de Instalação](docs/INSTALACAO.md)
+- [Roadmap Completo](docs/ROADMAP.md)
+- [Backend README](backend/README.md)
 
 ## 📄 Licença
 
-Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+MIT — veja [LICENSE](LICENSE) para detalhes.
 
-## 👥 Autores
+## 👤 Autor
 
-Desenvolvido com ❤️ por **Luan Gs**
-
-## 📞 Suporte
-
-Para dúvidas, sugestões ou reportar problemas:
-- Abra uma [issue](https://github.com/seu-usuario/financeiro-lopes/issues)
-- Entre em contato via email
-
----
-
-**💡 WolfSource** - Gestão Financeira Inteligente para Famílias Modernas
+Desenvolvido por **Luan Gs**
