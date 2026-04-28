@@ -298,6 +298,47 @@ export function setupEventListeners() {
     if (wasLoggedIn && !state.isLoggedIn) cleanupChat();
   });
 
+  // Header name → open settings/profile tab
+  const headerUserName = document.getElementById('headerUserName');
+  if (headerUserName) {
+    const goToSettings = () => switchTab('settings');
+    headerUserName.addEventListener('click', goToSettings);
+    headerUserName.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToSettings(); } });
+  }
+
+  // Header avatar → lightbox image preview
+  const headerAvatarWrap = document.getElementById('headerAvatarWrap');
+  const headerAvatar = document.getElementById('headerAvatar');
+  if (headerAvatarWrap && headerAvatar) {
+    const openLightbox = () => {
+      const src = headerAvatar.src;
+      if (!src) return;
+
+      const lb = document.createElement('div');
+      lb.className = 'img-lightbox';
+      lb.innerHTML = `
+        <button class="img-lightbox-close" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+        <img class="img-lightbox-img" src="${src}" alt="Foto de perfil">
+      `;
+      document.body.appendChild(lb);
+
+      const close = () => {
+        lb.classList.add('closing');
+        setTimeout(() => lb.remove(), 220);
+      };
+
+      lb.addEventListener('click', (e) => {
+        if (!e.target.closest('.img-lightbox-img')) close();
+      });
+      document.addEventListener('keydown', function esc(e) {
+        if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+      });
+    };
+
+    headerAvatarWrap.addEventListener('click', openLightbox);
+    headerAvatarWrap.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(); } });
+  }
+
   // Bottom Navigation
   document.querySelectorAll('.bottom-nav-item').forEach(tab => {
     tab.addEventListener('click', function() { switchTab(this.getAttribute('data-tab')); });

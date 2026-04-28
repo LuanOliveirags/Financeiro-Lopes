@@ -58,13 +58,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 20px 12px;
+  padding: 20px 20px 14px;
 }
 .page-title {
   font-size: 1.5rem;
   font-weight: var(--fw-black);
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 .page-header-actions { display: flex; align-items: center; gap: 8px; }
 .month-filter-hidden {
@@ -87,7 +87,12 @@
   border: 1px solid var(--border);
   transition: all var(--ease);
 }
-.ph-icon-btn:hover { color: var(--primary); border-color: var(--primary); }
+.ph-icon-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.06);
+  transform: scale(1.05);
+}
 
 .filter-chip {
   padding: 6px 12px;
@@ -129,22 +134,26 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 4px 8px;
+  padding: 16px 4px 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
 }
 .list-section-header h3 {
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
 }
 .see-all-btn {
   font-size: 0.8125rem;
   color: var(--primary);
-  font-weight: var(--fw-medium);
+  font-weight: var(--fw-semi);
   display: flex;
   align-items: center;
   gap: 4px;
-  transition: gap var(--ease);
+  transition: gap var(--ease), opacity var(--ease);
+  opacity: 0.85;
 }
-.see-all-btn:hover { gap: 8px; }
+.see-all-btn:hover { gap: 8px; opacity: 1; }
 
 /* ================================================================
    MODAL — editar telefone

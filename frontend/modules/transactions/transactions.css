@@ -10,6 +10,8 @@
   overflow: hidden;
   max-width: 100%;
   width: 100%;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%);
 }
 .week-scroller {
   display: flex;
@@ -262,9 +264,11 @@
   border-bottom: 1px solid var(--border);
 }
 .trans-day-label {
-  font-size: 0.8125rem;
+  font-size: 0.7rem;
   font-weight: var(--fw-semi);
-  color: var(--text-secondary);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
 }
 .trans-day-total {
   font-size: 0.8125rem;

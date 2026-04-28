@@ -1,10 +1,5 @@
 /* DASHBOARD.CSS — Dashboard stats, charts, KPI, balance */
 
-/* ============================================================
-   SECTIONS.CSS — SECTION-SPECIFIC COMPONENTS
-   Stats  · Transactions · Debts · Salaries
-   ============================================================ */
-
 /* ═══════════════════════════════
    DASHBOARD / STATS SECTION
 ═══════════════════════════════ */
@@ -15,6 +10,9 @@
   overflow: hidden;
   max-width: 100%;
   width: 100%;
+  /* Edge fade indicates scrollability */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%);
 }
 .months-scroller {
   display: flex;
@@ -108,6 +106,7 @@
 .balance-card.vr-mode::before {
   background: rgba(139, 195, 74, 0.12);
 }
+.balance-card.vr-mode::after { background: linear-gradient(90deg, #8BC34A, #689F38); }
 .balance-card.vr-mode .balance-label { color: #33691E; }
 [data-theme="dark"] .balance-card.vr-mode .balance-label { color: #C5E1A5; }
 .balance-card.vr-mode .balance-amount { color: #1B5E20; }
@@ -151,13 +150,15 @@
   background: linear-gradient(135deg, #1B3409 0%, #2E4A1A 100%);
 }
 .vr-kpi-summary-title {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: var(--fw-semi);
   color: #33691E;
   margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 [data-theme="dark"] .vr-kpi-summary-title { color: #C5E1A5; }
 .vr-kpi-summary-title i { font-size: 0.85rem; }
@@ -168,58 +169,85 @@
 }
 .vr-kpi-item {
   text-align: center;
-  padding: 10px 8px;
-  background: rgba(255,255,255,0.45);
+  padding: 12px 8px;
+  background: rgba(255,255,255,0.5);
   border-radius: var(--r-md);
+  border: 1px solid rgba(139, 195, 74, 0.2);
 }
-[data-theme="dark"] .vr-kpi-item { background: rgba(0,0,0,0.2); }
+[data-theme="dark"] .vr-kpi-item { background: rgba(0,0,0,0.2); border-color: rgba(139, 195, 74, 0.15); }
 .vr-kpi-item-label {
-  font-size: 0.7rem;
+  font-size: 0.6875rem;
   color: #33691E;
   margin-bottom: 4px;
   font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 [data-theme="dark"] .vr-kpi-item-label { color: #C5E1A5; }
 .vr-kpi-item-val {
   font-size: 1rem;
   font-weight: var(--fw-bold);
   color: #1B5E20;
+  letter-spacing: -0.01em;
 }
 [data-theme="dark"] .vr-kpi-item-val { color: #F1F8E9; }
 
-/* Balance Card */
+/* ─── Balance Card ─── */
 .balance-card {
   margin: 0 16px 16px;
   background: var(--bg-card);
-  border-radius: var(--r-xl);
-  padding: 24px 24px 12px;
-  box-shadow: var(--shadow-md);
+  border-radius: var(--r-2xl);
+  padding: 28px 24px 14px;
+  box-shadow: var(--shadow-lg);
   position: relative;
   overflow: hidden;
+  border: 1px solid var(--border);
 }
+
+/* Decorative background circle */
 .balance-card::before {
   content: '';
   position: absolute;
   top: -30px; right: -30px;
-  width: 120px; height: 120px;
+  width: 130px; height: 130px;
   border-radius: 50%;
   background: rgba(var(--primary-rgb), 0.06);
 }
-.balance-label {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-  font-weight: var(--fw-medium);
-  letter-spacing: 0.01em;
+
+/* Top gradient accent bar */
+.balance-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--grad-primary);
+  border-radius: var(--r-2xl) var(--r-2xl) 0 0;
+  pointer-events: none;
 }
+
+.balance-label {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  font-weight: var(--fw-semi);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
 .balance-amount {
-  font-size: 2.375rem;
+  font-size: 2.5rem;
   font-weight: var(--fw-black);
   color: var(--text-primary);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   line-height: 1;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  transition: color 0.3s ease;
 }
+
+/* Balance state color coding */
+.balance-card.negative-pulse .balance-amount { color: var(--expense); }
+.balance-card.positive-pulse .balance-amount { color: var(--success); }
+
 .sparkline-wrap {
   height: 80px;
   width: 100%;
@@ -249,7 +277,7 @@
   transition: filter 0.25s ease;
 }
 
-/* Income / Expense Cards */
+/* ─── Income / Expense Cards ─── */
 .ie-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -273,6 +301,17 @@
 }
 .ie-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .ie-card:active { transform: scale(0.97); }
+
+/* Colored left accent — income (cyan) / expense (red) */
+.ie-card:has(.income-circle) {
+  border-color: rgba(76, 201, 240, 0.22);
+  border-left: 3px solid rgba(76, 201, 240, 0.7);
+}
+.ie-card:has(.expense-circle) {
+  border-color: rgba(231, 76, 60, 0.22);
+  border-left: 3px solid rgba(231, 76, 60, 0.7);
+}
+
 .ie-circle {
   width: 46px; height: 46px;
   border-radius: 50%;
@@ -285,17 +324,19 @@
 .income-circle { background: var(--income-bg); color: var(--income-dark); }
 .expense-circle { background: var(--expense-bg); color: var(--expense); }
 .ie-label {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: var(--text-muted);
-  margin-bottom: 3px;
-  font-weight: var(--fw-medium);
+  margin-bottom: 4px;
+  font-weight: var(--fw-semi);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 .ie-info {
   min-width: 0;
   flex: 1;
 }
 .ie-value {
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-weight: var(--fw-bold);
   letter-spacing: -0.02em;
   white-space: nowrap;
@@ -305,7 +346,7 @@
 .income-value { color: var(--income-dark); }
 .expense-value { color: var(--expense); }
 
-/* KPI Mini Row */
+/* ─── KPI Mini Row ─── */
 .kpi-mini-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -333,25 +374,135 @@
   transform: scale(0.97);
 }
 .kpi-mini-icon {
-  width: 38px; height: 38px;
-  border-radius: var(--r-sm);
+  width: 40px; height: 40px;
+  border-radius: var(--r-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   flex-shrink: 0;
 }
 .debt-kpi-icon   { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
 .people-kpi-icon { background: rgba(76,201,240, 0.12); color: var(--income-dark); }
 .kpi-mini-text   { min-width: 0; overflow: hidden; flex: 1; }
-.kpi-mini-label  { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kpi-mini-val    { font-size: 0.9375rem; font-weight: var(--fw-bold); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi-mini-label  { font-size: 0.6875rem; color: var(--text-muted); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi-mini-val    { font-size: 1rem; font-weight: var(--fw-bold); color: var(--text-primary); letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi-mini-sub    { font-size: 0.65rem; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kpi-highlight-monthly { border-color: rgba(255,159,67,0.35); }
-.kpi-highlight-financing { border-color: rgba(67,97,238,0.35); }
-.kpi-highlight-loan { border-color: rgba(255,107,53,0.35); }
 
-/* Charts Grid */
+/* KPI highlighted variants — inset left accent strip */
+.kpi-highlight-monthly {
+  border-color: rgba(255,159,67,0.25);
+  box-shadow: var(--shadow-xs), inset 3px 0 0 rgba(255,159,67,0.65);
+}
+.kpi-highlight-financing {
+  border-color: rgba(67,97,238,0.25);
+  box-shadow: var(--shadow-xs), inset 3px 0 0 rgba(67,97,238,0.65);
+}
+.kpi-highlight-loan {
+  border-color: rgba(255,107,53,0.25);
+  box-shadow: var(--shadow-xs), inset 3px 0 0 rgba(255,107,53,0.65);
+}
+
+/* Preserve inset accent on hover (higher specificity beats responsive.css override) */
+.kpi-mini-card.kpi-highlight-monthly:hover {
+  box-shadow: var(--shadow-md), inset 3px 0 0 rgba(255,159,67,0.65);
+}
+.kpi-mini-card.kpi-highlight-financing:hover {
+  box-shadow: var(--shadow-md), inset 3px 0 0 rgba(67,97,238,0.65);
+}
+.kpi-mini-card.kpi-highlight-loan:hover {
+  box-shadow: var(--shadow-md), inset 3px 0 0 rgba(255,107,53,0.65);
+}
+
+/* ─── VR Dashboard Card (Geral mode) ─── */
+.vr-dashboard-card {
+  margin: 0 16px 16px;
+  background: var(--bg-card);
+  border-radius: var(--r-xl);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1.5px solid var(--border);
+  overflow: hidden;
+  position: relative;
+}
+.vr-dash-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.vr-dash-icon {
+  width: 36px; height: 36px;
+  border-radius: var(--r-sm);
+  background: rgba(139, 195, 74, 0.15);
+  color: #689F38;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+[data-theme="dark"] .vr-dash-icon {
+  background: rgba(139, 195, 74, 0.2);
+  color: #9CCC65;
+}
+.vr-dash-header h3 {
+  font-size: 0.9375rem;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+}
+.vr-dash-balance {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.vr-dash-balance-label {
+  font-size: 0.6875rem;
+  font-weight: var(--fw-semi);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.vr-dash-balance-val {
+  font-size: 1.75rem;
+  font-weight: var(--fw-black);
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+.vr-dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.vr-dash-item {
+  background: var(--bg-card-alt);
+  border-radius: var(--r-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  border: 1px solid var(--border);
+}
+.vr-income i { color: var(--success); font-size: 0.875rem; }
+.vr-expense i { color: var(--expense); font-size: 0.875rem; }
+.vr-dash-item-label {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.vr-dash-item-val {
+  font-size: 1rem;
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+/* ─── Charts Grid ─── */
 .charts-grid {
   padding: 0 16px 16px;
   display: flex;
@@ -366,6 +517,7 @@
   border-radius: var(--r-xl);
   padding: 20px;
   box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
   overflow: hidden;
   min-width: 0;
 }
@@ -377,11 +529,14 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
 }
 .chart-card-header h3 {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: var(--fw-semi);
   color: var(--text-primary);
+  letter-spacing: 0.01em;
 }
 .chart-icon { color: var(--primary); font-size: 0.875rem; }
