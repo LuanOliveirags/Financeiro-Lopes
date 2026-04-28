@@ -1,7 +1,13 @@
 // ============================================================
-// firebase-config.js — Configurações públicas da aplicação
-// Credenciais Firebase client-side são públicas por design.
-// Segredos (FCM keys, EmailJS) ficam em firebase-secrets.local.js
+// firebase-config.js — Configurações da aplicação
+//
+// Credenciais Firebase (apiKey, appId…) são públicas por design
+// — o Firebase SDK as expõe ao browser intencionalmente.
+// A segurança real fica nas Firestore Security Rules.
+//
+// ⚠️  FCM_SERVER_KEY e EMAILJS_CONFIG contêm chaves privadas.
+//     Preencha os valores abaixo localmente mas NÃO faça commit
+//     com chaves reais — mantenha os placeholders no repositório.
 // ============================================================
 
 export const firebaseConfig = {
@@ -14,9 +20,20 @@ export const firebaseConfig = {
   measurementId:     'G-7FHPEHP5G5'
 };
 
-// Segredos — carregados do arquivo local (gitignored).
-// Se o arquivo não existir, as features de push e email ficam desativadas.
-export { FCM_VAPID_KEY, FCM_SERVER_KEY, EMAILJS_CONFIG } from './firebase-secrets.local.js';
+// FCM_VAPID_KEY → Firebase Console → Cloud Messaging → Web Push certificates
+export const FCM_VAPID_KEY = 'YOUR_VAPID_KEY_HERE';
+
+// FCM_SERVER_KEY → Firebase Console → Cloud Messaging → Chave do servidor (Legacy)
+// ⚠️ Chave privada — não commitar com valor real
+export const FCM_SERVER_KEY = 'YOUR_SERVER_KEY_HERE';
+
+// EmailJS → https://www.emailjs.com → Account → API Keys
+// ⚠️ Chaves privadas — não commitar com valores reais
+export const EMAILJS_CONFIG = {
+  serviceId:  'YOUR_SERVICE_ID',
+  templateId: 'YOUR_TEMPLATE_ID',
+  publicKey:  'YOUR_PUBLIC_KEY'
+};
 
 export const CATEGORY_MAP = {
   alimentacao:    { icon: '🍽️', label: 'Alimentação',    css: 'cat-alimentacao'    },

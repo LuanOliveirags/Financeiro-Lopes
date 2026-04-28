@@ -10,7 +10,6 @@ dist/
 .env
 .env.*
 !.env.example
-firebase-secrets.local.js
 firebase-admin-key.json
 google-services.json
 GoogleService-Info.plist
