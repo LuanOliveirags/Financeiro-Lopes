@@ -40,7 +40,7 @@ html {
 
   /* ── CSS Variable for sidebar width ── */
   :root {
-    --sidebar-w: 68px;
+    --sidebar-w: 84px;
   }
 
   /* ── Bottom Nav → Left Sidebar (collapsed icon-only) ── */
@@ -79,8 +79,8 @@ html {
     width: 100%;
   }
   .sidebar-brand-logo {
-    width: 70px;
-    height: 70px;
+    width: 65px;
+    height: 65px;
     object-fit: contain;
     border-radius: var(--r-sm);
   }
@@ -100,8 +100,8 @@ html {
     border-radius: var(--r-md);
     gap: 0;
     min-width: unset;
-    width: 48px;
-    height: 50px;
+    width: 62px;
+    height: 52px;
     transition: all var(--ease);
   }
   .bottom-nav-item:nth-of-type(1),
@@ -129,10 +129,10 @@ html {
   }
 
   .nav-icon-wrap {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
     border-radius: var(--r-md);
-    font-size: 1rem;
+    font-size: 1.0625rem;
     transition: all var(--ease);
   }
 
@@ -147,8 +147,8 @@ html {
     width: 100%;
   }
   .fab-btn {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     bottom: 0;
     font-size: 0;
@@ -675,7 +675,7 @@ html {
 @media (min-width: 1440px) {
 
   :root {
-    --sidebar-w: 68px;
+    --sidebar-w: 84px;
   }
 
   .main-content > * {
