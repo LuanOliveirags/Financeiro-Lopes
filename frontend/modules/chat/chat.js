@@ -24,11 +24,19 @@ let _otherSeenAt       = '';
 let _editingMsgId      = null;
 let _convDocListener   = null;
 let _activeReactionBar = null;
-let _replyTo           = null;      // { id, text, senderName }
-let _ctxMsgEl          = null;      // elemento de mensagem com ctx menu aberto
-let _typingTimer       = null;      // debounce para parar de digitar
-let _scrollUnread      = 0;         // mensagens recebidas com scroll pra cima
+let _replyTo           = null;
+let _ctxMsgEl          = null;
+let _typingTimer       = null;
+let _scrollUnread      = 0;
 let _isAtBottom        = true;
+
+// Áudio
+let _recorder          = null;
+let _audioChunks       = [];
+let _recTimer          = null;
+let _recSeconds        = 0;
+let _recStream         = null;
+let _activeAudio       = null;
 
 // ================================================================
 // PÚBLICO
@@ -816,7 +824,11 @@ function _bindForm() {
   });
 
   micBtn?.addEventListener('click', () => {
-    import('./utils.js').then(({ showAlert }) => showAlert('Gravação de áudio em breve!', 'info'));
+    if (_recorder && _recorder.state !== 'inactive') {
+      _stopRecording(false); // parar e enviar
+    } else {
+      _startRecording();
+    }
   });
 
   _formBound = true;
@@ -926,17 +938,31 @@ function _renderMessages(messages) {
     const photo    = _resolvePhoto(msg.senderPhoto, msg.senderName);
     const isEdited = !!msg.editedAt;
 
+    // Agrupamento por remetente consecutivo (sem limite de tempo, igual WhatsApp)
+    const prev     = messages[idx - 1];
+    const next     = messages[idx + 1];
+    const prevSame = !!(prev && prev.senderId === msg.senderId);
+    const nextSame = !!(next && next.senderId === msg.senderId);
+    const isFirst  = !prevSame; // primeira da sequência → mostra cauda e avatar
+    const isLast   = !nextSame; // última da sequência → mostra avatar
+
+    // Raio da bolha: remove o canto com cauda apenas na primeira da sequência
+    let bubbleClass = 'chat-bubble';
+    if (msg.type === 'image') bubbleClass += ' chat-bubble--img';
+    if (!isFirst) bubbleClass += isMine ? ' chat-bubble--cont-mine' : ' chat-bubble--cont-theirs';
+
     // Status tick (apenas para mensagens minhas)
     const isRead = isMine && _otherSeenAt && msg.timestamp <= _otherSeenAt;
     const tickHtml = isMine
       ? `<span class="msg-ticks${isRead ? ' tick-read' : ''}"><i class="fa-solid fa-check-double"></i></span>`
       : '';
 
-    // Avatar
+    // Avatar — mostra apenas na última mensagem da sequência
     const avatarEl = photo
       ? `<img src="${photo}" alt="${esc(msg.senderName)}" class="chat-avatar-bubble"
               onerror="this.outerHTML='<div class=\\'chat-avatar-bubble chat-initial\\'>${esc(initial)}</div>'">`
       : `<div class="chat-avatar-bubble chat-initial">${esc(initial)}</div>`;
+    const avatarHtml = isLast ? avatarEl : `<div class="chat-avatar-bubble chat-avatar-ghost"></div>`;
 
     const reactionsHtml = _buildReactionsHtml(msg.reactions, me.id);
 
@@ -957,6 +983,14 @@ function _renderMessages(messages) {
       ? `<a href="${esc(msg.imageUrl)}" target="_blank" rel="noopener noreferrer" class="chat-img-link">
            <img src="${esc(msg.imageUrl)}" class="chat-bubble-img" alt="Imagem" loading="lazy">
          </a>`
+      : msg.type === 'audio' && msg.audioUrl
+      ? `<div class="chat-audio-player" data-audio-url="${esc(msg.audioUrl)}">
+           <button type="button" class="chat-audio-play-btn" aria-label="Reproduzir">
+             <i class="fa-solid fa-play"></i>
+           </button>
+           <div class="chat-audio-track"><div class="chat-audio-progress-bar"></div></div>
+           <span class="chat-audio-time">${_fmtDuration(msg.audioDuration || 0)}</span>
+         </div>`
       : `<p class="chat-bubble-text">${_formatText(msg.text)}</p>`;
 
     // Footer da bolha (hora + ticks + editado)
@@ -966,18 +1000,21 @@ function _renderMessages(messages) {
       ${tickHtml}
     </div>`;
 
+    // Gap menor entre mensagens agrupadas
+    const gapClass = prevSame ? 'chat-msg--grouped' : '';
+
     html += `
-      <div class="chat-msg ${isMine ? 'msg-mine' : 'msg-theirs'}"
+      <div class="chat-msg ${isMine ? 'msg-mine' : 'msg-theirs'} ${gapClass}"
            data-msg-id="${esc(msg.id)}"
            data-msg-ts="${esc(msg.timestamp)}"
            data-msg-mine="${isMine}"
            data-msg-text="${esc(msg.text || '')}"
            data-msg-sender="${esc(msg.senderName || '')}">
-        ${!isMine ? `<div class="chat-msg-avatar">${avatarEl}</div>` : ''}
+        ${!isMine ? `<div class="chat-msg-avatar">${avatarHtml}</div>` : ''}
         <div class="chat-bubble-col">
-          ${!isMine ? `<span class="chat-sender-name">${esc(msg.senderName)}</span>` : ''}
+          ${!isMine && isFirst ? `<span class="chat-sender-name">${esc(msg.senderName)}</span>` : ''}
           <div class="chat-bubble-wrap">
-            <div class="chat-bubble${msg.type === 'image' ? ' chat-bubble--img' : ''}">
+            <div class="${bubbleClass}">
               ${replyHtml}
               ${bubbleContent}
               ${footerHtml}
@@ -988,15 +1025,17 @@ function _renderMessages(messages) {
           </div>
           ${reactionsHtml}
         </div>
-        ${isMine ? `<div class="chat-msg-avatar chat-avatar-mine">${avatarEl}</div>` : ''}
+        ${isMine ? `<div class="chat-msg-avatar chat-avatar-mine">${avatarHtml}</div>` : ''}
       </div>`;
   });
 
+  if (_activeAudio) { _activeAudio.pause(); _activeAudio = null; }
   listEl.innerHTML = html;
   _bindMsgLongPress(listEl);
   _bindReactionBadges(listEl);
   _bindReactTriggers(listEl);
   _bindQuoteJump(listEl);
+  _bindAudioPlayers(listEl);
   if (_isAtBottom) _scrollToBottom(_chatOpen);
 }
 
@@ -1328,6 +1367,230 @@ async function _handleImageUpload(e) {
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paperclip"></i>'; }
   }
+}
+
+// ================================================================
+// ÁUDIO — GRAVAÇÃO E PLAYER
+// ================================================================
+
+function _getSupportedMimeType() {
+  const types = [
+    'audio/webm;codecs=opus', 'audio/webm',
+    'audio/ogg;codecs=opus',  'audio/ogg',
+    'audio/mp4'
+  ];
+  return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+}
+
+function _fmtDuration(secs) {
+  const s = Math.max(0, Math.floor(secs));
+  return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+}
+
+async function _startRecording() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    import('./utils.js').then(({ showAlert }) => showAlert('Gravação não suportada neste dispositivo.', 'error'));
+    return;
+  }
+  try {
+    _recStream  = await navigator.mediaDevices.getUserMedia({ audio: true });
+    _audioChunks = [];
+    const mime  = _getSupportedMimeType();
+    _recorder   = new MediaRecorder(_recStream, mime ? { mimeType: mime } : {});
+    _recorder.ondataavailable = e => { if (e.data?.size > 0) _audioChunks.push(e.data); };
+    _recorder.onstop = _handleRecordingStop;
+    _recorder.start(200);
+
+    _recSeconds = 0;
+    _showRecordingUI();
+    _recTimer = setInterval(() => {
+      _recSeconds++;
+      _updateRecordingTimer();
+      if (_recSeconds >= 120) _stopRecording(false); // máximo 2 min
+    }, 1000);
+  } catch (err) {
+    const msg = err.name === 'NotAllowedError'
+      ? 'Permissão de microfone negada.'
+      : 'Erro ao acessar microfone.';
+    import('./utils.js').then(({ showAlert }) => showAlert(msg, 'error'));
+  }
+}
+
+function _stopRecording(cancel = false) {
+  if (!_recorder || _recorder.state === 'inactive') return;
+  clearInterval(_recTimer);
+  _recTimer = null;
+  _hideRecordingUI();
+  if (cancel) {
+    _recorder.onstop = null;
+    _audioChunks     = [];
+    _recStream?.getTracks().forEach(t => t.stop());
+    _recStream = null;
+    _recorder.stop();
+    _recorder  = null;
+    return;
+  }
+  _recorder.stop(); // dispara onstop → _handleRecordingStop
+}
+
+async function _handleRecordingStop() {
+  _recStream?.getTracks().forEach(t => t.stop());
+  _recStream = null;
+  _recorder  = null;
+
+  const micBtn = document.getElementById('chatMicBtn');
+  if (micBtn) { micBtn.disabled = false; micBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>'; }
+
+  if (_audioChunks.length === 0 || _recSeconds < 1) {
+    _audioChunks = [];
+    return;
+  }
+  const mime = _audioChunks[0]?.type || 'audio/webm';
+  const blob = new Blob(_audioChunks, { type: mime });
+  const dur  = _recSeconds;
+  _audioChunks = [];
+  await _sendAudioMessage(blob, mime, dur);
+}
+
+async function _sendAudioMessage(blob, mimeType, duration) {
+  if (!storage || !_currentConvId || !state.currentUser) {
+    import('./utils.js').then(({ showAlert }) => showAlert('Firebase Storage não disponível.', 'error'));
+    return;
+  }
+  const micBtn = document.getElementById('chatMicBtn');
+  if (micBtn) { micBtn.disabled = true; micBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
+  try {
+    const msgId = generateId();
+    const ext   = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
+    const ref   = storage.ref(`chat-audio/${_currentConvId}/${msgId}.${ext}`);
+    await ref.put(blob, { contentType: mimeType });
+    const url = await ref.getDownloadURL();
+
+    const now = new Date().toISOString();
+    const me  = state.currentUser;
+    const msg = {
+      id: msgId, senderId: me.id,
+      senderName:  me.fullName || me.login,
+      senderPhoto: _resolvePhoto(me.photoURL, me.fullName || me.login),
+      text: '', audioUrl: url, audioDuration: duration,
+      type: 'audio', timestamp: now
+    };
+    const convRef = db.collection('conversations').doc(_currentConvId);
+    await convRef.collection('messages').doc(msgId).set(msg);
+    await convRef.update({
+      lastMessage: { text: '🎤 Áudio', timestamp: now, senderId: me.id },
+      updatedAt: now
+    });
+    if (_currentOtherUser) {
+      try {
+        const doc   = await db.collection('users').doc(_currentOtherUser.id).get();
+        const token = doc.exists ? doc.data().fcmToken : null;
+        if (token) sendFCMPush(token, msg.senderName, '🎤 Áudio');
+      } catch (_) {}
+    }
+  } catch (err) {
+    console.error('[Chat] Erro ao enviar áudio:', err);
+    import('./utils.js').then(({ showAlert }) => showAlert('Não foi possível enviar o áudio.', 'error'));
+  } finally {
+    if (micBtn) { micBtn.disabled = false; micBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>'; }
+  }
+}
+
+function _showRecordingUI() {
+  const micBtn = document.getElementById('chatMicBtn');
+  if (micBtn) {
+    micBtn.classList.add('chat-mic-recording');
+    micBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+    micBtn.title = 'Parar';
+  }
+
+  let bar = document.getElementById('chatRecordingBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id        = 'chatRecordingBar';
+    bar.className = 'chat-recording-bar';
+    bar.innerHTML = `
+      <button type="button" id="chatRecCancelBtn" class="chat-rec-cancel" aria-label="Cancelar">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+      <div class="chat-rec-wave">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <span id="chatRecTimer" class="chat-rec-timer">0:00</span>
+    `;
+    const form = document.getElementById('chatForm');
+    if (form) form.parentNode.insertBefore(bar, form);
+    document.getElementById('chatRecCancelBtn')
+      ?.addEventListener('click', () => _stopRecording(true));
+  }
+  bar.style.display = 'flex';
+}
+
+function _hideRecordingUI() {
+  const bar = document.getElementById('chatRecordingBar');
+  if (bar) bar.style.display = 'none';
+  const micBtn = document.getElementById('chatMicBtn');
+  if (micBtn) {
+    micBtn.classList.remove('chat-mic-recording');
+    micBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+    micBtn.title     = 'Áudio';
+    micBtn.disabled  = false;
+  }
+}
+
+function _updateRecordingTimer() {
+  const el = document.getElementById('chatRecTimer');
+  if (el) el.textContent = _fmtDuration(_recSeconds);
+}
+
+function _bindAudioPlayers(listEl) {
+  listEl.querySelectorAll('.chat-audio-player').forEach(player => {
+    const btn    = player.querySelector('.chat-audio-play-btn');
+    const progEl = player.querySelector('.chat-audio-progress-bar');
+    const timeEl = player.querySelector('.chat-audio-time');
+    const url    = player.dataset.audioUrl;
+    if (!btn || !url) return;
+
+    btn.addEventListener('click', () => {
+      // Se outro áudio está tocando, para
+      if (_activeAudio && _activeAudio._url !== url) {
+        _activeAudio.pause();
+        document.querySelectorAll('.chat-audio-play-btn i').forEach(i => {
+          i.className = 'fa-solid fa-play';
+        });
+        document.querySelectorAll('.chat-audio-progress-bar').forEach(b => {
+          b.style.width = '0%';
+        });
+        _activeAudio = null;
+      }
+
+      if (!_activeAudio) {
+        const audio  = new Audio(url);
+        audio._url   = url;
+        _activeAudio = audio;
+
+        audio.addEventListener('timeupdate', () => {
+          const pct = audio.duration ? (audio.currentTime / audio.duration * 100) : 0;
+          if (progEl) progEl.style.width = pct + '%';
+          if (timeEl) timeEl.textContent = _fmtDuration(audio.currentTime);
+        });
+        audio.addEventListener('ended', () => {
+          btn.querySelector('i').className = 'fa-solid fa-play';
+          if (progEl) progEl.style.width = '0%';
+          if (timeEl) timeEl.textContent  = _fmtDuration(audio.duration || 0);
+          _activeAudio = null;
+        });
+        audio.play().catch(() => {});
+        btn.querySelector('i').className = 'fa-solid fa-pause';
+      } else if (_activeAudio.paused) {
+        _activeAudio.play().catch(() => {});
+        btn.querySelector('i').className = 'fa-solid fa-pause';
+      } else {
+        _activeAudio.pause();
+        btn.querySelector('i').className = 'fa-solid fa-play';
+      }
+    });
+  });
 }
 
 // ================================================================
