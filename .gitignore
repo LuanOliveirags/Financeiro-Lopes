@@ -1,0 +1,50 @@
+# ─── Dependências ───────────────────────────────────────────
+node_modules/
+
+# ─── Build / Gerados ────────────────────────────────────────
+www/
+android/
+dist/
+
+# ─── Segredos — NUNCA commitar ──────────────────────────────
+.env
+.env.*
+!.env.example
+firebase-admin-key.json
+google-services.json
+GoogleService-Info.plist
+
+# ─── Android / Keystore ─────────────────────────────────────
+*.jks
+*.keystore
+release.properties
+local.properties
+
+# ─── Python / Backend ────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+backend/instance/
+backend/*.db
+backend/.env
+venv/
+.venv/
+*.egg-info/
+
+# ─── Sistema Operacional ─────────────────────────────────────
+.DS_Store
+.DS_Store?
+Thumbs.db
+desktop.ini
+
+# ─── Editores / IDEs ─────────────────────────────────────────
+.idea/
+*.iml
+.vscode/settings.json
+*.swp
+*.swo
+
+# ─── Logs ────────────────────────────────────────────────────
+*.log
+npm-debug.log*
