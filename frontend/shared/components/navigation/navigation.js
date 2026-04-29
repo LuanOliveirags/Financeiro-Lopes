@@ -14,6 +14,63 @@ import { openChoresTab, setupChoresListeners } from '../../../modules/chores/cho
 import { openShoppingPanel, setupShoppingListeners } from '../../../modules/shopping/shopping.js';
 import { getNotifSettings, saveNotifSettings, enableNotifications, disableNotifications, checkAndNotify, isNotifSupported } from '../../services/notifications.js';
 import { openChat, initChat, cleanupChat } from '../../../modules/chat/chat.js';
+import { APK_URL } from '../../../app/providers/firebase-config.js';
+
+// ===== INSTALAR APP =====
+function _setupInstallBtn() {
+  const btn = document.getElementById('installBtn');
+  if (!btn) return;
+
+  // Não mostrar se já está rodando como APK nativo (Capacitor)
+  const isNative = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform?.();
+  // Não mostrar se já está instalado como PWA standalone
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+
+  if (isNative || isStandalone) {
+    btn.style.display = 'none';
+    return;
+  }
+
+  // Sempre visível no browser
+  btn.style.display = 'flex';
+
+  let _pwaPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _pwaPrompt = e;
+    // Atualiza label para indicar instalação nativa do browser
+    btn.querySelector('.sr-text').textContent = 'Instalar App';
+  });
+
+  btn.addEventListener('click', async () => {
+    // 1ª opção: prompt nativo do browser (PWA)
+    if (_pwaPrompt) {
+      const result = await _pwaPrompt.prompt();
+      if (result?.outcome === 'accepted') {
+        btn.style.display = 'none';
+        _pwaPrompt = null;
+      }
+      return;
+    }
+
+    // 2ª opção: download do APK
+    if (APK_URL) {
+      const a = document.createElement('a');
+      a.href     = APK_URL;
+      a.download = 'WolfSource.apk';
+      a.click();
+      return;
+    }
+
+    // Sem APK configurado e sem prompt → instrução manual
+    showAlert(
+      'No Android: abra este site no Chrome → ⋮ → "Adicionar à tela inicial".\n' +
+      'Para instalar o APK, peça o link ao administrador.',
+      'info'
+    );
+  });
+}
 
 // ===== THEME =====
 function initializeTheme() {
@@ -416,13 +473,8 @@ export function setupEventListeners() {
   document.getElementById('syncBtn').addEventListener('click', syncData);
   document.getElementById('clearCacheBtn').addEventListener('click', clearCache);
 
-  // Install PWA
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    const installBtn = document.getElementById('installBtn');
-    installBtn.style.display = 'block';
-    installBtn.addEventListener('click', () => e.prompt());
-  });
+  // ── Botão "Instalar App" ──
+  _setupInstallBtn();
 
   // Filters
   document.getElementById('monthFilter').addEventListener('change', updateDashboard);

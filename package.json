@@ -8,7 +8,8 @@
     "copy": "node scripts/copy-web.js",
     "sync": "node scripts/copy-web.js && cap sync android",
     "open:android": "cap open android",
-    "build": "node scripts/copy-web.js && cap sync android && cap open android"
+    "build": "node scripts/copy-web.js && cap sync android && cap open android",
+    "icons:android": "node scripts/generate-android-icons.js"
   },
   "dependencies": {
     "@capacitor-firebase/messaging": "^6.0.0",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^6.0.0",
+    "firebase-admin": "^13.8.0",
     "sharp": "^0.34.5"
   }
 }
