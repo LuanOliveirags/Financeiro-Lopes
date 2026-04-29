@@ -58,8 +58,8 @@ export async function initFCM() {
       navigator.serviceWorker.ready.then(reg => {
         reg.showNotification(`💬 ${d.senderName || 'Nova mensagem'}`, {
           body:     (d.text || '').substring(0, 100),
-          icon:     'frontend/assets/images/icon-any-192.png',
-          badge:    'frontend/assets/images/icon-any-96.png',
+          icon:     'assets/images/icon-any-192.png',
+          badge:    'assets/images/icon-any-96.png',
           tag:      'chat-incoming',
           renotify: true,
           vibrate:  [200, 100, 200],
@@ -169,8 +169,8 @@ async function _initNativeFCM() {
       navigator.serviceWorker?.ready.then(reg => {
         reg.showNotification(title, {
           body,
-          icon:     'frontend/assets/images/icon-any-192.png',
-          badge:    'frontend/assets/images/icon-any-96.png',
+          icon:     'assets/images/icon-any-192.png',
+          badge:    'assets/images/icon-any-96.png',
           tag:      'chat-incoming',
           renotify: true,
           vibrate:  [200, 100, 200],

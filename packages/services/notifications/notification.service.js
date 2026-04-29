@@ -112,8 +112,8 @@ async function showNotification(title, body, tag, extraData = {}) {
     const reg = await navigator.serviceWorker.ready;
     await reg.showNotification(title, {
       body,
-      icon:              'frontend/assets/images/icon-any-192.png',
-      badge:             'frontend/assets/images/icon-any-96.png',
+      icon:              'assets/images/icon-any-192.png',
+      badge:             'assets/images/icon-any-96.png',
       tag,
       renotify:          true,
       requireInteraction: false,

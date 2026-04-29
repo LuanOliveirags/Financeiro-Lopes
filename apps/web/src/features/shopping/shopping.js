@@ -10,9 +10,9 @@ import { updateTransactionHistory } from '../transactions/transactions.service.j
 
 // ===== MERCADOS =====
 const STORES = {
-  ayumi:   { name: 'Ayumi',   label: 'Ayumi Supermercados',  img: 'frontend/assets/images/ayumi.png',   color: '#1a56db', bg: '#1a56db' },
-  assai:   { name: 'Assaí',   label: 'Assaí Atacadista',     img: 'frontend/assets/images/Assai.png',   color: '#e63312', bg: '#f59e0b' },
-  westboi: { name: 'Westboi', label: 'Westboi Açougue',      img: 'frontend/assets/images/westboi.png', color: '#b91c1c', bg: '#dc2626' },
+  ayumi:   { name: 'Ayumi',   label: 'Ayumi Supermercados',  img: 'assets/images/ayumi.png',   color: '#1a56db', bg: '#1a56db' },
+  assai:   { name: 'Assaí',   label: 'Assaí Atacadista',     img: 'assets/images/Assai.png',   color: '#e63312', bg: '#f59e0b' },
+  westboi: { name: 'Westboi', label: 'Westboi Açougue',      img: 'assets/images/westboi.png', color: '#b91c1c', bg: '#dc2626' },
   outro:   { name: 'Outro',   label: 'Outro mercado',        img: null,              color: '#6B7280', bg: '#6B7280' }
 };
 

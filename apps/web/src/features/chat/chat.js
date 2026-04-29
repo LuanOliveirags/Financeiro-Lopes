@@ -1056,8 +1056,8 @@ function _bindQuoteJump(listEl) {
 function _resolvePhoto(photoURL, nameOrLogin) {
   if (photoURL) return photoURL;
   const n = (nameOrLogin || '').toLowerCase();
-  if (n.includes('bianca')) return 'frontend/assets/images/bianca.jpeg';
-  if (n.includes('luan'))   return 'frontend/assets/images/luan.jpg';
+  if (n.includes('bianca')) return 'assets/images/bianca.jpeg';
+  if (n.includes('luan'))   return 'assets/images/luan.jpg';
   return '';
 }
 
@@ -1126,8 +1126,8 @@ async function _notifyNewMessage(msg) {
     const reg = await navigator.serviceWorker.ready;
     await reg.showNotification(`💬 ${msg.senderName}`, {
       body:               msg.text?.length > 100 ? msg.text.substring(0, 100) + '...' : (msg.text || ''),
-      icon:               'frontend/assets/images/icon-any-192.png',
-      badge:              'frontend/assets/images/icon-any-96.png',
+      icon:               'assets/images/icon-any-192.png',
+      badge:              'assets/images/icon-any-96.png',
       tag:                'chat-incoming',
       renotify:           true,
       requireInteraction: false,

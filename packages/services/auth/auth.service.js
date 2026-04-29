@@ -313,7 +313,7 @@ export function renderPersonIncomeCards() {
     html += `
       <div class="person-income-card" style="background:linear-gradient(135deg, ${g1}, ${g2})">
         <div class="pic-header">
-          <div class="pic-avatar">${m.name.toLowerCase().startsWith('bianca') ? '<img src="frontend/assets/images/bianca.jpeg" alt="Bianca" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : m.name.toLowerCase().startsWith('luan') ? '<img src="frontend/assets/images/luan.jpg" alt="Luan" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : '<i class="fa-solid ' + icons[i % icons.length] + '"></i>'}</div>
+          <div class="pic-avatar">${m.name.toLowerCase().startsWith('bianca') ? '<img src="assets/images/bianca.jpeg" alt="Bianca" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : m.name.toLowerCase().startsWith('luan') ? '<img src="assets/images/luan.jpg" alt="Luan" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : '<i class="fa-solid ' + icons[i % icons.length] + '"></i>'}</div>
           <span class="pic-name">${m.name}</span>
         </div>
         <div class="pic-salaries">
@@ -521,7 +521,7 @@ export function applyUserToUI() {
   const familyLabel = document.getElementById('settingsFamilyName');
   if (familyLabel) familyLabel.textContent = state.currentFamily ? state.currentFamily.name : 'Sem família';
 
-  const avatarURL = user.photoURL || (user.fullName && user.fullName.toLowerCase().includes('bianca') ? 'frontend/assets/images/bianca.jpeg' : null);
+  const avatarURL = user.photoURL || (user.fullName && user.fullName.toLowerCase().includes('bianca') ? 'assets/images/bianca.jpeg' : null);
   applyAvatar(avatarURL);
 
   const adminSection = document.getElementById('adminSection');
