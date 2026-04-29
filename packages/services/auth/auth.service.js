@@ -6,7 +6,7 @@
 import { EMAILJS_CONFIG } from '../firebase/firebase.config.js';
 import { state, isSuperAdmin, isAdmin, getFamilyId } from '../../core/state/store.js';
 import { esc, showAlert, generateId } from '../../utils/helpers.js';
-import { db, firebaseReady, storage as fbStorage, saveDataToStorage, loadDataFromStorage, cleanupFirebaseListeners, allowRefresh } from '../firebase/firebase.service.js';
+import { db, firebaseReady, storage as fbStorage, saveDataToStorage, loadDataFromStorage, cleanupFirebaseListeners, allowRefresh, notifyRefresh } from '../firebase/firebase.service.js';
 
 // ===== FLAG PARA EVITAR MÚLTIPLAS EXECUÇÕES =====
 let _checkingLogin = false;
@@ -658,9 +658,11 @@ export async function checkLoginStatus() {
           applyUserToUI();
           console.log('✅ Login concluído com sucesso! Habilitando refresh...');
           allowRefresh(true);
+          notifyRefresh();
         } catch (err) {
           console.error('❌ Erro ao carregar dados de login:', err);
           allowRefresh(true);
+          notifyRefresh();
         } finally {
           _checkingLogin = false;
         }

@@ -375,6 +375,10 @@ export function allowRefresh(allow = true) {
   console.log(`🔄 Refresh ${allow ? 'habilitado' : 'desabilitado'}`);
 }
 
+export function notifyRefresh() {
+  _notifyRefresh();
+}
+
 function _notifyRefresh() {
   // Só notifica refresh se está permitido e o usuário está realmente logado
   if (_refreshCallback && state.isLoggedIn && _allowRefresh) {
