@@ -2,7 +2,7 @@
 // UTILS.JS — Funções utilitárias compartilhadas
 // ============================================================
 
-import { CATEGORY_MAP } from '../../app/providers/firebase-config.js';
+import { CATEGORY_MAP } from '../services/firebase/firebase.config.js';
 
 export function generateId() {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
