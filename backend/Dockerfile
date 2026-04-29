@@ -25,21 +25,14 @@ ENV PATH=/root/.local/bin:$PATH
 # Copiar aplicação
 COPY app.py .
 COPY config.py .
-COPY .env.example .env
 
 # Criar diretório para banco de dados
 RUN mkdir -p /app/data
 
-# Expor porta
-EXPOSE 5000
-
 # Variáveis de ambiente
 ENV FLASK_APP=app.py
 ENV PYTHONUNBUFFERED=1
+ENV PORT=5000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:5000/health')"
-
-# Iniciar aplicação
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "app:app"]
+# Iniciar aplicação — usa $PORT injetado pelo Railway (ou 5000 como fallback)
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 4 --timeout 120 app:app

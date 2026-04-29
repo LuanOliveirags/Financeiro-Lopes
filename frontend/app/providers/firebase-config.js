@@ -21,7 +21,7 @@ export const firebaseConfig = {
 };
 
 // FCM_VAPID_KEY → Firebase Console → Cloud Messaging → Web Push certificates
-export const FCM_VAPID_KEY = 'YOUR_VAPID_KEY_HERE';
+export const FCM_VAPID_KEY = 'BCATQlnCYJRdAoQhksO2gXpzYMgS2HU-zQJY5V50XO62eiHPzePARxOpWBhUvYDFZQ5puKAAC3Qke_yXBq_yZa8';
 
 // FCM_SERVER_KEY → Firebase Console → Cloud Messaging → Chave do servidor (Legacy)
 // ⚠️ Chave privada — não commitar com valor real
@@ -34,6 +34,11 @@ export const EMAILJS_CONFIG = {
   templateId: 'YOUR_TEMPLATE_ID',
   publicKey:  'YOUR_PUBLIC_KEY'
 };
+
+// URL do backend Flask onde está o endpoint /api/fcm/send
+// Ex.: https://financeiro-lopes.up.railway.app
+// ⚠️ Não deixar vazio em produção
+export const BACKEND_URL = 'https://aware-delight-production-2e59.up.railway.app';
 
 export const CATEGORY_MAP = {
   alimentacao:    { icon: '🍽️', label: 'Alimentação',    css: 'cat-alimentacao'    },

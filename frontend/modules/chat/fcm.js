@@ -10,7 +10,7 @@
 
 import { state }              from '../../app/state/store.js';
 import { db, firebaseReady } from '../../app/providers/firebase-provider.js';
-import { FCM_VAPID_KEY, FCM_SERVER_KEY } from '../../app/providers/firebase-config.js';
+import { FCM_VAPID_KEY, BACKEND_URL } from '../../app/providers/firebase-config.js';
 import { isNative, getPlugin } from '../../app/providers/capacitor-bridge.js';
 
 let _messaging = null;
@@ -74,48 +74,28 @@ export async function initFCM() {
 }
 
 /**
- * Envia push para o destinatário. Inclui objeto `notification` para que o
- * Android FCM SDK exiba a notificação automaticamente em background/fechado.
+ * Envia push para o destinatário via backend Flask (FCM V1 API).
+ * O backend usa firebase-admin com service account para autenticar.
  */
 export async function sendFCMPush(recipientToken, senderName, text) {
   if (!recipientToken) return;
-  if (!FCM_SERVER_KEY || FCM_SERVER_KEY.startsWith('YOUR_')) return;
+  if (!BACKEND_URL || BACKEND_URL.startsWith('YOUR_')) return;
 
   const title = `💬 ${senderName || 'Nova mensagem'}`;
   const body  = (text || '').substring(0, 100);
 
   try {
-    await fetch('https://fcm.googleapis.com/fcm/send', {
+    await fetch(`${BACKEND_URL}/api/fcm/send`, {
       method:  'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `key=${FCM_SERVER_KEY}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        to:       recipientToken,
-        priority: 'high',
-        // notification → Android exibe automaticamente quando app está em background/fechado
-        notification: {
-          title,
-          body,
-          icon:  'ic_launcher',
-          sound: 'default',
-          tag:   'chat-incoming',
-        },
-        // data → disponível para o app processar quando aberto
+        token: recipientToken,
+        title,
+        body,
         data: {
           type:       'chat',
-          senderName: senderName,
-          text:       text.substring(0, 200),
-        },
-        android: {
-          priority: 'high',
-          notification: {
-            channel_id:    'chat_messages',
-            notification_priority: 'PRIORITY_HIGH',
-            default_sound: true,
-            default_vibrate_timings: true,
-          },
+          senderName: senderName || '',
+          text:       (text || '').substring(0, 200),
         },
       }),
     });

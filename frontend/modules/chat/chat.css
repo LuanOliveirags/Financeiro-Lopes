@@ -149,7 +149,7 @@
 .chat-messages-list {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 14px 8px;
+  padding: 16px 18px 8px; /* 18px para as caudas (-7px) não serem cortadas */
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -236,8 +236,8 @@
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.msg-mine   { align-self: flex-end;   flex-direction: row-reverse; }
-.msg-theirs { align-self: flex-start; }
+.msg-mine   { align-self: flex-end;   flex-direction: row-reverse; margin-right: 8px; }
+.msg-theirs { align-self: flex-start; margin-left: 8px; }
 
 .chat-msg-avatar {
   width: 30px; height: 30px;
@@ -1455,3 +1455,392 @@
 [data-theme="dark"] .chat-edit-modal             { background: var(--bg-card); }
 [data-theme="dark"] .chat-edit-input             { background: var(--bg-card-alt); border-color: var(--border); color: var(--text-primary); }
 [data-theme="dark"] .chat-edit-btn--cancel       { background: var(--bg-card-alt); }
+
+/* ================================================================
+   WHATSAPP-STYLE UPGRADES
+   ================================================================ */
+
+/* ── Bolha como flex-column para conter footer ── */
+.chat-bubble {
+  display: flex;
+  flex-direction: column;
+  position: relative; /* âncora para as pseudo-caudas */
+}
+
+/* ── Caudas (triangulos) nas bolhas ── */
+/* Mina: canto superior direito */
+.msg-mine .chat-bubble::before {
+  content: '';
+  position: absolute;
+  top: 0; right: -7px;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 8px 0 0 8px;
+  border-color: transparent transparent transparent var(--primary, #3D6A8E);
+}
+/* Dele/dela: canto superior esquerdo */
+.msg-theirs .chat-bubble::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -7px;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 8px 8px 0 0;
+  border-color: transparent #fff transparent transparent;
+}
+[data-theme="dark"] .msg-theirs .chat-bubble::before {
+  border-right-color: var(--bg-card-alt);
+}
+
+/* ── Footer da bolha (hora + ticks) dentro da bolha ── */
+.chat-bubble-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-top: 3px;
+  margin-left: 14px; /* empurra o footer p/ direita em msgs curtas */
+  line-height: 1;
+  align-self: flex-end; /* cola no lado direito do flex-column */
+  float: none;
+}
+.chat-bubble-time {
+  font-size: 0.6563rem;
+  white-space: nowrap;
+  line-height: 1;
+}
+.msg-mine   .chat-bubble-time { color: rgba(255,255,255,0.65); }
+.msg-theirs .chat-bubble-time { color: var(--text-muted); }
+
+/* Ticks de status */
+.msg-ticks {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+.msg-ticks i         { color: rgba(255,255,255,0.55); }
+.msg-ticks.tick-read i { color: #53bdeb; }
+
+/* ── Label editado ── */
+.chat-edited {
+  font-size: 0.65rem;
+  font-style: italic;
+  opacity: 0.7;
+}
+.msg-mine   .chat-edited { color: rgba(255,255,255,0.65); }
+.msg-theirs .chat-edited { color: var(--text-muted); }
+
+/* ── Botões send / mic ── */
+.chat-send-btn--active {
+  background: var(--grad-primary);
+  box-shadow: 0 4px 14px rgba(61,106,142,0.4);
+  animation: sendPop 0.18s cubic-bezier(0.34,1.56,0.64,1);
+}
+.chat-send-btn--mic {
+  background: var(--grad-primary);
+  box-shadow: 0 4px 14px rgba(61,106,142,0.35);
+}
+@keyframes sendPop {
+  from { transform: scale(0.7) rotate(-30deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg);   opacity: 1; }
+}
+@keyframes micPop {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* ── Indicador de digitação ── */
+.chat-typing-row {
+  padding: 4px 16px 8px;
+  flex-shrink: 0;
+}
+.chat-typing-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border-radius: 0 18px 18px 18px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  position: relative;
+}
+.chat-typing-bubble::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -7px;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 8px 8px 0 0;
+  border-color: transparent #fff transparent transparent;
+}
+[data-theme="dark"] .chat-typing-bubble         { background: var(--bg-card-alt); }
+[data-theme="dark"] .chat-typing-bubble::before { border-right-color: var(--bg-card-alt); }
+.chat-typing-bubble span {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: typingDot 1.2s ease-in-out infinite;
+}
+.chat-typing-bubble span:nth-child(1) { animation-delay: 0s; }
+.chat-typing-bubble span:nth-child(2) { animation-delay: 0.2s; }
+.chat-typing-bubble span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingDot {
+  0%, 60%, 100% { transform: translateY(0);    opacity: 0.4; }
+  30%            { transform: translateY(-5px); opacity: 1;   }
+}
+.chat-typing-label {
+  font-size: 0.75rem;
+  color: var(--primary);
+  font-style: italic;
+  animation: typingFade 1.4s ease infinite;
+}
+@keyframes typingFade {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1;   }
+}
+
+/* ── FAB scroll-to-bottom ── */
+.chat-scroll-down {
+  position: absolute;
+  bottom: 76px; right: 16px;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: none;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 10;
+}
+.chat-scroll-down:hover { transform: scale(1.1); box-shadow: 0 4px 18px rgba(0,0,0,0.25); }
+.chat-scroll-badge {
+  position: absolute;
+  top: -6px; right: -6px;
+  min-width: 18px; height: 18px;
+  background: #25D366;
+  color: #fff;
+  border-radius: 99px;
+  font-size: 0.6563rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px;
+  border: 1.5px solid var(--bg-card);
+}
+
+/* ── Barra de resposta acima do input ── */
+.chat-reply-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  animation: replyBarIn 0.18s ease;
+}
+@keyframes replyBarIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.chat-reply-bar-accent {
+  width: 3px;
+  background: var(--primary);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.chat-reply-bar-content { flex: 1; min-width: 0; }
+.chat-reply-bar-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-reply-bar-text {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-reply-cancel-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.chat-reply-cancel-btn:hover { background: var(--bg-card-alt); color: var(--text-primary); }
+
+/* ── Citação de resposta DENTRO da bolha ── */
+.chat-reply-quote {
+  display: flex;
+  gap: 8px;
+  border-radius: 6px;
+  padding: 5px 8px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: opacity 0.15s;
+}
+.chat-reply-quote:hover { opacity: 0.85; }
+.msg-mine .chat-reply-quote {
+  background: rgba(0,0,0,0.12);
+}
+.msg-theirs .chat-reply-quote {
+  background: rgba(0,0,0,0.05);
+}
+[data-theme="dark"] .msg-theirs .chat-reply-quote {
+  background: rgba(255,255,255,0.07);
+}
+.chat-reply-quote-bar {
+  width: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.msg-mine   .chat-reply-quote-bar { background: rgba(255,255,255,0.8); }
+.msg-theirs .chat-reply-quote-bar { background: var(--primary); }
+.chat-reply-quote-body   { flex: 1; min-width: 0; }
+.chat-reply-quote-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin: 0 0 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msg-mine   .chat-reply-quote-name { color: rgba(255,255,255,0.9); }
+.msg-theirs .chat-reply-quote-name { color: var(--primary); }
+.chat-reply-quote-text {
+  font-size: 0.78rem;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msg-mine   .chat-reply-quote-text { color: rgba(255,255,255,0.7); }
+.msg-theirs .chat-reply-quote-text { color: var(--text-muted); }
+
+/* ── Menu de contexto (long press) ── */
+.chat-ctx-menu {
+  position: absolute;
+  z-index: 50;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: 0 6px 28px rgba(0,0,0,0.18);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  min-width: 170px;
+  animation: ctxPop 0.15s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes ctxPop {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.chat-ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.chat-ctx-item:last-child { border-bottom: none; }
+.chat-ctx-item:hover { background: var(--bg-card-alt); }
+.chat-ctx-item i { width: 18px; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+.chat-ctx-item--danger       { color: #EF233C; }
+.chat-ctx-item--danger i     { color: #EF233C; }
+[data-theme="dark"] .chat-ctx-menu { background: var(--bg-card); border-color: var(--border); }
+
+/* ── Badge verde de não lidas na lista (número) ── */
+.conv-unread-badge {
+  min-width: 20px; height: 20px;
+  border-radius: 10px;
+  background: #25D366;
+  color: #fff;
+  font-size: 0.6563rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 5px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* ── Tick do último enviado na lista ── */
+.conv-last-tick {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  margin-right: 3px;
+  flex-shrink: 0;
+}
+.conv-last-tick i              { color: var(--text-muted); }
+.conv-last-tick.tick-read i   { color: #53bdeb; }
+
+/* ── Avatar inicial no header da conversa ── */
+.chat-hdr-initial {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Ajuste: tempo fora da bolha → removido (agora fica dentro) ── */
+.chat-time-label { display: none; }
+
+/* ── Destaque de mensagem ao clicar em citação ── */
+.chat-msg.msg-highlight .chat-bubble {
+  animation: msgHighlight 1.2s ease;
+}
+@keyframes msgHighlight {
+  0%, 100% { filter: brightness(1); }
+  30%       { filter: brightness(1.25); }
+}
+
+/* ── Linha inferior da lista de conversas (preview + badge) ── */
+.conv-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.conv-bottom-row .conv-preview {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Hora verde quando há não lidas ── */
+.conv-time--unread {
+  color: #25D366;
+  font-weight: 700;
+}
+
+/* ── Dark mode extras ── */
+[data-theme="dark"] .chat-scroll-down { background: var(--bg-card-alt); }
+[data-theme="dark"] .chat-reply-bar   { background: var(--bg-card); border-top-color: var(--border); }

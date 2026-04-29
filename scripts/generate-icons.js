@@ -1,10 +1,11 @@
-// Gera ícones Android em todas as densidades a partir do logo principal
+// Gera ícones Android idênticos ao PWA:
+// fundo branco + logo centralizado com padding para safe zone (70% do canvas)
 import sharp from 'sharp';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT  = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC   = join(ROOT, 'frontend/assets/images/lopes-logo-opt.png');
+const SRC   = join(ROOT, 'frontend/assets/images/icon-any-512.png'); // maior resolução como fonte
 const RES   = join(ROOT, 'android/app/src/main/res');
 
 const DENSITIES = [
@@ -15,28 +16,36 @@ const DENSITIES = [
   { folder: 'mipmap-xxxhdpi', size: 192 },
 ];
 
+const WHITE = { r: 255, g: 255, b: 255, alpha: 1 };
+
 for (const { folder, size } of DENSITIES) {
-  const dest = join(RES, folder);
+  const dest    = join(RES, folder);
+  // Logo ocupa 72% do canvas — seguro para qualquer máscara Android (squircle, círculo, etc.)
+  const logoSize = Math.round(size * 0.72);
 
-  // ic_launcher — fundo branco + logo redimensionado com padding
-  await sharp(SRC)
-    .resize(size, size, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
+  const logo = await sharp(SRC)
+    .resize(logoSize, logoSize, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
-    .toFile(join(dest, 'ic_launcher.png'));
+    .toBuffer();
 
-  // ic_launcher_foreground — transparente (para ícone adaptativo API 26+)
-  await sharp(SRC)
-    .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+  // ic_launcher e ic_launcher_round — fundo branco igual ao PWA instalado
+  const withBg = await sharp({ create: { width: size, height: size, channels: 4, background: WHITE } })
+    .composite([{ input: logo, gravity: 'centre' }])
     .png()
-    .toFile(join(dest, 'ic_launcher_foreground.png'));
+    .toBuffer();
 
-  // ic_launcher_round — fundo branco, mesmo conteúdo (Android aplica o recorte circular)
-  await sharp(SRC)
-    .resize(size, size, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
+  await sharp(withBg).toFile(join(dest, 'ic_launcher.png'));
+  await sharp(withBg).toFile(join(dest, 'ic_launcher_round.png'));
+
+  // ic_launcher_foreground — transparente para o adaptive icon (API 26+)
+  const foreground = await sharp({ create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: logo, gravity: 'centre' }])
     .png()
-    .toFile(join(dest, 'ic_launcher_round.png'));
+    .toBuffer();
 
-  console.log(`✅ ${folder} (${size}px)`);
+  await sharp(foreground).toFile(join(dest, 'ic_launcher_foreground.png'));
+
+  console.log(`✅ ${folder} (${size}px) — logo ${logoSize}px`);
 }
 
-console.log('\n✅ Todos os ícones gerados com sucesso.');
+console.log('\n✅ Ícones gerados — fundo branco, idêntico ao PWA.');

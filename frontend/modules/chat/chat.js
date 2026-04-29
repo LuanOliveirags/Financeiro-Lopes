@@ -1,7 +1,7 @@
-﻿// ============================================================
-// CHAT.JS â€” Chat profissional com DMs entre usuÃ¡rios Lopes
-// Arquitetura: conversations (Firestore) + messages subcollection
-// Busca de contato por nÃºmero de telefone (DDD + 9 + nÃºmero)
+// ============================================================
+// CHAT.JS — Chat estilo WhatsApp
+// Recursos: DMs, ticks de leitura, typing indicator, reply,
+//           menu de contexto, scroll FAB, send/mic morph
 // ============================================================
 
 import { state } from '../../app/state/store.js';
@@ -10,26 +10,30 @@ import { generateId, esc } from '../../shared/utils/helpers.js';
 import { initFCM, sendFCMPush } from './fcm.js';
 import { savePhoneNumber } from '../../app/providers/auth-provider.js';
 
-// ===== ESTADO INTERNO =====
-let _convListListener = null;   // listener da lista de conversas
-let _msgListener      = null;   // listener das mensagens da conversa atual
-let _currentConvId    = null;   // id da conversa aberta
-let _currentOtherUser = null;   // { id, name, photoURL }
-let _chatOpen         = false;
-let _unreadByConv     = {};     // { convId: true }
-let _formBound        = false;
-let _btnBound         = false;
-let _lastTimestamp    = null;
-let _otherSeenAt      = '';     // seenAt do outro (atualizado via listener em tempo real)
-let _editingMsgId     = null;   // id da mensagem sendo editada
-let _convDocListener  = null;   // listener do doc da conversa atual (para seenAt)
-let _activeReactionBar = null;  // elemento da barra de reações ativa
+// ── Estado interno ──
+let _convListListener  = null;
+let _msgListener       = null;
+let _currentConvId     = null;
+let _currentOtherUser  = null;
+let _chatOpen          = false;
+let _unreadByConv      = {};
+let _formBound         = false;
+let _btnBound          = false;
+let _lastTimestamp     = null;
+let _otherSeenAt       = '';
+let _editingMsgId      = null;
+let _convDocListener   = null;
+let _activeReactionBar = null;
+let _replyTo           = null;      // { id, text, senderName }
+let _ctxMsgEl          = null;      // elemento de mensagem com ctx menu aberto
+let _typingTimer       = null;      // debounce para parar de digitar
+let _scrollUnread      = 0;         // mensagens recebidas com scroll pra cima
+let _isAtBottom        = true;
 
 // ================================================================
 // PÚBLICO
 // ================================================================
 
-/** Abre o painel de chat na lista de conversas. */
 export function openChat() {
   const panel = document.getElementById('chatPanel');
   if (!panel) return;
@@ -38,13 +42,11 @@ export function openChat() {
   document.body.style.overflow = 'hidden';
   _chatOpen = true;
 
-  // Verifica se o usuário tem telefone cadastrado
   if (!state.currentUser?.phone) {
     _showView('chatViewPhoneGate');
     const inp = document.getElementById('phoneGateInput');
     if (inp) { inp.value = ''; inp.focus(); }
-    const err = document.getElementById('phoneGateError');
-    if (err) err.style.display = 'none';
+    document.getElementById('phoneGateError')?.style && (document.getElementById('phoneGateError').style.display = 'none');
     return;
   }
 
@@ -53,7 +55,6 @@ export function openChat() {
   _showView('chatViewList');
 }
 
-/** Fecha o painel de chat. */
 export function closeChat() {
   const panel = document.getElementById('chatPanel');
   if (!panel) return;
@@ -61,30 +62,24 @@ export function closeChat() {
   document.body.style.overflow = '';
   _chatOpen = false;
   _stopMsgListener();
+  _hideCtxMenu();
 }
 
-/** Inicializa listeners (chamado após login bem-sucedido). */
 export function initChat() {
   if (!firebaseReady || !state.currentUser) return;
   _bindButtons();
   _initConvList();
 }
 
-/** Limpa tudo ao fazer logout. */
 export function cleanupChat() {
   _stopConvList();
   _stopMsgListener();
   closeChat();
-  _chatOpen         = false;
-  _unreadByConv     = {};
-  _formBound        = false;
-  _btnBound         = false;
-  _currentConvId    = null;
-  _currentOtherUser = null;
-  _lastTimestamp    = null;
-  _otherSeenAt      = '';
-  _editingMsgId     = null;
+  _chatOpen = false; _unreadByConv = {}; _formBound = false; _btnBound = false;
+  _currentConvId = null; _currentOtherUser = null; _lastTimestamp = null;
+  _otherSeenAt = ''; _editingMsgId = null;
   _stopConvDocListener();
+  _clearReply();
   const listEl = document.getElementById('chatMessagesList');
   if (listEl) listEl.innerHTML = '';
   _updateBadge(0);
@@ -101,10 +96,9 @@ function _initConvList() {
   _convListListener = db.collection('conversations')
     .where('participantIds', 'array-contains', state.currentUser.id)
     .onSnapshot(snapshot => {
-      const me      = state.currentUser;
+      const me = state.currentUser;
       const allData = snapshot.docs.map(d => d.data());
 
-      // Separa ativas e arquivadas
       const active = allData
         .filter(conv => !(conv.archived || {})[me.id])
         .sort((a, b) => {
@@ -117,22 +111,14 @@ function _initConvList() {
       _renderConvList(active);
       _updateArchivedBadge(archivedCount);
 
-      // Recalcula badge de nao lidos (apenas ativas)
       active.forEach(conv => {
         const last = conv.lastMessage;
-        if (!last || last.senderId === me.id) {
-          delete _unreadByConv[conv.id];
-          return;
-        }
+        if (!last || last.senderId === me.id) { delete _unreadByConv[conv.id]; return; }
         const seenAt = (conv.seenAt || {})[me.id] || '';
-        if (last.timestamp > seenAt) {
-          _unreadByConv[conv.id] = true;
-        } else {
-          delete _unreadByConv[conv.id];
-        }
+        if (last.timestamp > seenAt) _unreadByConv[conv.id] = true;
+        else delete _unreadByConv[conv.id];
       });
       _updateBadge(Object.keys(_unreadByConv).length);
-
     }, err => console.error('[Chat] Conv list error:', err));
 }
 
@@ -147,29 +133,40 @@ function _renderConvList(convs) {
 
   listEl.querySelectorAll('.conv-item').forEach(el => el.remove());
 
-  if (convs.length === 0) {
-    if (emptyEl) emptyEl.style.display = 'flex';
-    return;
-  }
+  if (convs.length === 0) { if (emptyEl) emptyEl.style.display = 'flex'; return; }
   if (emptyEl) emptyEl.style.display = 'none';
 
   const me = state.currentUser;
   convs.forEach(conv => {
     const otherId  = conv.participantIds.find(id => id !== me.id) || '';
     const info     = (conv.participants || {})[otherId] || {};
-    const name     = info.name || 'Usuario';
+    const name     = info.name || 'Usuário';
     const photo    = _resolvePhoto(info.photoURL, name);
     const last     = conv.lastMessage;
-    const lastText = last ? _truncate(last.text, 46) : '';
+    const lastText = last ? _truncate(last.text || (last.type === 'image' ? '📷 Foto' : ''), 46) : '';
     const lastTime = last ? _shortTime(last.timestamp) : '';
     const initial  = name.charAt(0).toUpperCase();
     const seenAt   = (conv.seenAt || {})[me.id] || '';
     const isUnread = last && last.senderId !== me.id && last.timestamp > seenAt;
+    const isSentByMe = last && last.senderId === me.id;
+    // Tick: lida = seenAt do outro > timestamp
+    const otherSeenAtConv = (conv.seenAt || {})[otherId] || '';
+    const isReadByOther   = isSentByMe && otherSeenAtConv && last.timestamp <= otherSeenAtConv;
 
     const avatarHtml = photo
       ? `<img src="${photo}" alt="${esc(name)}" class="conv-avatar-img"
               onerror="this.outerHTML='<div class=\\'conv-avatar-initial\\'>${esc(initial)}</div>'">`
       : `<div class="conv-avatar-initial">${esc(initial)}</div>`;
+
+    const tickHtml = isSentByMe
+      ? `<span class="conv-last-tick${isReadByOther ? ' tick-read' : ''}">
+           <i class="fa-solid fa-check-double"></i>
+         </span>`
+      : '';
+
+    const unreadHtml = isUnread
+      ? `<div class="conv-unread-badge">${_unreadByConv[conv.id] ? '1' : ''}</div>`
+      : '';
 
     const item = document.createElement('div');
     item.className = `conv-item${isUnread ? ' conv-unread' : ''}`;
@@ -183,13 +180,15 @@ function _renderConvList(convs) {
       <div class="conv-info">
         <div class="conv-top-row">
           <span class="conv-name">${esc(name)}</span>
-          <span class="conv-time">${esc(lastTime)}</span>
+          <span class="conv-time${isUnread ? ' conv-time--unread' : ''}">${esc(lastTime)}</span>
         </div>
-        <div class="conv-preview${isUnread ? ' conv-preview-unread' : ''}">
-          ${lastText ? esc(lastText) : '<em>Iniciar conversa</em>'}
+        <div class="conv-bottom-row">
+          <div class="conv-preview${isUnread ? ' conv-preview-unread' : ''}">
+            ${tickHtml}${lastText ? esc(lastText) : '<em>Iniciar conversa</em>'}
+          </div>
+          ${unreadHtml}
         </div>
       </div>
-      ${isUnread ? '<div class="conv-dot"></div>' : ''}
     `;
 
     item.addEventListener('click', () => _openConversation(
@@ -201,7 +200,7 @@ function _renderConvList(convs) {
 }
 
 // ================================================================
-// BUSCA POR TELEFONE — NOVA CONVERSA
+// BUSCA POR TELEFONE
 // ================================================================
 
 function _showSearch() {
@@ -220,14 +219,10 @@ async function _doSearch() {
 
   const raw        = input.value.trim();
   const normalized = raw.replace(/\D/g, '');
-
   resultArea.style.display = 'block';
 
   if (normalized.length < 10) {
-    resultArea.innerHTML = `<div class="srm srm-warn">
-      <i class="fa-solid fa-triangle-exclamation"></i>
-      Digite um numero valido com DDD (minimo 10 digitos).
-    </div>`;
+    resultArea.innerHTML = `<div class="srm srm-warn"><i class="fa-solid fa-triangle-exclamation"></i> Digite um numero valido com DDD.</div>`;
     return;
   }
 
@@ -237,20 +232,13 @@ async function _doSearch() {
     const snap = await db.collection('users').where('phone', '==', normalized).limit(1).get();
 
     if (snap.empty) {
-      resultArea.innerHTML = `<div class="srm srm-warn">
-        <i class="fa-solid fa-user-xmark"></i>
-        Nenhum usuario cadastrado com esse numero no WolfSource.
-      </div>`;
+      resultArea.innerHTML = `<div class="srm srm-warn"><i class="fa-solid fa-user-xmark"></i> Nenhum usuario com esse numero.</div>`;
       return;
     }
 
     const found = snap.docs[0].data();
-
     if (found.id === state.currentUser.id) {
-      resultArea.innerHTML = `<div class="srm srm-warn">
-        <i class="fa-solid fa-circle-info"></i>
-        Este e o seu proprio numero de telefone.
-      </div>`;
+      resultArea.innerHTML = `<div class="srm srm-warn"><i class="fa-solid fa-circle-info"></i> Este e o seu proprio numero.</div>`;
       return;
     }
 
@@ -275,20 +263,12 @@ async function _doSearch() {
 
     document.getElementById('btnStartChat')?.addEventListener('click', async () => {
       const convId = await _getOrCreate(found);
-      _openConversation(convId, {
-        id:       found.id,
-        name:     found.fullName,
-        login:    found.login || '',
-        photoURL: photo
-      });
+      _openConversation(convId, { id: found.id, name: found.fullName, login: found.login || '', photoURL: photo });
     });
 
   } catch (err) {
     console.error('[Chat] Erro ao buscar:', err);
-    resultArea.innerHTML = `<div class="srm srm-warn">
-      <i class="fa-solid fa-circle-xmark"></i>
-      Erro ao buscar. Verifique sua conexao.
-    </div>`;
+    resultArea.innerHTML = `<div class="srm srm-warn"><i class="fa-solid fa-circle-xmark"></i> Erro ao buscar. Verifique sua conexao.</div>`;
   }
 }
 
@@ -301,15 +281,14 @@ async function _getOrCreate(otherUser) {
 
   if (!snap.exists) {
     await ref.set({
-      id:             convId,
-      participantIds: ids,
+      id: convId, participantIds: ids,
       participants: {
         [me.id]: { name: me.fullName || me.login, photoURL: _resolvePhoto(me.photoURL, me.fullName || me.login) },
         [otherUser.id]: { name: otherUser.fullName || otherUser.name || '', photoURL: _resolvePhoto(otherUser.photoURL, otherUser.name || otherUser.fullName || otherUser.login) }
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      seenAt:    {}
+      seenAt: {}
     });
   }
   return convId;
@@ -322,32 +301,42 @@ async function _getOrCreate(otherUser) {
 function _openConversation(convId, otherUser) {
   _currentConvId    = convId;
   _currentOtherUser = otherUser;
+  _scrollUnread     = 0;
+  _isAtBottom       = true;
 
-  const titleEl = document.querySelector('#chatViewMessages .chat-title');
-  if (titleEl) titleEl.textContent = otherUser.name || 'Chat';
+  const nameEl = document.getElementById('chatHdrName');
+  if (nameEl) nameEl.textContent = otherUser.name || 'Chat';
 
   const subEl = document.getElementById('chatHdrSubtitle');
   if (subEl) subEl.textContent = 'toque aqui para ver o perfil';
 
-  const avatarEl = document.getElementById('chatHdrAvatar');
-  if (avatarEl) {
-    const hdrPhoto = _resolvePhoto(otherUser.photoURL, otherUser.name || otherUser.login);
-    if (hdrPhoto) {
-      avatarEl.src = hdrPhoto;
-      avatarEl.style.display = '';
-    } else {
-      avatarEl.style.display = 'none';
+  const avatarEl  = document.getElementById('chatHdrAvatar');
+  const initialEl = document.getElementById('chatHdrAvatarFallback');
+  const hdrPhoto  = _resolvePhoto(otherUser.photoURL, otherUser.name || otherUser.login);
+  if (hdrPhoto && avatarEl) {
+    avatarEl.src = hdrPhoto;
+    avatarEl.style.display = '';
+    if (initialEl) initialEl.style.display = 'none';
+  } else {
+    if (avatarEl) avatarEl.style.display = 'none';
+    if (initialEl) {
+      initialEl.textContent = (otherUser.name || '?').charAt(0).toUpperCase();
+      initialEl.style.display = 'flex';
     }
   }
 
-  // Listener em tempo real do doc da conversa para saber quando o outro usuário visualizou
   _stopConvDocListener();
-  const _listenOtherId = otherUser.id;
   _convDocListener = db.collection('conversations').doc(convId).onSnapshot(snap => {
-    if (snap.exists) _otherSeenAt = (snap.data().seenAt || {})[_listenOtherId] || '';
+    if (!snap.exists) return;
+    const data = snap.data();
+    _otherSeenAt = (data.seenAt || {})[otherUser.id] || '';
+
+    // Typing indicator
+    const typingTs = (data.typing || {})[otherUser.id] || '';
+    const isTyping = typingTs && (Date.now() - new Date(typingTs).getTime()) < 5000;
+    _setTypingIndicator(isTyping, otherUser.name);
   }, () => {});
 
-  // Destacar conversa ativa na lista (desktop)
   document.querySelectorAll('.conv-item').forEach(el =>
     el.classList.toggle('conv-active', el.dataset.convId === convId)
   );
@@ -355,6 +344,7 @@ function _openConversation(convId, otherUser) {
   _showView('chatViewMessages');
   _bindForm();
   _initEmojiPicker();
+  _initScrollFab();
   _startMsgListener(convId);
   _markSeen(convId);
 
@@ -362,6 +352,17 @@ function _openConversation(convId, otherUser) {
     _scrollToBottom(false);
     document.getElementById('chatInput')?.focus();
   }, 80);
+}
+
+function _setTypingIndicator(isTyping, name) {
+  const row    = document.getElementById('chatTypingRow');
+  const subEl  = document.getElementById('chatHdrSubtitle');
+  if (row) row.style.display = isTyping ? 'block' : 'none';
+  if (subEl) {
+    subEl.innerHTML = isTyping
+      ? `<span class="chat-typing-label">digitando...</span>`
+      : 'toque aqui para ver o perfil';
+  }
 }
 
 function _startMsgListener(convId) {
@@ -386,8 +387,11 @@ function _startMsgListener(convId) {
         if (msg.senderId === state.currentUser.id) return;
         if (_lastTimestamp && msg.timestamp <= _lastTimestamp) return;
 
-        if (_chatOpen) {
+        if (_chatOpen && _isAtBottom) {
           _markSeen(convId);
+        } else if (_chatOpen && !_isAtBottom) {
+          _scrollUnread++;
+          _updateScrollFab();
         } else {
           _unreadByConv[convId] = true;
           _updateBadge(Object.keys(_unreadByConv).length);
@@ -395,9 +399,7 @@ function _startMsgListener(convId) {
         }
       });
 
-      if (msgs.length > 0) {
-        _lastTimestamp = msgs[msgs.length - 1].timestamp;
-      }
+      if (msgs.length > 0) _lastTimestamp = msgs[msgs.length - 1].timestamp;
     }, err => console.error('[Chat] Msg listener error:', err));
 }
 
@@ -415,11 +417,10 @@ async function _markSeen(convId) {
     await db.collection('conversations').doc(convId).update({
       [`seenAt.${state.currentUser.id}`]: new Date().toISOString()
     });
-  } catch (e) { /* ignore */ }
+  } catch (_) {}
 }
 
-/** Envia uma mensagem na conversa atual. */
-export async function sendMessage(text) {
+export async function sendMessage(text, replyTo) {
   if (!firebaseReady || !state.currentUser || !_currentConvId) return;
   const sanitized = (text || '').trim().substring(0, 1000);
   if (!sanitized) return;
@@ -431,8 +432,12 @@ export async function sendMessage(text) {
     senderName:  state.currentUser.fullName || state.currentUser.login,
     senderPhoto: _resolvePhoto(state.currentUser.photoURL, state.currentUser.fullName || state.currentUser.login),
     text:        sanitized,
-    timestamp:   now
+    timestamp:   now,
+    ...(replyTo ? { replyTo } : {})
   };
+
+  // Para de digitar ao enviar
+  _broadcastStopTyping();
 
   try {
     const convRef = db.collection('conversations').doc(_currentConvId);
@@ -442,27 +447,157 @@ export async function sendMessage(text) {
       updatedAt:   now
     });
 
-    // FCM push para o destinatario
     if (_currentOtherUser) {
       try {
-        const doc = await db.collection('users').doc(_currentOtherUser.id).get();
+        const doc   = await db.collection('users').doc(_currentOtherUser.id).get();
         const token = doc.exists ? doc.data().fcmToken : null;
         if (token) sendFCMPush(token, msg.senderName, msg.text);
-      } catch (e) { /* ignore FCM errors */ }
+      } catch (_) {}
     }
-
   } catch (err) {
     console.error('[Chat] Erro ao enviar:', err);
     const inp = document.getElementById('chatInput');
     if (inp && !inp.value) inp.value = text;
-    import('./utils.js').then(({ showAlert }) =>
-      showAlert('Nao foi possivel enviar a mensagem.', 'error')
-    );
+    import('./utils.js').then(({ showAlert }) => showAlert('Não foi possível enviar a mensagem.', 'error'));
   }
 }
 
 // ================================================================
-// BINDINGS DE UI
+// TYPING INDICATOR
+// ================================================================
+
+function _broadcastTyping() {
+  if (!_currentConvId || !state.currentUser) return;
+  db.collection('conversations').doc(_currentConvId).update({
+    [`typing.${state.currentUser.id}`]: new Date().toISOString()
+  }).catch(() => {});
+}
+
+function _broadcastStopTyping() {
+  clearTimeout(_typingTimer);
+  _typingTimer = null;
+  if (!_currentConvId || !state.currentUser) return;
+  db.collection('conversations').doc(_currentConvId).update({
+    [`typing.${state.currentUser.id}`]: ''
+  }).catch(() => {});
+}
+
+// ================================================================
+// SCROLL FAB
+// ================================================================
+
+function _initScrollFab() {
+  const listEl = document.getElementById('chatMessagesList');
+  const fabEl  = document.getElementById('chatScrollDownBtn');
+  if (!listEl || !fabEl) return;
+
+  if (listEl._scrollBound) return;
+  listEl._scrollBound = true;
+
+  listEl.addEventListener('scroll', () => {
+    const distFromBottom = listEl.scrollHeight - listEl.scrollTop - listEl.clientHeight;
+    _isAtBottom = distFromBottom < 60;
+    if (_isAtBottom) {
+      _scrollUnread = 0;
+      _updateScrollFab();
+      if (_currentConvId && _chatOpen) _markSeen(_currentConvId);
+    }
+    fabEl.style.display = _isAtBottom ? 'none' : 'flex';
+  }, { passive: true });
+
+  fabEl.addEventListener('click', () => {
+    _scrollToBottom(true);
+    _scrollUnread = 0;
+    _updateScrollFab();
+  });
+}
+
+function _updateScrollFab() {
+  const badge = document.getElementById('chatScrollDownBadge');
+  if (badge) {
+    badge.textContent   = _scrollUnread > 9 ? '9+' : String(_scrollUnread);
+    badge.style.display = _scrollUnread > 0 ? 'flex' : 'none';
+  }
+}
+
+// ================================================================
+// REPLY
+// ================================================================
+
+function _setReply(msg) {
+  _replyTo = {
+    id:         msg.id || msg.dataset?.msgId || '',
+    text:       msg.text || msg.querySelector?.('.chat-bubble-text')?.textContent?.trim() || '',
+    senderName: msg.senderName || ''
+  };
+
+  const bar    = document.getElementById('chatReplyBar');
+  const nameEl = document.getElementById('chatReplyBarName');
+  const textEl = document.getElementById('chatReplyBarText');
+
+  if (nameEl) nameEl.textContent = _replyTo.senderName || 'Mensagem';
+  if (textEl) textEl.textContent = _truncate(_replyTo.text, 60);
+  if (bar)    bar.style.display  = 'flex';
+
+  document.getElementById('chatInput')?.focus();
+}
+
+function _clearReply() {
+  _replyTo = null;
+  const bar = document.getElementById('chatReplyBar');
+  if (bar) bar.style.display = 'none';
+}
+
+// ================================================================
+// CONTEXT MENU
+// ================================================================
+
+let _ctxMsgData = null;
+
+function _showCtxMenu(msgEl, x, y) {
+  const menu = document.getElementById('chatCtxMenu');
+  if (!menu) return;
+
+  _ctxMsgEl   = msgEl;
+  const isMine = msgEl.dataset.msgMine === 'true';
+  const msgId  = msgEl.dataset.msgId;
+  const msgTs  = msgEl.dataset.msgTs;
+  const text   = msgEl.querySelector('.chat-bubble-text')?.textContent?.trim() || '';
+  const name   = msgEl.querySelector('.chat-sender-name')?.textContent || _currentOtherUser?.name || '';
+
+  _ctxMsgData = { id: msgId, ts: msgTs, text, isMine, senderName: isMine ? (state.currentUser?.fullName || '') : name };
+
+  document.getElementById('ctxEditBtn').style.display   = isMine ? 'flex' : 'none';
+  document.getElementById('ctxDeleteBtn').style.display = isMine ? 'flex' : 'none';
+  document.getElementById('ctxCopyBtn').style.display   = text   ? 'flex' : 'none';
+
+  // Posicionar menu dentro do painel
+  const panel   = document.getElementById('chatViewMessages');
+  const rect    = panel ? panel.getBoundingClientRect() : { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
+  const menuW   = 180;
+  const menuH   = (isMine ? 4 : 2) * 44 + 8;
+  let   left    = x - rect.left;
+  let   top     = y - rect.top;
+
+  if (left + menuW > rect.width  - 8) left = rect.width  - menuW - 8;
+  if (top  + menuH > rect.height - 8) top  = top - menuH - 12;
+  if (top < 4) top = 4;
+  if (left < 4) left = 4;
+
+  menu.style.left    = left + 'px';
+  menu.style.top     = top  + 'px';
+  menu.style.display = 'block';
+}
+
+function _hideCtxMenu() {
+  const menu = document.getElementById('chatCtxMenu');
+  if (menu) menu.style.display = 'none';
+  _ctxMsgEl   = null;
+  _ctxMsgData = null;
+}
+
+// ================================================================
+// BINDINGS
 // ================================================================
 
 function _bindButtons() {
@@ -479,10 +614,9 @@ function _bindButtons() {
 
   document.getElementById('chatMsgBackBtn')
     ?.addEventListener('click', () => {
+      _broadcastStopTyping();
       _stopMsgListener();
-      _currentConvId    = null;
-      _currentOtherUser = null;
-      _lastTimestamp    = null;
+      _currentConvId = null; _currentOtherUser = null; _lastTimestamp = null;
       document.querySelectorAll('.conv-item.conv-active').forEach(el => el.classList.remove('conv-active'));
       _showView('chatViewList');
     });
@@ -496,7 +630,6 @@ function _bindButtons() {
   document.getElementById('searchPhoneInput')
     ?.addEventListener('input', _maskPhone);
 
-  // Opções da conversa
   document.getElementById('chatOptionsBtn')
     ?.addEventListener('click', _openOptions);
   document.getElementById('chatOptClear')
@@ -510,15 +643,14 @@ function _bindButtons() {
   document.getElementById('chatOptionsSheet')
     ?.addEventListener('click', e => { if (e.target === e.currentTarget) _closeOptions(); });
 
-  // Imagem
   document.getElementById('chatImageBtn')
     ?.addEventListener('click', () => document.getElementById('chatImageInput')?.click());
   document.getElementById('chatImageInput')
     ?.addEventListener('change', _handleImageUpload);
 
-  // Perfil do contato
   document.getElementById('chatHeaderInfo')
     ?.addEventListener('click', _openProfile);
+
   document.getElementById('profileCloseBtn')
     ?.addEventListener('click', _closeProfile);
   document.getElementById('chatProfilePanel')
@@ -529,12 +661,9 @@ function _bindButtons() {
     ?.addEventListener('click', () => { _closeProfile(); _archiveConversation(); });
   document.getElementById('profileBtnBlock')
     ?.addEventListener('click', () => {
-      import('./utils.js').then(({ showAlert }) =>
-        showAlert('Funcionalidade em breve.', 'info')
-      );
+      import('./utils.js').then(({ showAlert }) => showAlert('Funcionalidade em breve.', 'info'));
     });
 
-  // Meu perfil (barra inferior da lista)
   document.getElementById('chatMyProfileBtn')
     ?.addEventListener('click', _openMyProfile);
   document.getElementById('myProfileCloseBtn')
@@ -548,13 +677,11 @@ function _bindButtons() {
   document.getElementById('myProfileEditRecadoBtn')
     ?.addEventListener('click', () => document.getElementById('editRecadoBtn')?.click());
 
-  // Arquivadas
   document.getElementById('convArchivedBtn')
     ?.addEventListener('click', _loadArchivedView);
   document.getElementById('archivedBackBtn')
     ?.addEventListener('click', () => _showView('chatViewList'));
 
-  // Editar mensagem
   document.getElementById('chatEditSaveBtn')
     ?.addEventListener('click', _commitEdit);
   document.getElementById('chatEditCancelBtn')
@@ -564,32 +691,33 @@ function _bindButtons() {
   document.getElementById('chatEditMsgModal')
     ?.addEventListener('click', e => { if (e.target === e.currentTarget) _closeEditModal(); });
 
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && _chatOpen) closeChat(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && _chatOpen) {
+      if (document.getElementById('chatCtxMenu')?.style.display !== 'none') { _hideCtxMenu(); return; }
+      closeChat();
+    }
+  });
 
   // Gate de telefone
   document.getElementById('phoneGateCloseBtn')
     ?.addEventListener('click', closeChat);
 
   document.getElementById('phoneGateInput')
-    ?.addEventListener('input', _maskPhone.bind(null, { target: document.getElementById('phoneGateInput') }));
-  document.getElementById('phoneGateInput')
     ?.addEventListener('input', e => _maskPhone(e));
 
   document.getElementById('phoneGateForm')
     ?.addEventListener('submit', async e => {
       e.preventDefault();
-      const inp    = document.getElementById('phoneGateInput');
-      const errEl  = document.getElementById('phoneGateError');
-      const btn    = document.getElementById('phoneGateSubmit');
-      const raw    = inp?.value || '';
+      const inp   = document.getElementById('phoneGateInput');
+      const errEl = document.getElementById('phoneGateError');
+      const btn   = document.getElementById('phoneGateSubmit');
+      const raw   = inp?.value || '';
       if (errEl) errEl.style.display = 'none';
-      if (btn)   { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...'; }
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...'; }
       try {
         await savePhoneNumber(raw);
-        // Atualiza exibição do telefone no perfil (settings)
         const phoneEl = document.getElementById('settingsUserPhone');
         if (phoneEl) phoneEl.textContent = inp.value;
-        // Entra no chat normalmente
         if (!_convListListener) _initConvList();
         initFCM().catch(() => {});
         _showView('chatViewList');
@@ -599,6 +727,37 @@ function _bindButtons() {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check"></i> Salvar e entrar no Chat'; }
       }
     });
+
+  // Reply bar — cancelar
+  document.getElementById('chatReplyCancelBtn')
+    ?.addEventListener('click', _clearReply);
+
+  // Context menu buttons
+  document.getElementById('ctxReplyBtn')?.addEventListener('click', () => {
+    if (_ctxMsgData) _setReply(_ctxMsgData);
+    _hideCtxMenu();
+  });
+  document.getElementById('ctxCopyBtn')?.addEventListener('click', () => {
+    if (_ctxMsgData?.text) navigator.clipboard?.writeText(_ctxMsgData.text).catch(() => {});
+    _hideCtxMenu();
+  });
+  document.getElementById('ctxEditBtn')?.addEventListener('click', () => {
+    if (_ctxMsgData) _promptEdit(_ctxMsgData.id, _ctxMsgData.ts, _ctxMsgData.text);
+    _hideCtxMenu();
+  });
+  document.getElementById('ctxDeleteBtn')?.addEventListener('click', () => {
+    const data = _ctxMsgData;
+    _hideCtxMenu();
+    if (data) _deleteMessage(data.id);
+  });
+
+  // Fechar ctx menu clicando fora
+  document.addEventListener('click', e => {
+    const menu = document.getElementById('chatCtxMenu');
+    if (menu && menu.style.display !== 'none' && !menu.contains(e.target)) {
+      _hideCtxMenu();
+    }
+  });
 
   _btnBound = true;
 }
@@ -614,26 +773,52 @@ function _maskPhone(e) {
 
 function _bindForm() {
   if (_formBound) return;
-  const form = document.getElementById('chatForm');
+  const form    = document.getElementById('chatForm');
+  const input   = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('chatSendBtn');
+  const micBtn  = document.getElementById('chatMicBtn');
   if (!form) return;
+
+  // Morph send ↔ mic
+  const _updateSendMic = () => {
+    const hasText = input?.value?.trim().length > 0;
+    if (sendBtn) sendBtn.style.display = hasText ? 'flex' : 'none';
+    if (micBtn)  micBtn.style.display  = hasText ? 'none' : 'flex';
+  };
+  input?.addEventListener('input', () => {
+    _updateSendMic();
+
+    // Typing indicator: debounce 4s
+    clearTimeout(_typingTimer);
+    _broadcastTyping();
+    _typingTimer = setTimeout(_broadcastStopTyping, 4000);
+  });
+  _updateSendMic();
+
   form.addEventListener('submit', e => {
     e.preventDefault();
-    const input = document.getElementById('chatInput');
     const text  = input?.value?.trim();
     if (!text) return;
+    const reply = _replyTo ? { ..._replyTo } : undefined;
     input.value = '';
-    sendMessage(text);
-    // Close emoji picker on send
-    const picker = document.getElementById('emojiPicker');
-    if (picker) picker.style.display = 'none';
+    _updateSendMic();
+    _clearReply();
+    sendMessage(text, reply);
+    document.getElementById('emojiPicker')?.style && (document.getElementById('emojiPicker').style.display = 'none');
     document.getElementById('emojiToggleBtn')?.classList.remove('active');
   });
-  document.getElementById('chatInput')?.addEventListener('keydown', e => {
+
+  input?.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      document.getElementById('chatForm')?.dispatchEvent(new Event('submit'));
+      form.dispatchEvent(new Event('submit'));
     }
   });
+
+  micBtn?.addEventListener('click', () => {
+    import('./utils.js').then(({ showAlert }) => showAlert('Gravação de áudio em breve!', 'info'));
+  });
+
   _formBound = true;
 }
 
@@ -644,16 +829,16 @@ const EMOJI_DATA = {
   smileys: ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🫢','🫣','🤫','🤔','🫡','🤐','🤨','😐','😑','😶','🫥','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','🫤','😟','🙁','😮','😯','😲','😳','🥺','🥹','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖'],
   gestos: ['👋','🤚','🖐️','✋','🖖','🫱','🫲','🫳','🫴','👌','🤌','🤏','✌️','🤞','🫰','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','🫵','👍','👎','✊','👊','🤛','🤜','👏','🙌','🫶','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🧠','🫀','🫁','🦷','🦴','👀','👁️','👅','👄','🫦','💋'],
   coracoes: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','❣️','💕','💞','💓','💗','💖','💘','💝','💟','♥️','🫶','😍','🥰','😘','💑','💏','💌','🌹','🥀','💐'],
-  animais: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐻‍❄️','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🪱','🐛','🦋','🐌','🐞','🐜','🪰','🪲','🪳','🦟','🦗','🕷️','🐢','🐍','🦎','🦂','🦀','🦞','🦐','🦑','🐙','🐠','🐟','🐡','🐬','🐳','🐋','🦈','🐊','🐅','🐆','🦓','🦍','🦧','🐘','🦛','🦏','🐪','🐫','🦒','🦘','🦬','🐃','🐂','🐄','🐎','🐖','🐏','🐑','🦙','🐐','🦌','🐕','🐩','🦮','🐕‍🦺','🐈','🐈‍⬛','🪶','🐓','🦃','🦤','🦚','🦜','🦢','🦩','🕊️','🐇','🦝','🦨','🦡','🦫','🦦','🦥','🐁','🐀','🐿️','🦔'],
-  comida: ['🍕','🍔','🍟','🌭','🍿','🧂','🥓','🥚','🥐','🍞','🥖','🥨','🧀','🥗','🥙','🥪','🌮','🌯','🫔','🥫','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍘','🍥','🥠','🥮','🍢','🍡','🍧','🍨','🍦','🥧','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍩','🍪','🌰','🥜','🍯','🥛','🍼','🫖','☕','🍵','🧃','🥤','🧋','🍶','🍺','🍻','🥂','🍷','🥃','🍸','🍹','🧉','🍾','🫗','🍴','🥄','🔪','🫙'],
-  objetos: ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁','🏹','🎣','🤿','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🎪','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🪘','🎷','🎺','🪗','🎸','🪕','🎻','🎲','♟️','🎯','🎳','🎮','🕹️','🧸','🪄','🎈','🎉','🎊','🎁','🎀','🪅','🪩','🎗️','🏆','🥇','🥈','🥉','🏅']
+  animais: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐻‍❄️','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🪱','🐛','🦋','🐌','🐞','🐜','🪰','🪲','🪳','🦟','🦗','🕷️','🐢','🐍','🦎','🦂','🦀','🦞','🦐','🦑','🐙','🐠','🐟','🐡','🐬','🐳','🐋','🦈','🐊','🐅','🐆'],
+  comida: ['🍕','🍔','🍟','🌭','🍿','🧂','🥓','🥚','🥐','🍞','🥖','🥨','🧀','🥗','🥙','🥪','🌮','🌯','🫔','🥫','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍘','🍥','🥠','🥮','🍢','🍡','🍧','🍨','🍦','🥧','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍩','🍪','🌰','🥜','🍯','🥛','🍼','🫖','☕','🍵','🧃','🥤','🧋','🍶','🍺','🍻','🥂','🍷','🥃','🍸','🍹','🧉','🍾'],
+  objetos: ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁','🏹','🎣','🤿','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🎪','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🪘','🎷','🎺','🪗','🎸','🪕','🎻','🎲','♟️','🎯','🎳','🎮','🕹️','🧸','🪄','🎈','🎉','🎊','🎁','🎀','🪅','🪩']
 };
 
 function _initEmojiPicker() {
-  const picker = document.getElementById('emojiPicker');
-  const grid = document.getElementById('emojiGrid');
+  const picker    = document.getElementById('emojiPicker');
+  const grid      = document.getElementById('emojiGrid');
   const toggleBtn = document.getElementById('emojiToggleBtn');
-  const input = document.getElementById('chatInput');
+  const input     = document.getElementById('chatInput');
   if (!picker || !grid || !toggleBtn || !input) return;
 
   function renderCategory(cat) {
@@ -664,17 +849,17 @@ function _initEmojiPicker() {
       btn.textContent = em;
       btn.addEventListener('click', () => {
         const start = input.selectionStart;
-        const end = input.selectionEnd;
+        const end   = input.selectionEnd;
         input.value = input.value.slice(0, start) + em + input.value.slice(end);
-        const pos = start + em.length;
+        const pos   = start + em.length;
         input.setSelectionRange(pos, pos);
         input.focus();
+        input.dispatchEvent(new Event('input'));
       });
       grid.appendChild(btn);
     });
   }
 
-  // Tab clicks
   picker.querySelectorAll('.emoji-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       picker.querySelector('.emoji-tab.active')?.classList.remove('active');
@@ -683,7 +868,6 @@ function _initEmojiPicker() {
     });
   });
 
-  // Toggle picker
   toggleBtn.addEventListener('click', () => {
     const showing = picker.style.display === 'none';
     picker.style.display = showing ? '' : 'none';
@@ -691,15 +875,13 @@ function _initEmojiPicker() {
     if (showing) renderCategory(picker.querySelector('.emoji-tab.active')?.dataset.cat || 'smileys');
   });
 
-  // Close when clicking outside
-  document.addEventListener('click', (e) => {
+  document.addEventListener('click', e => {
     if (picker.style.display !== 'none' && !picker.contains(e.target) && !toggleBtn.contains(e.target)) {
       picker.style.display = 'none';
       toggleBtn.classList.remove('active');
     }
   });
 
-  // Render default
   renderCategory('smileys');
 }
 
@@ -717,7 +899,7 @@ function _showView(id) {
 }
 
 // ================================================================
-// RENDERIZACAO
+// RENDERIZAÇÃO DE MENSAGENS
 // ================================================================
 
 function _renderMessages(messages) {
@@ -730,7 +912,7 @@ function _renderMessages(messages) {
   let lastDateKey = '';
   let html = '';
 
-  messages.forEach(msg => {
+  messages.forEach((msg, idx) => {
     const tsDate  = msg.timestamp ? new Date(msg.timestamp) : null;
     const dateKey = tsDate ? tsDate.toLocaleDateString('pt-BR') : '';
     if (dateKey && dateKey !== lastDateKey) {
@@ -738,41 +920,73 @@ function _renderMessages(messages) {
       lastDateKey = dateKey;
     }
 
-    const isMine  = msg.senderId === me.id;
-    const timeStr = tsDate
-      ? tsDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-      : '';
+    const isMine   = msg.senderId === me.id;
+    const timeStr  = tsDate ? tsDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
     const initial  = (msg.senderName || '?').charAt(0).toUpperCase();
     const photo    = _resolvePhoto(msg.senderPhoto, msg.senderName);
+    const isEdited = !!msg.editedAt;
+
+    // Status tick (apenas para mensagens minhas)
+    const isRead = isMine && _otherSeenAt && msg.timestamp <= _otherSeenAt;
+    const tickHtml = isMine
+      ? `<span class="msg-ticks${isRead ? ' tick-read' : ''}"><i class="fa-solid fa-check-double"></i></span>`
+      : '';
+
+    // Avatar
     const avatarEl = photo
       ? `<img src="${photo}" alt="${esc(msg.senderName)}" class="chat-avatar-bubble"
               onerror="this.outerHTML='<div class=\\'chat-avatar-bubble chat-initial\\'>${esc(initial)}</div>'">`
       : `<div class="chat-avatar-bubble chat-initial">${esc(initial)}</div>`;
 
-    const isEdited = !!msg.editedAt;
     const reactionsHtml = _buildReactionsHtml(msg.reactions, me.id);
 
+    // Reply quote dentro da bolha
+    let replyHtml = '';
+    if (msg.replyTo) {
+      replyHtml = `<div class="chat-reply-quote" data-jump-to="${esc(msg.replyTo.id || '')}">
+        <div class="chat-reply-quote-bar"></div>
+        <div class="chat-reply-quote-body">
+          <p class="chat-reply-quote-name">${esc(msg.replyTo.senderName || 'Mensagem')}</p>
+          <p class="chat-reply-quote-text">${esc(_truncate(msg.replyTo.text || '', 60))}</p>
+        </div>
+      </div>`;
+    }
+
+    // Conteúdo da bolha
     const bubbleContent = msg.type === 'image' && msg.imageUrl
       ? `<a href="${esc(msg.imageUrl)}" target="_blank" rel="noopener noreferrer" class="chat-img-link">
            <img src="${esc(msg.imageUrl)}" class="chat-bubble-img" alt="Imagem" loading="lazy">
          </a>`
       : `<p class="chat-bubble-text">${_formatText(msg.text)}</p>`;
 
+    // Footer da bolha (hora + ticks + editado)
+    const footerHtml = `<div class="chat-bubble-footer">
+      ${isEdited ? '<span class="chat-edited">editado</span>' : ''}
+      <span class="chat-bubble-time">${timeStr}</span>
+      ${tickHtml}
+    </div>`;
+
     html += `
-      <div class="chat-msg ${isMine ? 'msg-mine' : 'msg-theirs'}" data-msg-id="${esc(msg.id)}" data-msg-ts="${esc(msg.timestamp)}" data-msg-mine="${isMine}">
+      <div class="chat-msg ${isMine ? 'msg-mine' : 'msg-theirs'}"
+           data-msg-id="${esc(msg.id)}"
+           data-msg-ts="${esc(msg.timestamp)}"
+           data-msg-mine="${isMine}"
+           data-msg-text="${esc(msg.text || '')}"
+           data-msg-sender="${esc(msg.senderName || '')}">
         ${!isMine ? `<div class="chat-msg-avatar">${avatarEl}</div>` : ''}
         <div class="chat-bubble-col">
           ${!isMine ? `<span class="chat-sender-name">${esc(msg.senderName)}</span>` : ''}
           <div class="chat-bubble-wrap">
             <div class="chat-bubble${msg.type === 'image' ? ' chat-bubble--img' : ''}">
+              ${replyHtml}
               ${bubbleContent}
+              ${footerHtml}
             </div>
             <button type="button" class="chat-react-trigger" title="Reagir" data-msg-id="${esc(msg.id)}">
               <i class="fa-regular fa-face-smile"></i>
             </button>
           </div>
           ${reactionsHtml}
-          <span class="chat-time-label">${timeStr}${isEdited ? ' <span class="chat-edited">\u2022 editado</span>' : ''}</span>
         </div>
         ${isMine ? `<div class="chat-msg-avatar chat-avatar-mine">${avatarEl}</div>` : ''}
       </div>`;
@@ -782,13 +996,24 @@ function _renderMessages(messages) {
   _bindMsgLongPress(listEl);
   _bindReactionBadges(listEl);
   _bindReactTriggers(listEl);
-  _scrollToBottom(_chatOpen);
+  _bindQuoteJump(listEl);
+  if (_isAtBottom) _scrollToBottom(_chatOpen);
 }
 
-/**
- * Resolve a foto de um usuário.
- * Prioridade: photoURL → imagem local por nome → string vazia.
- */
+function _bindQuoteJump(listEl) {
+  listEl.querySelectorAll('.chat-reply-quote[data-jump-to]').forEach(el => {
+    el.addEventListener('click', () => {
+      const targetId = el.dataset.jumpTo;
+      if (!targetId) return;
+      const target = listEl.querySelector(`[data-msg-id="${targetId}"]`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.add('msg-highlight');
+      setTimeout(() => target.classList.remove('msg-highlight'), 1500);
+    });
+  });
+}
+
 function _resolvePhoto(photoURL, nameOrLogin) {
   if (photoURL) return photoURL;
   const n = (nameOrLogin || '').toLowerCase();
@@ -818,9 +1043,8 @@ function _shortTime(ts) {
   if (!ts) return '';
   const d     = new Date(ts);
   const today = new Date();
-  if (d.toLocaleDateString('pt-BR') === today.toLocaleDateString('pt-BR')) {
+  if (d.toLocaleDateString('pt-BR') === today.toLocaleDateString('pt-BR'))
     return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  }
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
@@ -862,27 +1086,22 @@ async function _notifyNewMessage(msg) {
   try {
     const reg = await navigator.serviceWorker.ready;
     await reg.showNotification(`💬 ${msg.senderName}`, {
-      body:               msg.text.length > 100 ? msg.text.substring(0, 100) + '...' : msg.text,
+      body:               msg.text?.length > 100 ? msg.text.substring(0, 100) + '...' : (msg.text || ''),
       icon:               'frontend/assets/images/icon-any-192.png',
       badge:              'frontend/assets/images/icon-any-96.png',
       tag:                'chat-incoming',
       renotify:           true,
       requireInteraction: false,
       vibrate:            [200, 100, 200],
-      data:               { type: 'chat' },
-      actions: [
-        { action: 'open',    title: '💬 Abrir Chat' },
-        { action: 'dismiss', title: 'Fechar'        }
-      ]
+      data:               { type: 'chat' }
     });
-  } catch (err) {
-    console.warn('[Chat] Notificacao falhou:', err);
-  }
+  } catch (_) {}
 }
 
 // ================================================================
-// CONV DOC LISTENER (seenAt do outro usuário)
+// CONV DOC LISTENER
 // ================================================================
+
 function _stopConvDocListener() {
   if (_convDocListener) { _convDocListener(); _convDocListener = null; }
 }
@@ -890,6 +1109,7 @@ function _stopConvDocListener() {
 // ================================================================
 // OPÇÕES DA CONVERSA
 // ================================================================
+
 function _openOptions() {
   const sheet = document.getElementById('chatOptionsSheet');
   if (sheet) sheet.style.display = 'flex';
@@ -901,8 +1121,9 @@ function _closeOptions() {
 }
 
 // ================================================================
-// PERFIL DO CONTATO
+// PERFIS
 // ================================================================
+
 function _openMyProfile() {
   const panel = document.getElementById('chatMyProfilePanel');
   if (!panel || !state.currentUser) return;
@@ -919,33 +1140,27 @@ function _openProfile() {
   const panel = document.getElementById('chatProfilePanel');
   if (!panel) return;
 
-  const user = _currentOtherUser;
+  const user  = _currentOtherUser;
   const photo = _resolvePhoto(user.photoURL, user.name || user.login);
 
-  // Avatar
   const avatarEl = document.getElementById('profileAvatar');
   const fallback = document.getElementById('profileAvatarFallback');
   if (avatarEl && photo) {
-    avatarEl.src = photo;
-    avatarEl.style.display = '';
+    avatarEl.src = photo; avatarEl.style.display = '';
     if (fallback) fallback.style.display = 'none';
   } else {
     if (avatarEl) avatarEl.style.display = 'none';
     if (fallback) fallback.style.display = 'flex';
   }
 
-  // Name
   const nameEl = document.getElementById('profileName');
   if (nameEl) nameEl.textContent = user.name || 'Contato';
 
-  // Phone - tentamos buscar do Firestore
   const phoneEl = document.getElementById('profilePhone');
   if (phoneEl) {
     phoneEl.textContent = '';
     db.collection('users').doc(user.id).get().then(snap => {
-      if (snap.exists && snap.data().phone) {
-        phoneEl.textContent = _formatPhone(snap.data().phone);
-      }
+      if (snap.exists && snap.data().phone) phoneEl.textContent = _formatPhone(snap.data().phone);
     }).catch(() => {});
   }
 
@@ -957,36 +1172,27 @@ function _closeProfile() {
   if (panel) panel.style.display = 'none';
 }
 
+// ================================================================
+// AÇÕES DA CONVERSA
+// ================================================================
+
 async function _clearConversation() {
   _closeOptions();
   if (!_currentConvId) return;
   if (!confirm('Apagar todas as mensagens desta conversa? Esta ação não pode ser desfeita.')) return;
-
   try {
     const msgsRef = db.collection('conversations').doc(_currentConvId).collection('messages');
     const snap    = await msgsRef.get();
-
-    let batch = db.batch();
-    let count = 0;
+    let batch = db.batch(); let count = 0;
     for (const doc of snap.docs) {
       batch.delete(doc.ref);
-      if (++count >= 400) {
-        await batch.commit();
-        batch = db.batch();
-        count = 0;
-      }
+      if (++count >= 400) { await batch.commit(); batch = db.batch(); count = 0; }
     }
     if (count > 0) await batch.commit();
-
-    await db.collection('conversations').doc(_currentConvId).update({
-      lastMessage: null,
-      updatedAt:   new Date().toISOString()
-    });
+    await db.collection('conversations').doc(_currentConvId).update({ lastMessage: null, updatedAt: new Date().toISOString() });
   } catch (err) {
-    console.error('[Chat] Erro ao limpar conversa:', err);
-    import('./utils.js').then(({ showAlert }) =>
-      showAlert('Não foi possível limpar a conversa.', 'error')
-    );
+    console.error('[Chat] Erro ao limpar:', err);
+    import('./utils.js').then(({ showAlert }) => showAlert('Não foi possível limpar a conversa.', 'error'));
   }
 }
 
@@ -994,76 +1200,78 @@ async function _archiveConversation() {
   _closeOptions();
   if (!_currentConvId || !state.currentUser) return;
   const me = state.currentUser.id;
-
   try {
     const convRef = db.collection('conversations').doc(_currentConvId);
     const snap    = await convRef.get();
     const isArch  = snap.exists && !!(snap.data().archived || {})[me];
-
     await convRef.update({ [`archived.${me}`]: !isArch });
-
-    _stopMsgListener();
-    _currentConvId    = null;
-    _currentOtherUser = null;
-    _lastTimestamp    = null;
+    _stopMsgListener(); _currentConvId = null; _currentOtherUser = null; _lastTimestamp = null;
     _showView('chatViewList');
-
     import('./utils.js').then(({ showAlert }) =>
       showAlert(isArch ? 'Conversa restaurada.' : 'Conversa arquivada.', 'success')
     );
   } catch (err) {
-    console.error('[Chat] Erro ao arquivar conversa:', err);
-    import('./utils.js').then(({ showAlert }) =>
-      showAlert('Erro ao arquivar conversa.', 'error')
-    );
+    console.error('[Chat] Erro ao arquivar:', err);
+    import('./utils.js').then(({ showAlert }) => showAlert('Erro ao arquivar.', 'error'));
   }
 }
 
 async function _deleteConversation() {
   _closeOptions();
   if (!_currentConvId) return;
-  if (!confirm('Excluir esta conversa permanentemente? As mensagens serão apagadas para todos os participantes.')) return;
-
+  if (!confirm('Excluir esta conversa permanentemente?')) return;
   try {
     const convRef = db.collection('conversations').doc(_currentConvId);
-    const msgsRef = convRef.collection('messages');
-    const snap    = await msgsRef.get();
-
-    let batch = db.batch();
-    let count = 0;
+    const snap    = await convRef.collection('messages').get();
+    let batch = db.batch(); let count = 0;
     for (const doc of snap.docs) {
       batch.delete(doc.ref);
       if (++count >= 400) { await batch.commit(); batch = db.batch(); count = 0; }
     }
     if (count > 0) await batch.commit();
     await convRef.delete();
-
-    _stopMsgListener();
-    _currentConvId    = null;
-    _currentOtherUser = null;
-    _lastTimestamp    = null;
+    _stopMsgListener(); _currentConvId = null; _currentOtherUser = null; _lastTimestamp = null;
     _showView('chatViewList');
-
-    import('./utils.js').then(({ showAlert }) =>
-      showAlert('Conversa excluída.', 'success')
-    );
+    import('./utils.js').then(({ showAlert }) => showAlert('Conversa excluída.', 'success'));
   } catch (err) {
-    console.error('[Chat] Erro ao excluir conversa:', err);
-    import('./utils.js').then(({ showAlert }) =>
-      showAlert('Não foi possível excluir a conversa.', 'error')
-    );
+    console.error('[Chat] Erro ao excluir:', err);
+    import('./utils.js').then(({ showAlert }) => showAlert('Não foi possível excluir.', 'error'));
+  }
+}
+
+async function _deleteMessage(msgId) {
+  if (!_currentConvId || !state.currentUser) return;
+  if (!confirm('Apagar esta mensagem para você?')) return;
+  try {
+    const convRef = db.collection('conversations').doc(_currentConvId);
+    await convRef.collection('messages').doc(msgId).delete();
+    // Atualiza lastMessage se necessário
+    const msgsSnap = await convRef.collection('messages').orderBy('timestamp', 'desc').limit(1).get();
+    if (msgsSnap.empty) {
+      await convRef.update({ lastMessage: null, updatedAt: new Date().toISOString() });
+    } else {
+      const last = msgsSnap.docs[0].data();
+      await convRef.update({
+        lastMessage: { text: last.text || '', timestamp: last.timestamp, senderId: last.senderId },
+        updatedAt: new Date().toISOString()
+      });
+    }
+  } catch (err) {
+    console.error('[Chat] Erro ao apagar mensagem:', err);
+    import('./utils.js').then(({ showAlert }) => showAlert('Não foi possível apagar a mensagem.', 'error'));
   }
 }
 
 // ================================================================
-// ENVIO DE IMAGEM
+// UPLOAD DE IMAGEM
 // ================================================================
+
 async function _handleImageUpload(e) {
   const file = e.target.files?.[0];
   e.target.value = '';
   if (!file) return;
   if (!file.type.startsWith('image/')) {
-    import('./utils.js').then(({ showAlert }) => showAlert('Selecione um arquivo de imagem válido.', 'error'));
+    import('./utils.js').then(({ showAlert }) => showAlert('Selecione uma imagem válida.', 'error'));
     return;
   }
   if (file.size > 10 * 1024 * 1024) {
@@ -1080,15 +1288,15 @@ async function _handleImageUpload(e) {
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; }
 
   try {
-    const msgId   = generateId();
-    const ext     = file.name.split('.').pop() || 'jpg';
-    const path    = `chat-images/${_currentConvId}/${msgId}.${ext}`;
-    const ref     = storage.ref(path);
+    const msgId = generateId();
+    const ext   = file.name.split('.').pop() || 'jpg';
+    const path  = `chat-images/${_currentConvId}/${msgId}.${ext}`;
+    const ref   = storage.ref(path);
     await ref.put(file);
-    const url     = await ref.getDownloadURL();
+    const url = await ref.getDownloadURL();
 
-    const now     = new Date().toISOString();
-    const me      = state.currentUser;
+    const now = new Date().toISOString();
+    const me  = state.currentUser;
     const msg = {
       id:          msgId,
       senderId:    me.id,
@@ -1103,28 +1311,29 @@ async function _handleImageUpload(e) {
     const convRef = db.collection('conversations').doc(_currentConvId);
     await convRef.collection('messages').doc(msgId).set(msg);
     await convRef.update({
-      lastMessage: { text: '📷 Imagem', timestamp: now, senderId: me.id },
+      lastMessage: { text: '📷 Foto', timestamp: now, senderId: me.id },
       updatedAt:   now
     });
 
     if (_currentOtherUser) {
       try {
-        const doc = await db.collection('users').doc(_currentOtherUser.id).get();
+        const doc   = await db.collection('users').doc(_currentOtherUser.id).get();
         const token = doc.exists ? doc.data().fcmToken : null;
-        if (token) sendFCMPush(token, msg.senderName, '📷 Imagem');
-      } catch (_) { /* ignore */ }
+        if (token) sendFCMPush(token, msg.senderName, '📷 Foto');
+      } catch (_) {}
     }
   } catch (err) {
     console.error('[Chat] Erro ao enviar imagem:', err);
     import('./utils.js').then(({ showAlert }) => showAlert('Não foi possível enviar a imagem.', 'error'));
   } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-image"></i>'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paperclip"></i>'; }
   }
 }
 
 // ================================================================
-// CONVERSAS ARQUIVADAS
+// ARQUIVADAS
 // ================================================================
+
 function _updateArchivedBadge(count) {
   const btn = document.getElementById('convArchivedBtn');
   if (!btn) return;
@@ -1145,26 +1354,16 @@ async function _loadArchivedView() {
   );
 
   try {
-    const snap = await db.collection('conversations')
-      .where('participantIds', 'array-contains', state.currentUser.id)
-      .get();
-
+    const snap    = await db.collection('conversations')
+      .where('participantIds', 'array-contains', state.currentUser.id).get();
     const me       = state.currentUser;
-    const archived = snap.docs
-      .map(d => d.data())
+    const archived = snap.docs.map(d => d.data())
       .filter(conv => !!(conv.archived || {})[me.id])
-      .sort((a, b) => {
-        const ta = a.updatedAt || a.createdAt || '';
-        const tb = b.updatedAt || b.createdAt || '';
-        return tb > ta ? 1 : -1;
-      });
+      .sort((a, b) => ((b.updatedAt || b.createdAt || '') > (a.updatedAt || a.createdAt || '') ? 1 : -1));
 
     document.getElementById('archLoadingEl')?.remove();
 
-    if (archived.length === 0) {
-      if (emptyEl) emptyEl.style.display = 'flex';
-      return;
-    }
+    if (archived.length === 0) { if (emptyEl) emptyEl.style.display = 'flex'; return; }
     if (emptyEl) emptyEl.style.display = 'none';
 
     archived.forEach(conv => {
@@ -1188,43 +1387,37 @@ async function _loadArchivedView() {
           </div>
           <div class="conv-preview">Arquivada</div>
         </div>
-        <button class="conv-unarchive-btn" data-conv-id="${esc(conv.id)}" title="Restaurar conversa">
+        <button class="conv-unarchive-btn" data-conv-id="${esc(conv.id)}" title="Restaurar">
           <i class="fa-solid fa-box-open"></i>
         </button>`;
 
       item.querySelector('.conv-unarchive-btn')?.addEventListener('click', async e => {
         e.stopPropagation();
-        const convId = e.currentTarget.dataset.convId;
         try {
-          await db.collection('conversations').doc(convId).update({
-            [`archived.${me.id}`]: false
-          });
+          await db.collection('conversations').doc(e.currentTarget.dataset.convId)
+            .update({ [`archived.${me.id}`]: false });
           _loadArchivedView();
         } catch (err) { console.error('[Chat] Erro ao restaurar:', err); }
       });
 
-      item.addEventListener('click', () => {
-        _openConversation(conv.id, { id: otherId, name, photoURL: photo });
-      });
+      item.addEventListener('click', () => _openConversation(conv.id, { id: otherId, name, photoURL: photo }));
       listEl.appendChild(item);
     });
-
   } catch (err) {
     console.error('[Chat] Erro ao carregar arquivadas:', err);
     document.getElementById('archLoadingEl')?.remove();
-    const listEl2 = document.getElementById('archivedListEl');
-    if (listEl2) listEl2.insertAdjacentHTML('afterbegin',
+    document.getElementById('archivedListEl')?.insertAdjacentHTML('afterbegin',
       '<div class="srm srm-warn">Erro ao carregar arquivadas.</div>'
     );
   }
 }
 
 // ================================================================
-// REAÇÕES EM MENSAGENS
+// REAÇÕES
 // ================================================================
-const QUICK_REACTIONS = ['❤️','😂','😮','😢','😡','👍'];
 
-const MORE_REACTIONS = [
+const QUICK_REACTIONS = ['❤️','😂','😮','😢','😡','👍'];
+const MORE_REACTIONS  = [
   '😍','🥰','😘','🤣','😅','😜','🤭','🤩',
   '🙏','👏','🔥','🎉','💯','✨','💔','😱',
   '😈','😔','😳','🤔','🙄','🥵','🥶','🤢',
@@ -1234,7 +1427,6 @@ const MORE_REACTIONS = [
 
 function _buildReactionsHtml(reactions, myId) {
   if (!reactions || typeof reactions !== 'object') return '';
-  // Agrupar: { emoji: { count, hasMine } }
   const grouped = {};
   for (const [uid, emoji] of Object.entries(reactions)) {
     if (!grouped[emoji]) grouped[emoji] = { count: 0, hasMine: false };
@@ -1261,12 +1453,10 @@ function _showReactionBar(msgEl) {
   const bar = document.createElement('div');
   bar.className = 'chat-reaction-bar';
 
-  // Quick reactions
   QUICK_REACTIONS.forEach(em => {
     const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = em;
-    btn.addEventListener('click', (e) => {
+    btn.type = 'button'; btn.textContent = em;
+    btn.addEventListener('click', e => {
       e.stopPropagation();
       _toggleReaction(msgEl.dataset.msgId, em);
       _closeReactionBar();
@@ -1274,43 +1464,32 @@ function _showReactionBar(msgEl) {
     bar.appendChild(btn);
   });
 
-  // "+" button for more emojis
   const plusBtn = document.createElement('button');
-  plusBtn.type = 'button';
-  plusBtn.className = 'reaction-more-btn';
+  plusBtn.type = 'button'; plusBtn.className = 'reaction-more-btn';
   plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
-  plusBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    _showExpandedReactions(bar, msgEl);
-  });
+  plusBtn.addEventListener('click', e => { e.stopPropagation(); _showExpandedReactions(bar, msgEl); });
   bar.appendChild(plusBtn);
 
-  // Position above the bubble
   msgEl.style.position = 'relative';
   const isMine = msgEl.dataset.msgMine === 'true';
-  bar.style.bottom = '100%';
+  bar.style.position    = 'absolute';
+  bar.style.bottom      = '100%';
   bar.style.marginBottom = '6px';
-  if (isMine) {
-    bar.style.right = '40px';
-  } else {
-    bar.style.left = '40px';
-  }
+  if (isMine) bar.style.right = '40px';
+  else         bar.style.left  = '40px';
   msgEl.appendChild(bar);
   _activeReactionBar = bar;
 }
 
 function _showExpandedReactions(bar, msgEl) {
-  // Toggle expanded grid
   let grid = bar.querySelector('.reaction-expanded-grid');
   if (grid) { grid.remove(); return; }
-
   grid = document.createElement('div');
   grid.className = 'reaction-expanded-grid';
   MORE_REACTIONS.forEach(em => {
     const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = em;
-    btn.addEventListener('click', (e) => {
+    btn.type = 'button'; btn.textContent = em;
+    btn.addEventListener('click', e => {
       e.stopPropagation();
       _toggleReaction(msgEl.dataset.msgId, em);
       _closeReactionBar();
@@ -1321,32 +1500,21 @@ function _showExpandedReactions(bar, msgEl) {
 }
 
 function _closeReactionBar() {
-  if (_activeReactionBar) {
-    _activeReactionBar.remove();
-    _activeReactionBar = null;
-  }
+  if (_activeReactionBar) { _activeReactionBar.remove(); _activeReactionBar = null; }
 }
 
 async function _toggleReaction(msgId, emoji) {
   if (!_currentConvId || !state.currentUser) return;
   const me = state.currentUser.id;
   try {
-    const msgRef = db.collection('conversations').doc(_currentConvId)
-      .collection('messages').doc(msgId);
-    const snap = await msgRef.get();
+    const msgRef  = db.collection('conversations').doc(_currentConvId).collection('messages').doc(msgId);
+    const snap    = await msgRef.get();
     if (!snap.exists) return;
     const reactions = snap.data().reactions || {};
-    if (reactions[me] === emoji) {
-      // Remove own reaction (toggle off)
-      delete reactions[me];
-    } else {
-      // Set/change reaction
-      reactions[me] = emoji;
-    }
+    if (reactions[me] === emoji) delete reactions[me];
+    else reactions[me] = emoji;
     await msgRef.update({ reactions });
-  } catch (err) {
-    console.error('[Chat] Erro ao reagir:', err);
-  }
+  } catch (err) { console.error('[Chat] Erro ao reagir:', err); }
 }
 
 function _bindReactionBadges(listEl) {
@@ -1355,14 +1523,13 @@ function _bindReactionBadges(listEl) {
     if (!badge) return;
     const msgEl = badge.closest('.chat-msg');
     if (!msgEl) return;
-    const emoji = badge.dataset.reactEmoji;
-    if (emoji) _toggleReaction(msgEl.dataset.msgId, emoji);
+    _toggleReaction(msgEl.dataset.msgId, badge.dataset.reactEmoji);
   });
 }
 
 function _bindReactTriggers(listEl) {
   listEl.querySelectorAll('.chat-react-trigger').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', e => {
       e.stopPropagation();
       const msgEl = btn.closest('.chat-msg');
       if (msgEl) _showReactionBar(msgEl);
@@ -1370,28 +1537,29 @@ function _bindReactTriggers(listEl) {
   });
 }
 
-// Close reaction bar on click outside
 document.addEventListener('click', e => {
-  if (_activeReactionBar && !_activeReactionBar.contains(e.target) && !e.target.closest('.chat-msg')) {
+  if (_activeReactionBar && !_activeReactionBar.contains(e.target) && !e.target.closest('.chat-msg'))
     _closeReactionBar();
-  }
 });
 
 // ================================================================
-// EDITAR MENSAGEM (long-press + modal) & REAÇÃO (double-tap)
+// LONG PRESS → CONTEXT MENU (substitui só o edit)
 // ================================================================
+
 function _bindMsgLongPress(listEl) {
   if (listEl._lpBound) return;
   listEl._lpBound = true;
 
-  let timer = null;
+  let timer   = null;
   let lastTap = 0;
   const cancel = () => { clearTimeout(timer); timer = null; };
 
-  // Double-tap → reaction bar (any message)
+  // Double-tap → reaction bar
   listEl.addEventListener('click', e => {
+    if (e.target.closest('.chat-reaction-bar') || e.target.closest('.chat-reaction-badge')
+        || e.target.closest('.chat-ctx-menu')) return;
     const msgEl = e.target.closest('.chat-msg');
-    if (!msgEl || e.target.closest('.chat-reaction-bar') || e.target.closest('.chat-reaction-badge')) return;
+    if (!msgEl) return;
     const now = Date.now();
     if (now - lastTap < 350) {
       e.preventDefault();
@@ -1402,29 +1570,36 @@ function _bindMsgLongPress(listEl) {
     }
   });
 
-  // Long-press → edit (own messages only)
+  // Long-press → context menu
   listEl.addEventListener('pointerdown', e => {
-    const msgEl = e.target.closest('[data-msg-mine="true"]');
+    if (e.target.closest('.chat-reaction-bar') || e.target.closest('.chat-react-trigger')
+        || e.target.closest('.chat-ctx-menu')) return;
+    const msgEl = e.target.closest('.chat-msg');
     if (!msgEl) return;
     timer = setTimeout(() => {
       timer = null;
-      const msgId   = msgEl.dataset.msgId;
-      const msgTs   = msgEl.dataset.msgTs;
-      const msgText = msgEl.querySelector('.chat-bubble-text')?.textContent?.trim() || '';
-      _promptEdit(msgId, msgTs, msgText);
-    }, 600);
+      e.preventDefault();
+      _showCtxMenu(msgEl, e.clientX, e.clientY);
+    }, 500);
   });
 
   listEl.addEventListener('pointerup',     cancel);
   listEl.addEventListener('pointercancel', cancel);
   listEl.addEventListener('pointermove',   cancel);
   listEl.addEventListener('contextmenu', e => {
-    if (e.target.closest('.chat-msg')) e.preventDefault();
+    if (e.target.closest('.chat-msg')) {
+      e.preventDefault();
+      const msgEl = e.target.closest('.chat-msg');
+      _showCtxMenu(msgEl, e.clientX, e.clientY);
+    }
   });
 }
 
+// ================================================================
+// EDITAR MENSAGEM
+// ================================================================
+
 function _promptEdit(msgId, msgTs, msgText) {
-  // Só pode editar se o outro ainda não visualizou
   if (_otherSeenAt && msgTs <= _otherSeenAt) {
     import('./utils.js').then(({ showAlert }) =>
       showAlert('Esta mensagem já foi visualizada e não pode ser editada.', 'warning')
@@ -1437,10 +1612,7 @@ function _promptEdit(msgId, msgTs, msgText) {
   if (!modal || !input) return;
   input.value = msgText;
   modal.style.display = 'flex';
-  requestAnimationFrame(() => {
-    input.focus();
-    input.setSelectionRange(0, input.value.length);
-  });
+  requestAnimationFrame(() => { input.focus(); input.setSelectionRange(0, input.value.length); });
 }
 
 function _closeEditModal() {
@@ -1459,14 +1631,12 @@ async function _commitEdit() {
 
   try {
     const now    = new Date().toISOString();
-    const msgRef = db.collection('conversations').doc(_currentConvId)
-      .collection('messages').doc(msgId);
+    const msgRef = db.collection('conversations').doc(_currentConvId).collection('messages').doc(msgId);
     const msgSnap = await msgRef.get();
     const msgData = msgSnap.exists ? msgSnap.data() : null;
 
     await msgRef.update({ text: newText, editedAt: now });
 
-    // Atualiza lastMessage se for a última mensagem da conversa
     if (msgData) {
       const convSnap = await db.collection('conversations').doc(_currentConvId).get();
       if (convSnap.exists && convSnap.data().lastMessage?.timestamp === msgData.timestamp) {
@@ -1476,10 +1646,7 @@ async function _commitEdit() {
       }
     }
   } catch (err) {
-    console.error('[Chat] Erro ao editar mensagem:', err);
-    import('./utils.js').then(({ showAlert }) =>
-      showAlert('Não foi possível editar a mensagem.', 'error')
-    );
+    console.error('[Chat] Erro ao editar:', err);
+    import('./utils.js').then(({ showAlert }) => showAlert('Não foi possível editar a mensagem.', 'error'));
   }
 }
-

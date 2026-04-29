@@ -4,11 +4,14 @@ WolfSource Backend
 """
 
 import os
+import json
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from datetime import datetime
+import firebase_admin
+from firebase_admin import credentials, messaging as fcm_messaging
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -27,6 +30,24 @@ db = SQLAlchemy(app)
 
 # Configurar CORS
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# ===== FIREBASE ADMIN (FCM V1) =====
+_firebase_app = None
+
+def _get_firebase_app():
+    global _firebase_app
+    if _firebase_app is not None:
+        return _firebase_app
+    sa_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON')
+    if not sa_json:
+        return None
+    try:
+        sa_dict = json.loads(sa_json)
+        cred = credentials.Certificate(sa_dict)
+        _firebase_app = firebase_admin.initialize_app(cred)
+    except Exception as e:
+        print(f'[FCM] Falha ao inicializar Firebase Admin: {e}')
+    return _firebase_app
 
 # ===== MODELOS =====
 class Family(db.Model):
@@ -404,6 +425,45 @@ def get_stats():
     })
 
 
+# ===== ROTA FCM V1 =====
+@app.route('/api/fcm/send', methods=['POST'])
+def send_fcm_push():
+    """Envia push notification via FCM V1 API usando firebase-admin"""
+    if not _get_firebase_app():
+        return jsonify({'error': 'Firebase Admin não configurado (FIREBASE_SERVICE_ACCOUNT_JSON ausente)'}), 503
+
+    data = request.get_json() or {}
+    token = data.get('token')
+    title = data.get('title', '')
+    body  = data.get('body', '')
+    extra = {str(k): str(v) for k, v in (data.get('data') or {}).items()}
+
+    if not token:
+        return jsonify({'error': 'token é obrigatório'}), 400
+
+    try:
+        message = fcm_messaging.Message(
+            token=token,
+            notification=fcm_messaging.Notification(title=title, body=body),
+            data=extra,
+            android=fcm_messaging.AndroidConfig(
+                priority='high',
+                notification=fcm_messaging.AndroidNotification(
+                    channel_id='chat_messages',
+                    priority='high',
+                    default_sound=True,
+                    default_vibrate_timings=True,
+                    icon='ic_launcher',
+                    tag='chat-incoming',
+                ),
+            ),
+        )
+        result = fcm_messaging.send(message)
+        return jsonify({'success': True, 'messageId': result})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # ===== TRATAMENTO DE ERROS =====
 @app.errorhandler(404)
 def not_found(error):
@@ -417,15 +477,11 @@ def internal_error(error):
 
 
 # ===== INICIALIZAÇÃO =====
-@app.before_first_request
-def create_tables():
-    """Criar tabelas do banco de dados"""
+with app.app_context():
     db.create_all()
 
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     
     # Development
     app.run(
