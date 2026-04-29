@@ -1,0 +1,26 @@
+{
+  "appId":   "com.wolfsource.finance",
+  "appName": "WolfSource",
+  "webDir":  "../../www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#162134",
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1800,
+      "backgroundColor":    "#162134",
+      "showSpinner":        false,
+      "androidSplashResourceName": "splash",
+      "launchFadeOutDuration": 400
+    },
+    "FirebaseMessaging": {
+      "presentationOptions": ["alert", "sound", "badge"]
+    }
+  }
+}

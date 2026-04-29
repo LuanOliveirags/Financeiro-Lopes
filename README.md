@@ -23,20 +23,19 @@ Aplicação web e Android para gestão financeira familiar. Desenvolvida como PW
 - Navegador moderno (Chrome, Firefox, Edge, Safari)
 - Servidor web local para desenvolvimento
 
-### Rodar no Browser
+### Rodar no Browser (dev)
 
 ```bash
 # Clone o repositório
 git clone https://github.com/LuanGs1/Financeiro-Lopes.git
 cd Financeiro-Lopes
+npm install
 
-# Qualquer servidor estático serve — exemplos:
-python -m http.server 8000
-npx http-server
-npx serve .
+# Monta www/ e serve localmente
+npm run dev
 ```
 
-Acesse `http://localhost:8000` e instale como PWA pelo ícone na barra de endereços.
+Acesse `http://localhost:3000` e instale como PWA pelo ícone na barra de endereços.
 
 ### Configurar Firebase
 
@@ -44,7 +43,7 @@ O projeto já vem com uma instância configurada. Para usar a sua própria:
 
 1. Crie um projeto no [Firebase Console](https://console.firebase.google.com)
 2. Habilite **Cloud Firestore** e **Firebase Storage**
-3. Atualize as credenciais em `frontend/app/providers/firebase-config.js`:
+3. Atualize as credenciais em `packages/services/firebase/firebase.config.js`:
 
 ```js
 export const firebaseConfig = {
@@ -56,17 +55,6 @@ export const firebaseConfig = {
   appId:             'seu-app-id'
 };
 ```
-
-### Configurar Segredos (FCM + EmailJS)
-
-Copie o template e preencha com suas chaves reais:
-
-```bash
-cp frontend/app/providers/firebase-secrets.example.js \
-   frontend/app/providers/firebase-secrets.local.js
-```
-
-Edite `firebase-secrets.local.js` com suas chaves. Esse arquivo está no `.gitignore` e nunca deve ser commitado.
 
 ## 📱 Build Android (APK)
 
@@ -82,14 +70,14 @@ O frontend é empacotado com **Capacitor 6** — zero mudança no código, mesma
 
 ```bash
 npm install
-npm run sync          # copia www/ + sincroniza plugins no Android
+npm run sync          # monta www/ + sincroniza com Android (cwd: apps/mobile/)
 
 # APK via terminal (sem precisar do Android Studio)
 JAVA_HOME="C:/Program Files/Android/Android Studio/jbr" \
-  ./android/gradlew -p android assembleDebug
+  ./apps/mobile/android/gradlew -p apps/mobile/android assembleDebug
 ```
 
-O APK ficará em `android/app/build/outputs/apk/debug/app-debug.apk`.
+O APK ficará em `apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk`.
 
 ### Abrir no Android Studio (APK de Release)
 
@@ -99,71 +87,109 @@ npm run open:android
 
 No Android Studio: **Build → Generate Signed App Bundle / APK → APK**.
 
+### Deploy no GitHub Pages
+
+```bash
+npm run deploy   # monta www/ e publica no branch gh-pages
+```
+
 ### Atualizar o app após mudanças no frontend
 
 ```bash
-npm run sync   # recopia www/ e sincroniza com o projeto Android
+npm run sync   # remonta www/ e sincroniza com o projeto Android
 ```
 
 ## 🏗️ Arquitetura
 
 ```
 Financeiro-Lopes/
-├── index.html                        # Entrada da aplicação
-├── manifest.json                     # Manifest PWA
-├── service-worker.js                 # Cache offline + FCM background
-├── capacitor.config.json             # Config Capacitor (appId, webDir, plugins)
 ├── package.json                      # Dependências Node / scripts de build
-├── scripts/
-│   └── copy-web.js                   # Copia assets para www/ antes do cap sync
 │
-├── frontend/
-│   ├── app/
-│   │   ├── bootstrap.js              # Entry point — init Firebase, auth, UI
-│   │   ├── router.js                 # Carrega fragmentos HTML dos módulos
-│   │   ├── providers/
-│   │   │   ├── firebase-config.js    # Config pública + re-export de segredos
-│   │   │   ├── firebase-secrets.example.js  # Template (commitar)
-│   │   │   ├── firebase-secrets.local.js    # Chaves reais (gitignored)
-│   │   │   ├── firebase-provider.js  # CRUD Firestore + listeners realtime
-│   │   │   ├── auth-provider.js      # Autenticação, roles, família
-│   │   │   └── capacitor-bridge.js   # Detecção de ambiente nativo (APK)
+├── apps/
+│   ├── web/
+│   │   ├── public/                   # Assets estáticos (servidos na raiz do www/)
+│   │   │   ├── index.html
+│   │   │   ├── manifest.json
+│   │   │   ├── service-worker.js
+│   │   │   └── assets/images/
+│   │   │
+│   │   └── src/
+│   │       ├── app/
+│   │       │   ├── bootstrap.js      # Entry point — init Firebase, auth, UI
+│   │       │   └── router.js         # Carrega fragmentos HTML dos módulos
+│   │       │
+│   │       ├── features/
+│   │       │   ├── auth/             # Login + reset de senha
+│   │       │   ├── dashboard/        # KPIs, gráficos, resumo mensal
+│   │       │   ├── transactions/     # CRUD de transações
+│   │       │   ├── salaries/         # Controle de salários
+│   │       │   ├── debts/            # Gestão de dívidas
+│   │       │   ├── shopping/         # Lista de compras colaborativa
+│   │       │   ├── chores/           # Tarefas domésticas
+│   │       │   ├── chat/             # Chat realtime (html, css, js)
+│   │       │   └── settings/         # Perfil, usuários, família
+│   │       │
+│   │       └── styles/
+│   │           ├── base.css
+│   │           ├── animations.css
+│   │           └── responsive.css
+│   │
+│   └── mobile/
+│       ├── capacitor.config.json     # Config Capacitor (webDir: ../../www)
+│       └── android/                  # Projeto Android gerado pelo Capacitor
+│
+├── packages/
+│   ├── core/
 │   │   └── state/
-│   │       ├── store.js              # Estado global (transações, dívidas, user)
-│   │       └── session.js            # Persistência de sessão
+│   │       ├── store.js              # Estado global da aplicação
+│   │       └── session.js            # Re-exports de helpers de sessão
 │   │
-│   ├── modules/
-│   │   ├── login/                    # Tela de login + reset de senha
-│   │   ├── dashboard/                # KPIs, gráficos, resumo mensal
-│   │   ├── transactions/             # CRUD de transações
-│   │   ├── salaries/                 # Controle de salários
-│   │   ├── debts/                    # Gestão de dívidas
-│   │   ├── shopping/                 # Lista de compras colaborativa
-│   │   ├── chores/                   # Tarefas domésticas
-│   │   ├── chat/                     # Chat realtime + FCM (web e nativo)
-│   │   └── settings/                 # Perfil, usuários, família, preferências
+│   ├── services/
+│   │   ├── firebase/
+│   │   │   ├── firebase.config.js    # Config pública + constantes (VAPID, URLs)
+│   │   │   ├── firebase.service.js   # CRUD Firestore + listeners realtime
+│   │   │   └── fcm.service.js        # Firebase Cloud Messaging (web + nativo)
+│   │   │
+│   │   ├── auth/
+│   │   │   └── auth.service.js       # Autenticação, roles, família
+│   │   │
+│   │   └── notifications/
+│   │       └── notification.service.js  # Notificações locais + debt alerts
 │   │
-│   ├── shared/
-│   │   ├── components/
-│   │   │   ├── navigation/           # Header, bottom nav, FAB
-│   │   │   ├── modal/                # Sistema de modais
-│   │   │   ├── forms/                # Estilos de formulários
-│   │   │   └── calendar/             # Seletor de data
-│   │   ├── services/
-│   │   │   └── notifications.js      # Notificações locais + debt alerts
-│   │   ├── styles/global/            # base.css, animations.css, responsive.css
-│   │   └── utils/helpers.js          # Formatação, IDs, utilitários
+│   ├── ui/
+│   │   ├── navigation/               # Header, bottom nav, FAB (css + js)
+│   │   ├── modal/                    # Sistema de modais (css)
+│   │   ├── forms/                    # Estilos de formulários (css)
+│   │   └── calendar/                 # Seletor de data (css)
 │   │
-│   └── assets/images/                # Logos, ícones PWA, avatares
+│   └── utils/
+│       ├── helpers.js                # Formatação, IDs, utilitários
+│       └── capacitor.bridge.js       # Detecção de ambiente nativo (APK)
 │
 ├── backend/                          # API Flask (opcional)
-│   ├── app.py                        # Rotas REST
-│   ├── config.py                     # Configurações por ambiente
+│   ├── src/
+│   │   ├── controllers/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   └── repositories/
+│   ├── app.py
+│   ├── config.py
 │   ├── requirements.txt
-│   ├── Dockerfile
-│   └── docker-compose.yml
+│   └── Dockerfile
 │
-└── docs/                             # Documentação adicional
+├── infra/
+│   ├── scripts/
+│   │   ├── copy-web.js               # Monta www/ para Capacitor e GH Pages
+│   │   ├── generate-icons.js         # Gera ícones PWA em múltiplos tamanhos
+│   │   ├── generate-android-icons.js # Gera ícones para Android/Capacitor
+│   │   ├── release.js                # Pipeline completo de release do APK
+│   │   └── upload-apk.js             # Faz upload do APK e atualiza config
+│   ├── ci/
+│   └── docker/
+│
+└── docs/
+    ├── INSTALACAO.md
+    └── ROADMAP.md
 ```
 
 ### Padrões de Arquitetura
@@ -171,10 +197,10 @@ Financeiro-Lopes/
 | Padrão | Aplicação |
 |---|---|
 | SPA sem framework | Navegação via `router.js` + fragmentos HTML |
-| Provider pattern | Firebase, Auth e estado encapsulados em `providers/` |
-| Module-based | Cada feature tem seu HTML, CSS e JS isolados |
-| Dual-environment | `capacitor-bridge.js` detecta APK vs browser em runtime |
-| Secrets gitignored | `firebase-secrets.local.js` nunca entra no repositório |
+| Apps / Packages | Web e mobile em `apps/`, compartilhados em `packages/` |
+| Module-based | Cada feature tem seu HTML, CSS e JS isolados em `features/` |
+| Build assembly | `copy-web.js` monta `www/` preservando paths relativos |
+| Dual-environment | `capacitor.bridge.js` detecta APK vs browser em runtime |
 
 ## 💻 Stack
 
@@ -267,6 +293,7 @@ cd backend && docker-compose up
 - [x] Backend Flask + Docker
 - [x] **APK Android via Capacitor** (web e app no mesmo Firebase)
 - [x] Notificações push nativas Android
+- [x] **Reestruturação modular** (apps / packages / infra)
 
 ### Em Desenvolvimento
 - [ ] Relatórios PDF exportáveis

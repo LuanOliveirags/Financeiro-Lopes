@@ -5,12 +5,14 @@
   "type": "module",
   "description": "WolfSource - Gestão Financeira",
   "scripts": {
-    "copy": "node scripts/copy-web.js",
-    "sync": "node scripts/copy-web.js && cap sync android",
-    "open:android": "cap open android",
-    "build": "node scripts/copy-web.js && cap sync android && cap open android",
-    "icons:android": "node scripts/generate-android-icons.js",
-    "release": "node scripts/release.js"
+    "copy": "node infra/scripts/copy-web.js",
+    "sync": "node infra/scripts/copy-web.js && cd apps/mobile && npx cap sync android",
+    "open:android": "cd apps/mobile && npx cap open android",
+    "build": "node infra/scripts/copy-web.js && cd apps/mobile && npx cap sync android && npx cap open android",
+    "icons:android": "node infra/scripts/generate-android-icons.js",
+    "release": "node infra/scripts/release.js",
+    "deploy": "node infra/scripts/copy-web.js && npx gh-pages -d www",
+    "dev": "node infra/scripts/copy-web.js && npx serve www"
   },
   "dependencies": {
     "@capacitor-firebase/messaging": "^6.0.0",
@@ -21,6 +23,7 @@
   "devDependencies": {
     "@capacitor/cli": "^6.0.0",
     "firebase-admin": "^13.8.0",
+    "gh-pages": "^6.3.0",
     "sharp": "^0.34.5"
   }
 }

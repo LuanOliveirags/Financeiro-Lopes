@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#3D6A8E">
+    <meta name="description" content="App de Gestão financeira pessoal - WolfSource - Gestão Financeira">
+    <meta name="keywords" content="Finanças, despesas, Gestão, PWA">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/images/icon-any-192.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="assets/images/icon-any-96.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
+
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+
+    <!-- CSS Files — Global -->
+    <link rel="stylesheet" href="apps/web/src/styles/base.css">
+    <link rel="stylesheet" href="apps/web/src/styles/animations.css">
+    <!-- CSS Files — Shared Components (packages) -->
+    <link rel="stylesheet" href="packages/ui/forms/forms.css">
+    <link rel="stylesheet" href="packages/ui/navigation/navigation.css">
+    <link rel="stylesheet" href="packages/ui/modal/modal.css">
+    <link rel="stylesheet" href="packages/ui/calendar/calendar.css">
+    <!-- CSS Files — Features -->
+    <link rel="stylesheet" href="apps/web/src/features/auth/login.css">
+    <link rel="stylesheet" href="apps/web/src/features/dashboard/dashboard.css">
+    <link rel="stylesheet" href="apps/web/src/features/transactions/transactions.css">
+    <link rel="stylesheet" href="apps/web/src/features/debts/debts.css">
+    <link rel="stylesheet" href="apps/web/src/features/salaries/salaries.css">
+    <link rel="stylesheet" href="apps/web/src/features/settings/settings.css">
+    <link rel="stylesheet" href="apps/web/src/features/chores/chores.css">
+    <link rel="stylesheet" href="apps/web/src/features/shopping/shopping.css">
+    <link rel="stylesheet" href="apps/web/src/features/chat/chat.css">
+    <!-- CSS Files — Responsive (must be last to override) -->
+    <link rel="stylesheet" href="apps/web/src/styles/responsive.css">
+
+    <title>WolfSource</title>
+</head>
+<body>
+    <!-- Login + Reset Password Modal → carregado de apps/web/src/features/auth/login.html -->
+
+    <!-- ====== APP SHELL ====== -->
+    <div id="appContainer" class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="header-avatar-wrap" id="headerAvatarWrap" role="button" tabindex="0" title="Ver foto de perfil" aria-label="Ver foto de perfil ampliada">
+                        <img id="headerAvatar" src="assets/images/lopes-logo-opt.png" alt="WolfSource - Gestão Financeira" class="profile-logo-small">
+                    </div>
+                    <div class="header-text">
+                        <p class="header-greeting"></p>
+                        <h2 class="header-title" id="headerUserName" role="button" tabindex="0" title="Abrir perfil" aria-label="Abrir configurações de perfil">Usuário</h2>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="offlineBadge" class="header-badge-btn" style="display: none;" title="Offline">
+                        <i class="fa-solid fa-wifi-slash"></i>
+                    </button>
+                    <button id="themeToggle" class="header-icon-btn" title="Alternar Tema">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <button id="logoutBtn" class="header-icon-btn logout-btn" title="Sair">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="sidebar-brand">
+                <img src="assets/images/lopes-logo-opt.png" alt="WolfSource" class="sidebar-brand-logo">
+            </div>
+            <button class="bottom-nav-item active" data-tab="dashboard">
+                <span class="nav-icon-wrap"><i class="fa-solid fa-chart-pie"></i></span>
+                <span class="nav-label">Status</span>
+            </button>
+            <button class="bottom-nav-item" data-tab="debts">
+                <span class="nav-icon-wrap"><i class="fa-solid fa-credit-card"></i></span>
+                <span class="nav-label">Dívidas</span>
+            </button>
+            <div class="fab-container">
+                <button id="fabBtn" class="fab-btn" aria-label="Adicionar">
+                    <i class="fa-solid fa-plus fab-plus"></i>
+                    <span class="chat-fab-dot" id="chatFabDot" style="display:none" aria-label="Mensagens não lidas"></span>
+                </button>
+                <div id="quickActionsMenu" class="quick-actions-menu">
+                    <button class="quick-action-item" data-action="chat">
+                        <div class="qa-icon-wrap qa-chat-wrap">
+                            <i class="fa-solid fa-comments"></i>
+                            <span class="chat-fab-badge" id="chatUnreadBadge" style="display:none" aria-label="Mensagens não lidas">0</span>
+                        </div>
+                        <span class="action-label">Chat</span>
+                    </button>
+                    <button class="quick-action-item" data-action="chores">
+                        <div class="qa-icon-wrap"><i class="fa-solid fa-broom"></i></div>
+                        <span class="action-label">Tarefas</span>
+                    </button>
+                    <button class="quick-action-item" data-action="transaction">
+                        <div class="qa-icon-wrap"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
+                        <span class="action-label">Transação</span>
+                    </button>
+                    <button class="quick-action-item" data-action="settings">
+                        <div class="qa-icon-wrap"><i class="fa-solid fa-gear"></i></div>
+                        <span class="action-label">Config</span>
+                    </button>
+                </div>
+            </div>
+            <button class="bottom-nav-item" data-tab="salaries">
+                <span class="nav-icon-wrap"><i class="fa-solid fa-sack-dollar"></i></span>
+                <span class="nav-label">Salário</span>
+            </button>
+            <button class="bottom-nav-item" data-tab="shopping">
+                <span class="nav-icon-wrap"><i class="fa-solid fa-cart-shopping"></i></span>
+                <span class="nav-label">Compras</span>
+            </button>
+            <button class="bottom-nav-item" data-tab="settings" id="settingsNavBtn" style="display:none">
+                <span class="nav-icon-wrap"><i class="fa-solid fa-gear"></i></span>
+                <span class="nav-label">Config</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent"></main>
+
+    </div>
+
+    <!-- Chat Panel + Overlays + Modais → carregado de apps/web/src/features/chat/chat.html -->
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker registrado'))
+                    .catch(err => console.log('SW Error:', err));
+            });
+        }
+    </script>
+
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+
+    <!-- Main Script -->
+    <script type="module" src="apps/web/src/app/bootstrap.js"></script>
+</body>
+</html>
