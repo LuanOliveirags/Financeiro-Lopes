@@ -8,6 +8,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const gradlew = path.join(root, 'android', 'gradlew.bat');
 
+// Java incluído no Android Studio — evita depender de instalação separada
+process.env.JAVA_HOME = 'C:\\Program Files\\Android\\Android Studio\\jbr';
+
 const STEPS = [
   {
     label: '1/4  Copiando web assets',

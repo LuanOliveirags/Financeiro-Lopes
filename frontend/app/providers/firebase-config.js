@@ -43,7 +43,7 @@ export const BACKEND_URL = 'https://aware-delight-production-2e59.up.railway.app
 // URL pública do APK para download direto.
 // Gere no Firebase Storage ou qualquer hospedagem e cole aqui.
 // Ex.: 'https://storage.googleapis.com/financeiro-lopes.appspot.com/app-release.apk'
-export const APK_URL = 'https://files.catbox.moe/jixpt0.apk';
+export const APK_URL = 'https://files.catbox.moe/bpkvh2.apk';
 
 export const CATEGORY_MAP = {
   alimentacao:    { icon: '🍽️', label: 'Alimentação',    css: 'cat-alimentacao'    },

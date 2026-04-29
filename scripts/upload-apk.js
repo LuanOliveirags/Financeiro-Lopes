@@ -21,6 +21,7 @@ async function main() {
   const apkBytes = await readFile(APK_PATH);
   console.log(`📦 APK encontrado (${(apkBytes.length / 1024 / 1024).toFixed(1)} MB)`);
 
+  // catbox.moe — hospedagem permanente, link direto para download
   console.log('🚀 Enviando para catbox.moe...');
   const form = new FormData();
   form.append('reqtype', 'fileupload');
@@ -40,9 +41,7 @@ async function main() {
   }
 
   const apkUrl = (await res.text()).trim();
-  if (!apkUrl.startsWith('http')) {
-    throw new Error(`Resposta inesperada: ${apkUrl}`);
-  }
+  if (!apkUrl.startsWith('http')) throw new Error(`Resposta inesperada: ${apkUrl}`);
 
   console.log('\n🔗 URL do APK:', apkUrl);
 
