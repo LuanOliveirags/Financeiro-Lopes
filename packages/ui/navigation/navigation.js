@@ -18,58 +18,51 @@ import { APK_URL } from '../../services/firebase/firebase.config.js';
 
 // ===== INSTALAR APP =====
 function _setupInstallBtn() {
-  const btn = document.getElementById('installBtn');
-  if (!btn) return;
+  const pwaBtn = document.getElementById('installPwaBtn');
+  const apkBtn = document.getElementById('installApkBtn');
 
-  // Não mostrar se já está rodando como APK nativo (Capacitor)
-  const isNative = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform?.();
-  // Não mostrar se já está instalado como PWA standalone
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-    || window.navigator.standalone === true;
+  const isNative     = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform?.();
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-  if (isNative || isStandalone) {
-    btn.style.display = 'none';
-    return;
+  // --- Botão PWA ---
+  if (pwaBtn) {
+    if (isNative || isStandalone) {
+      pwaBtn.style.display = 'none';
+    } else {
+      pwaBtn.style.display = 'flex';
+      let _pwaPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        _pwaPrompt = e;
+      });
+      pwaBtn.addEventListener('click', async () => {
+        if (_pwaPrompt) {
+          const result = await _pwaPrompt.prompt();
+          if (result?.outcome === 'accepted') {
+            pwaBtn.style.display = 'none';
+            _pwaPrompt = null;
+          }
+        } else {
+          showAlert('No Android: Chrome → ⋮ → "Adicionar à tela inicial".\nNo iOS: Safari → Compartilhar → "Adicionar à Tela de Início".', 'info');
+        }
+      });
+    }
   }
 
-  // Sempre visível no browser
-  btn.style.display = 'flex';
-
-  let _pwaPrompt = null;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    _pwaPrompt = e;
-    // Atualiza label para indicar instalação nativa do browser
-    btn.querySelector('.sr-text').textContent = 'Instalar App';
-  });
-
-  btn.addEventListener('click', async () => {
-    // 1ª opção: prompt nativo do browser (PWA)
-    if (_pwaPrompt) {
-      const result = await _pwaPrompt.prompt();
-      if (result?.outcome === 'accepted') {
-        btn.style.display = 'none';
-        _pwaPrompt = null;
-      }
-      return;
+  // --- Botão APK ---
+  if (apkBtn) {
+    if (isNative || !APK_URL) {
+      apkBtn.style.display = 'none';
+    } else {
+      apkBtn.style.display = 'flex';
+      apkBtn.addEventListener('click', () => {
+        const a = document.createElement('a');
+        a.href     = APK_URL;
+        a.download = 'WolfSource.apk';
+        a.click();
+      });
     }
-
-    // 2ª opção: download do APK
-    if (APK_URL) {
-      const a = document.createElement('a');
-      a.href     = APK_URL;
-      a.download = 'WolfSource.apk';
-      a.click();
-      return;
-    }
-
-    // Sem APK configurado e sem prompt → instrução manual
-    showAlert(
-      'No Android: abra este site no Chrome → ⋮ → "Adicionar à tela inicial".\n' +
-      'Para instalar o APK, peça o link ao administrador.',
-      'info'
-    );
-  });
+  }
 }
 
 // ===== THEME =====
