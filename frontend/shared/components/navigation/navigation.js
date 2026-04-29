@@ -4,7 +4,7 @@
 
 import { state, isSuperAdmin, getFamilyId } from '../../../app/state/store.js';
 import { showAlert, toDateStr } from '../../utils/helpers.js';
-import { firebaseReady, saveDataToStorage, loadDataFromStorage, exportData, importData, syncData, clearCache, syncAllToFirebase, allowRefresh } from '../../../app/providers/firebase-provider.js';
+import { firebaseReady, saveDataToStorage, loadDataFromStorage, exportData, importData, syncData, clearCache, syncAllToFirebase, allowRefresh, refreshIfStale } from '../../../app/providers/firebase-provider.js';
 import { uploadAvatar, loginUser, registerUser, changeUserPassword, savePhoneNumber, saveRecado, loadUsersList, saveUserEdit, loadFamiliesListUI, createFamily, populateFamilySelects, loadFamily, applyUserToUI, logout } from '../../../app/providers/auth-provider.js';
 import { addTransaction, updateTransactionHistory } from '../../../modules/transactions/transactions.service.js';
 import { addDebt, resetDebtModal, setupDebtTypeListeners, setupDebtFilterListeners, updateDebtsList } from '../../../modules/debts/debts.js';
@@ -213,7 +213,7 @@ export function switchTab(tabName) {
   if (tabSection) tabSection.classList.add('active');
   if (tabBtn) tabBtn.classList.add('active');
 
-  if (tabName === 'dashboard') { updateDashboard(); initMonthScroller(); }
+  if (tabName === 'dashboard') { updateDashboard(); initMonthScroller(); refreshIfStale(); }
   else if (tabName === 'transactions') { initWeekScroller(); updateTransactionHistory(); }
   else if (tabName === 'debts') { updateDebtsList(); }
   else if (tabName === 'salaries') { updateSalaryDisplay(); }

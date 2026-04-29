@@ -17,6 +17,7 @@ let _fbListeners = [];
 let _loadingData = false;
 let _listenersActive = false;
 let _allowRefresh = false;
+let _lastFetchTime = 0;
 
 // ===== INICIALIZAÇÃO =====
 export function initFirebase() {
@@ -192,6 +193,7 @@ export async function loadDataFromFirebase() {
     state.salaries = salSnap.docs.map(doc => doc.data()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
     saveDataToStorage();
+    _lastFetchTime = Date.now();
     _notifyRefresh();
     console.log('Dados carregados do Firebase com sucesso!');
   } catch (error) {
@@ -256,6 +258,22 @@ export function cleanupFirebaseListeners() {
   _loadingData = false;
   clearTimeout(_fbSyncTimer);
 }
+
+// Busca dados frescos do Firebase se passaram mais de maxAgeMs desde a última busca.
+// Padrão: 30s — evita spam mas garante dados atuais ao voltar ao app.
+export function refreshIfStale(maxAgeMs = 30_000) {
+  if (!firebaseReady || !state.isLoggedIn || !_allowRefresh) return;
+  if (_loadingData) return;
+  if (Date.now() - _lastFetchTime < maxAgeMs) return;
+  console.log('🔄 Dados potencialmente desatualizados — buscando do Firebase...');
+  loadDataFromFirebase();
+}
+
+// Dispara refresh ao voltar ao foreground (app minimizado, aba trocada no browser)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) refreshIfStale();
+});
+window.addEventListener('focus', () => refreshIfStale());
 
 // ===== SYNC COMPLETO =====
 export async function syncAllToFirebase() {
