@@ -5,7 +5,7 @@
 import { loadPages } from './router.js';
 import { initFirebase, setRefreshCallback } from '../../../../packages/services/firebase/firebase.service.js';
 import { createDefaultAdmin, checkLoginStatus, initResetPasswordUI } from '../../../../packages/services/auth/auth.service.js';
-import { setupEventListeners, setupOnlineOfflineListeners } from '../../../../packages/ui/navigation/navigation.js';
+import { setupEventListeners, setupOnlineOfflineListeners, initMonthScroller } from '../../../../packages/ui/navigation/navigation.js';
 import { updateDashboard, setupDashboardToggle, setupKpiClickListeners, setupValuesToggle } from '../features/dashboard/dashboard.js';
 import { updateTransactionHistory } from '../features/transactions/transactions.service.js';
 import { updateDebtsList } from '../features/debts/debts.js';
@@ -53,6 +53,7 @@ setupKpiClickListeners();
 setupValuesToggle();
 setupOnlineOfflineListeners();
 initResetPasswordUI();
+initMonthScroller();
 
 // Operações async que dependem do Firebase (podem demorar)
 await createDefaultAdmin();
