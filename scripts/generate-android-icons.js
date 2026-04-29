@@ -1,18 +1,20 @@
 // scripts/generate-android-icons.js
-// Gera todos os ícones Android (mipmap-*) a partir do ícone PWA maskable
+// Gera ícones Android profissionais: fundo sólido navy + logo centralizado com alpha
 import sharp from 'sharp';
-import { copyFile, mkdir } from 'fs/promises';
+import { mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const root      = path.resolve(__dirname, '..');
+const root = path.resolve(__dirname, '..');
 
-// Fonte: ícone maskable 512px (maior = melhor qualidade)
-const SOURCE_MASKABLE = path.join(root, 'frontend/assets/images/icon-maskable-512.png');
-const SOURCE_ANY      = path.join(root, 'frontend/assets/images/icon-any-512.png');
-const MIPMAP_BASE     = path.join(root, 'android/app/src/main/res');
+// icon-512.png: logo com canal alpha, sem fundo, 512×512
+const LOGO_SRC   = path.join(root, 'frontend/assets/images/icon-512.png');
+const MIPMAP_DIR = path.join(root, 'android/app/src/main/res');
+
+// Cor de fundo que combina com o tema do app
+const BG = { r: 22, g: 33, b: 52, alpha: 1 }; // #162134
 
 const DENSITIES = [
   { folder: 'mipmap-mdpi',    launcher: 48,  foreground: 108 },
@@ -22,34 +24,64 @@ const DENSITIES = [
   { folder: 'mipmap-xxxhdpi', launcher: 192, foreground: 432 },
 ];
 
-async function resize(src, dest, size) {
-  await sharp(src)
-    .resize(size, size, { fit: 'fill' })
+const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
+
+async function resizeLogo(size, bg = TRANSPARENT) {
+  return sharp(LOGO_SRC)
+    .resize(size, size, { fit: 'contain', background: bg })
+    .png()
+    .toBuffer();
+}
+
+// Ícone legado: fundo navy sólido + logo a 84% do canvas
+async function makeLegacy(dest, canvasSize) {
+  const logoSize = Math.round(canvasSize * 0.84);
+  const pad = Math.round((canvasSize - logoSize) / 2);
+
+  const logo = await resizeLogo(logoSize);
+  await sharp({ create: { width: canvasSize, height: canvasSize, channels: 4, background: BG } })
+    .composite([{ input: logo, top: pad, left: pad }])
     .png()
     .toFile(dest);
-  console.log(`  ✓ ${path.relative(root, dest)} (${size}×${size})`);
+  console.log(`  ✓ ${path.relative(root, dest)} (${canvasSize}px)`);
+}
+
+// Foreground adaptativo: logo a 62% do canvas em fundo transparente
+// O Android garante visibilidade apenas do centro 66.67% → logo cabe dentro do safe zone
+async function makeForeground(dest, canvasSize) {
+  const logoSize = Math.round(canvasSize * 0.62);
+  const pad = Math.round((canvasSize - logoSize) / 2);
+
+  const logo = await resizeLogo(logoSize);
+  await sharp({ create: { width: canvasSize, height: canvasSize, channels: 4, background: TRANSPARENT } })
+    .composite([{ input: logo, top: pad, left: pad }])
+    .png()
+    .toFile(dest);
+  console.log(`  ✓ ${path.relative(root, dest)} (${canvasSize}px foreground)`);
 }
 
 async function main() {
-  const src = existsSync(SOURCE_MASKABLE) ? SOURCE_MASKABLE : SOURCE_ANY;
-  if (!existsSync(src)) {
-    console.error('❌ Ícone fonte não encontrado:', src);
+  if (!existsSync(LOGO_SRC)) {
+    console.error('❌ Logo não encontrado:', LOGO_SRC);
     process.exit(1);
   }
-  console.log('🎨 Fonte:', path.relative(root, src));
-  console.log('');
+
+  const meta = await sharp(LOGO_SRC).metadata();
+  if (!meta.hasAlpha) {
+    console.warn('⚠️  Logo sem canal alpha — resultado pode ter bordas visíveis');
+  }
+  console.log(`🎨 Fonte: icon-512.png (${meta.width}×${meta.height}, alpha: ${meta.hasAlpha})\n`);
 
   for (const { folder, launcher, foreground } of DENSITIES) {
-    const dir = path.join(MIPMAP_BASE, folder);
+    const dir = path.join(MIPMAP_DIR, folder);
     if (!existsSync(dir)) await mkdir(dir, { recursive: true });
 
-    await resize(src, path.join(dir, 'ic_launcher.png'),            launcher);
-    await resize(src, path.join(dir, 'ic_launcher_round.png'),      launcher);
-    await resize(src, path.join(dir, 'ic_launcher_foreground.png'), foreground);
+    await makeLegacy(path.join(dir, 'ic_launcher.png'),       launcher);
+    await makeLegacy(path.join(dir, 'ic_launcher_round.png'), launcher);
+    await makeForeground(path.join(dir, 'ic_launcher_foreground.png'), foreground);
   }
 
-  console.log('\n✅ Ícones Android gerados com sucesso!');
-  console.log('   Rebuild o APK no Android Studio para aplicar as mudanças.');
+  console.log('\n✅ Ícones gerados! Rebuild o APK no Android Studio para aplicar.');
 }
 
 main().catch(err => { console.error('❌', err); process.exit(1); });
