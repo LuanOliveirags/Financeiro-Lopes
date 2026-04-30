@@ -69,9 +69,9 @@ function _openApkModal(apkUrl) {
   const downloadBtn = document.getElementById('apkDownloadBtn');
   if (!modal) return;
 
-  qrImg.src       = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(apkUrl)}`;
+  qrImg.src           = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(apkUrl)}`;
   urlText.textContent = apkUrl;
-  downloadBtn.href    = apkUrl;
+  downloadBtn.href    = '#';
 
   modal.classList.add('active');
 
@@ -85,6 +85,28 @@ function _openApkModal(apkUrl) {
       icon.className = 'fa-solid fa-check';
       setTimeout(() => { icon.className = 'fa-regular fa-copy'; }, 1800);
     });
+  };
+
+  downloadBtn.onclick = async (e) => {
+    e.preventDefault();
+    const icon = downloadBtn.querySelector('i');
+    icon.className = 'fa-solid fa-spinner fa-spin';
+    downloadBtn.style.opacity = '0.75';
+    try {
+      const res  = await fetch(apkUrl);
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'WolfSource.apk';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch {
+      window.open(apkUrl, '_blank');
+    } finally {
+      icon.className = 'fa-solid fa-download';
+      downloadBtn.style.opacity = '';
+    }
   };
 }
 
