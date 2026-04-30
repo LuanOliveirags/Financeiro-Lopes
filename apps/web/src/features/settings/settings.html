@@ -177,6 +177,38 @@
         </div>
     </div>
 
+    <!-- Modal: Instalar APK -->
+    <div id="apkModal" class="modal">
+        <div class="modal-content apk-modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-brands fa-android"></i> Instalar APK</h3>
+                <button id="apkModalClose" class="modal-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="apk-modal-body">
+                <p class="apk-wifi-hint"><i class="fa-solid fa-wifi"></i> Conecte o celular na mesma rede Wi-Fi</p>
+                <div class="apk-qr-wrap">
+                    <img id="apkQrImg" src="" alt="QR Code APK" class="apk-qr-img">
+                </div>
+                <p class="apk-qr-caption">Escaneie com a câmera do celular para baixar direto via Wi-Fi</p>
+                <div class="apk-url-row">
+                    <span id="apkUrlText" class="apk-url-text"></span>
+                    <button id="apkCopyBtn" class="apk-copy-btn" title="Copiar link">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+                <a id="apkDownloadBtn" href="#" class="apk-download-btn" download="WolfSource.apk">
+                    <i class="fa-solid fa-download"></i> Baixar APK
+                </a>
+                <ol class="apk-steps">
+                    <li>Escaneie o QR ou copie o link no celular</li>
+                    <li>Abra o arquivo <code>.apk</code> baixado</li>
+                    <li>Permita instalação de fontes desconhecidas</li>
+                    <li>Instale e aproveite o WolfSource!</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Alterar Senha -->
     <div id="changePasswordModal" class="modal">
         <div class="modal-content">

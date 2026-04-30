@@ -55,14 +55,37 @@ function _setupInstallBtn() {
       apkBtn.style.display = 'none';
     } else {
       apkBtn.style.display = 'flex';
-      apkBtn.addEventListener('click', () => {
-        const a = document.createElement('a');
-        a.href     = APK_URL;
-        a.download = 'WolfSource.apk';
-        a.click();
-      });
+      apkBtn.addEventListener('click', () => _openApkModal(APK_URL));
     }
   }
+}
+
+function _openApkModal(apkUrl) {
+  const modal       = document.getElementById('apkModal');
+  const closeBtn    = document.getElementById('apkModalClose');
+  const qrImg       = document.getElementById('apkQrImg');
+  const urlText     = document.getElementById('apkUrlText');
+  const copyBtn     = document.getElementById('apkCopyBtn');
+  const downloadBtn = document.getElementById('apkDownloadBtn');
+  if (!modal) return;
+
+  qrImg.src       = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(apkUrl)}`;
+  urlText.textContent = apkUrl;
+  downloadBtn.href    = apkUrl;
+
+  modal.classList.add('active');
+
+  const close = () => modal.classList.remove('active');
+  closeBtn.onclick = close;
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); }, { once: true });
+
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(apkUrl).then(() => {
+      const icon = copyBtn.querySelector('i');
+      icon.className = 'fa-solid fa-check';
+      setTimeout(() => { icon.className = 'fa-regular fa-copy'; }, 1800);
+    });
+  };
 }
 
 // ===== THEME =====
