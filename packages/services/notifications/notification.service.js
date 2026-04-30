@@ -193,10 +193,8 @@ async function registerPeriodicSync() {
     const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
     if (status.state !== 'granted') return;
     await reg.periodicSync.register('debt-check', { minInterval: 24 * 60 * 60 * 1000 });
-    console.log('[Notif] Periodic Background Sync registrado');
   } catch (err) {
     // Não é erro crítico — recurso disponível apenas em Chrome Android com HTTPS
-    console.log('[Notif] Periodic Sync indisponível neste ambiente:', err.message);
   }
 }
 

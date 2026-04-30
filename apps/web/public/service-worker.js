@@ -99,14 +99,10 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Cache aberto');
         return Promise.all(
-          URLS_TO_CACHE.map(url =>
-            cache.add(url).catch(() => console.log('Falha ao cachear:', url))
-          )
+          URLS_TO_CACHE.map(url => cache.add(url).catch(() => {}))
         );
       })
-      .catch((error) => console.log('Erro ao cachear:', error))
   );
   self.skipWaiting();
 });
@@ -118,7 +114,6 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Removendo cache antigo:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -161,15 +156,6 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-
-// Background Sync
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-transactions') event.waitUntil(syncTransactions());
-});
-
-async function syncTransactions() {
-  console.log('Iniciando sincronização de transações...');
-}
 
 // Push Notifications
 self.addEventListener('push', (event) => {

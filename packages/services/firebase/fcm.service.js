@@ -48,7 +48,6 @@ export async function initFCM() {
     if (_fcmToken && firebaseReady && state.currentUser) {
       await db.collection('users').doc(state.currentUser.id)
         .set({ fcmToken: _fcmToken }, { merge: true });
-      console.log('[FCM] Token registrado no Firestore.');
     }
 
     _messaging.onMessage((payload) => {
@@ -156,7 +155,6 @@ async function _initNativeFCM() {
     if (_fcmToken && firebaseReady && state.currentUser) {
       await db.collection('users').doc(state.currentUser.id)
         .set({ fcmToken: _fcmToken }, { merge: true });
-      console.log('[FCM Native] Token salvo no Firestore:', _fcmToken.substring(0, 20) + '...');
     }
 
     // Foreground: app aberto → exibe notificação via Service Worker

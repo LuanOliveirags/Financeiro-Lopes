@@ -18,31 +18,24 @@ import '../features/shopping/shopping.js';
 // Carrega todos os fragmentos HTML antes de qualquer acesso ao DOM
 await loadPages();
 
-// Registra callback centralizado para refresh de UI após carregamento de dados
 setRefreshCallback(async () => {
-  console.log('🔄 Atualizando UI com novos dados...');
   try {
     updateDashboard();
     updateTransactionHistory();
     updateDebtsList();
     updateSalaryDisplay();
-    // Inicializa chat em tempo real (seguro chamar múltiplas vezes)
     initChat();
-    // Inicializa FCM para push notifications do chat no celular
     initFCM().catch(() => {});
-    // Mantém IDB do SW atualizado e verifica notificações
     await storeDebtSummaryForSW();
     await initNotifications();
-    console.log('✅ UI atualizada com sucesso');
   } catch (error) {
-    console.error('❌ Erro ao atualizar UI:', error);
+    console.error('Erro ao atualizar UI:', error);
   }
 });
 
 // ===== INICIALIZAÇÃO =====
 // Não usa DOMContentLoaded — o top-level await loadPages() já garante
 // que DOM está pronto e scripts externos (Firebase, Chart.js) carregados.
-console.log('🚀 Iniciando aplicação WolfSource...');
 initFirebase();
 
 // Registra event listeners ANTES de qualquer operação async
@@ -57,6 +50,4 @@ initMonthScroller();
 
 // Operações async que dependem do Firebase (podem demorar)
 await createDefaultAdmin();
-await checkLoginStatus();
-
-console.log('✅ Aplicação WolfSource iniciada com sucesso! 💰');
+await checkLoginStatus();;

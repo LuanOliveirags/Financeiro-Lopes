@@ -277,7 +277,6 @@ export function setupEventListeners() {
   // Login form
   document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
-    console.log('🔐 Iniciando processo de login...');
     
     // Desabilita refresh durante login para evitar loops
     allowRefresh(false);
@@ -291,7 +290,6 @@ export function setupEventListeners() {
     try {
       const user = await loginUser(login, password);
       if (user) {
-        console.log('✅ Login bem-sucedido!');
         errorDiv.classList.remove('show');
         state.isLoggedIn = true;
         state.user = user.login;
@@ -300,7 +298,6 @@ export function setupEventListeners() {
         localStorage.setItem('loginTime', new Date().toISOString());
         
         // Mostra o dashboard PRIMEIRO (mesmo padrão do checkLoginStatus)
-        console.log('🎨 Exibindo dashboard...');
         document.getElementById('loginContainer').classList.remove('active');
         document.getElementById('appContainer').classList.add('active');
         applyUserToUI();
@@ -308,23 +305,18 @@ export function setupEventListeners() {
         
         // Carrega dados em background — erros NÃO bloqueiam o dashboard
         try {
-          console.log('📂 Carregando família do usuário...');
           await loadFamily();
         } catch (famErr) {
           console.warn('⚠️ Erro ao carregar família (não bloqueia login):', famErr);
         }
         
-        console.log('💾 Carregando dados armazenados...');
         await loadDataFromStorage();
         
-        console.log('🎨 Atualizando UI com dados carregados...');
         applyUserToUI();
         updateDashboard();
         
-        console.log('✨ Login finalizado! Habilitando refresh...');
         allowRefresh(true); // Reabilita refresh após login completo
         
-        console.log('✨ Login finalizado com sucesso!');
       } else {
         errorDiv.textContent = 'Usuário ou senha incorretos!';
         errorDiv.classList.add('show');
