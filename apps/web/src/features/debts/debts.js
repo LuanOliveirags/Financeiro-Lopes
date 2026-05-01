@@ -1,16 +1,26 @@
 // ============================================================
-// DEBTS.JS — CRUD, UI, filtros e alertas de dívidas
+// DEBTS.JS — Controller de UI de dívidas
+// Responsabilidade: DOM, eventos e orquestração.
+// Lógica de dados → packages/services/debts/debts.service.js
 // ============================================================
 
 import { CATEGORY_MAP, BANK_IMG, CREDITOR_IMG } from '../../../../../packages/services/firebase/firebase.config.js';
 import { state, getFamilyId } from '../../../../../packages/core/state/store.js';
-import { generateId, esc, formatCurrency, formatDate, toDateStr, showAlert, emptyState } from '../../../../../packages/utils/helpers.js';
+import { generateId, esc, formatCurrency, formatDate, showAlert, emptyState } from '../../../../../packages/utils/helpers.js';
 import { saveDataToStorage, saveToFirebase, deleteFromFirebase, updateInFirebase } from '../../../../../packages/services/firebase/firebase.service.js';
 import { updateDashboard } from '../dashboard/dashboard.js';
 import { updateTransactionHistory } from '../transactions/transactions.service.js';
+import {
+  buildDebtObject,
+  buildPaymentTransaction,
+  computeDebtStats,
+  computeAlerts,
+  getDebtDisplayStatus,
+  matchesDebtFilter
+} from '../../../../../packages/services/debts/debts.service.js';
 
 // ===== ESTADO DO FILTRO =====
-let currentDebtFilter = null;
+let currentDebtFilter    = null;
 let _debtFilterDelegated = false;
 
 // ===== ADICIONAR DÍVIDA =====
@@ -20,17 +30,17 @@ export function addDebt(e) {
   const familyId = getFamilyId();
   if (!familyId) { showAlert('Erro: família não identificada. Faça login novamente.', 'danger'); return; }
 
-  const editId = document.getElementById('editDebtId').value;
-  const debtType = document.getElementById('debtType').value;
-  const totalAmount = parseFloat(document.getElementById('debtAmount').value);
-  const installments = parseInt(document.getElementById('debtInstallments').value) || 1;
+  const editId           = document.getElementById('editDebtId').value;
+  const debtType         = document.getElementById('debtType').value;
+  const totalAmount      = parseFloat(document.getElementById('debtAmount').value);
+  const installments     = parseInt(document.getElementById('debtInstallments').value) || 1;
   const paidInstallments = parseInt(document.getElementById('debtPaidInstallments').value) || 0;
-  const manualInstValue = parseFloat(document.getElementById('debtInstallmentValue').value) || (totalAmount / installments);
+  const manualInstValue  = parseFloat(document.getElementById('debtInstallmentValue').value) || (totalAmount / installments);
 
-  const isFinanciamento = debtType === 'financiamento';
-  const isEmprestimo = debtType === 'emprestimo';
-  const isCartao = debtType === 'cartao';
-  const cartaoMode = document.getElementById('cartaoMode').value;
+  const isFinanciamento  = debtType === 'financiamento';
+  const isEmprestimo     = debtType === 'emprestimo';
+  const isCartao         = debtType === 'cartao';
+  const cartaoMode       = document.getElementById('cartaoMode').value;
   const usesInstallments = isFinanciamento || isEmprestimo || (isCartao && cartaoMode === 'parcelado');
 
   const fixedSel = document.getElementById('debtFixedCreditor');
@@ -41,49 +51,34 @@ export function addDebt(e) {
       : debtType === 'fixa' && fixedSel && fixedSel.value !== '__outro__'
         ? fixedSel.value
         : document.getElementById('debtCreditor').value;
-  const dueDate = document.getElementById('debtDueDate').value;
+  const dueDate     = document.getElementById('debtDueDate').value;
   const responsible = document.getElementById('debtResponsible').value;
-  const category = document.getElementById('debtCategory').value || '';
+  const category    = document.getElementById('debtCategory').value || '';
   const description = document.getElementById('debtDescription').value;
 
-  if (!creditor || !totalAmount || !dueDate) {
-    alert('Por favor, preencha todos os campos obrigatórios!');
-    return;
-  }
+  if (!creditor || !totalAmount || !dueDate) { alert('Por favor, preencha todos os campos obrigatórios!'); return; }
 
   if (editId) {
     const debt = state.debts.find(d => d.id === editId);
     if (!debt) return;
-
-    debt.creditor = creditor;
-    debt.amount = totalAmount;
-    debt.dueDate = dueDate;
-    debt.responsible = responsible;
-    debt.category = category;
-    debt.description = description;
-    debt.debtType = debtType;
-    debt.cartaoMode = cartaoMode;
-    debt.installments = usesInstallments ? installments : 1;
-    debt.paidInstallments = usesInstallments ? paidInstallments : 0;
-    debt.installmentValue = usesInstallments ? manualInstValue : totalAmount;
-
+    const updates = {
+      creditor, amount: totalAmount, dueDate, responsible, category, description,
+      debtType, cartaoMode,
+      installments:     usesInstallments ? installments     : 1,
+      paidInstallments: usesInstallments ? paidInstallments : 0,
+      installmentValue: usesInstallments ? manualInstValue  : totalAmount
+    };
+    Object.assign(debt, updates);
     saveDataToStorage();
-    updateInFirebase('debts', editId, {
-      creditor: debt.creditor, amount: debt.amount, dueDate: debt.dueDate,
-      responsible: debt.responsible, category: debt.category, description: debt.description,
-      debtType: debt.debtType, cartaoMode: debt.cartaoMode, installments: debt.installments,
-      paidInstallments: debt.paidInstallments, installmentValue: debt.installmentValue
-    });
+    updateInFirebase('debts', editId, updates);
     showAlert('Dívida atualizada com sucesso!', 'success');
   } else {
-    const debt = {
-      id: generateId(), creditor, amount: totalAmount, dueDate, responsible, category, description,
-      debtType, cartaoMode,
-      installments: usesInstallments ? installments : 1,
-      paidInstallments: usesInstallments ? paidInstallments : 0,
-      installmentValue: usesInstallments ? manualInstValue : totalAmount,
-      status: 'active', paidAt: null, familyId, createdAt: new Date().toISOString()
-    };
+    const debt = buildDebtObject({
+      creditor, totalAmount, dueDate, responsible, category, description,
+      debtType, cartaoMode, usesInstallments,
+      installments, paidInstallments, installmentValue: manualInstValue,
+      familyId
+    });
     state.debts.push(debt);
     saveDataToStorage();
     saveToFirebase('debts', debt);
@@ -123,14 +118,14 @@ export function editDebt(id) {
   const debt = state.debts.find(d => d.id === id);
   if (!debt) return;
 
-  document.getElementById('editDebtId').value = debt.id;
-  document.getElementById('debtAmount').value = debt.amount;
-  document.getElementById('debtDueDate').value = debt.dueDate;
-  document.getElementById('debtResponsible').value = debt.responsible;
-  document.getElementById('debtCategory').value = debt.category || '';
-  document.getElementById('debtDescription').value = debt.description || '';
+  document.getElementById('editDebtId').value        = debt.id;
+  document.getElementById('debtAmount').value        = debt.amount;
+  document.getElementById('debtDueDate').value       = debt.dueDate;
+  document.getElementById('debtResponsible').value   = debt.responsible;
+  document.getElementById('debtCategory').value      = debt.category || '';
+  document.getElementById('debtDescription').value   = debt.description || '';
 
-  const debtType = (debt.debtType === 'parcelada') ? 'financiamento' : (debt.debtType || 'unica');
+  const debtType  = (debt.debtType === 'parcelada') ? 'financiamento' : (debt.debtType || 'unica');
   document.getElementById('debtType').value = debtType;
   document.querySelectorAll('.debt-type-toggle').forEach(b => b.classList.remove('active'));
   const activeBtn = document.querySelector(`.debt-type-toggle[data-value="${debtType}"]`);
@@ -151,7 +146,7 @@ export function editDebt(id) {
     document.getElementById('debtBankIssuer').value = debt.creditor;
   } else if (debtType === 'fixa') {
     const fixedSel = document.getElementById('debtFixedCreditor');
-    const isKnown = [...fixedSel.options].some(o => o.value === debt.creditor);
+    const isKnown  = [...fixedSel.options].some(o => o.value === debt.creditor);
     document.getElementById('creditorFixedGroup').style.display = 'block';
     document.getElementById('creditorCardGroup').style.display = 'none';
     document.getElementById('creditorBankGroup').style.display = 'none';
@@ -175,36 +170,32 @@ export function editDebt(id) {
   }
   if (activeBtn) activeBtn.classList.add('active');
 
-  const isFinanciamento = debtType === 'financiamento';
-  const isEmprestimo = debtType === 'emprestimo';
-  const isCartao = debtType === 'cartao';
-  const cartaoMode = debt.cartaoMode || 'unica';
-  const usesInstallments = isFinanciamento || isEmprestimo || (isCartao && cartaoMode === 'parcelado');
+  const cartaoMode       = debt.cartaoMode || 'unica';
+  const usesInstallments = debtType === 'financiamento' || debtType === 'emprestimo' || (debtType === 'cartao' && cartaoMode === 'parcelado');
 
-  document.getElementById('cartaoOptions').style.display = isCartao ? 'block' : 'none';
-  if (isCartao) {
+  document.getElementById('cartaoOptions').style.display = debtType === 'cartao' ? 'block' : 'none';
+  if (debtType === 'cartao') {
     document.getElementById('cartaoMode').value = cartaoMode;
     document.querySelectorAll('.cartao-mode-toggle').forEach(b => b.classList.remove('active'));
-    const modeBtn = document.querySelector(`.cartao-mode-toggle[data-value="${cartaoMode}"]`);
-    if (modeBtn) modeBtn.classList.add('active');
+    document.querySelector(`.cartao-mode-toggle[data-value="${cartaoMode}"]`)?.classList.add('active');
   }
 
   document.getElementById('installmentFields').style.display = usesInstallments ? 'block' : 'none';
   if (usesInstallments) {
-    document.getElementById('debtInstallments').value = debt.installments || '';
-    document.getElementById('debtInstallmentValue').value = debt.installmentValue || '';
-    document.getElementById('debtPaidInstallments').value = debt.paidInstallments || 0;
+    document.getElementById('debtInstallments').value      = debt.installments || '';
+    document.getElementById('debtInstallmentValue').value  = debt.installmentValue || '';
+    document.getElementById('debtPaidInstallments').value  = debt.paidInstallments || 0;
     const remaining = debt.amount - ((debt.installmentValue || 0) * (debt.paidInstallments || 0));
-    document.getElementById('debtRemainingValue').value = remaining.toFixed(2);
+    document.getElementById('debtRemainingValue').value    = remaining.toFixed(2);
     document.getElementById('debtAmountLabel').textContent = 'Valor Total (R$)';
-  } else if (debtType === 'fixa' || (isCartao && cartaoMode === 'recorrente')) {
+  } else if (debtType === 'fixa' || (debtType === 'cartao' && cartaoMode === 'recorrente')) {
     document.getElementById('debtAmountLabel').textContent = 'Valor Mensal (R$)';
   } else {
     document.getElementById('debtAmountLabel').textContent = 'Valor (R$)';
   }
 
   document.getElementById('debtModalTitle').innerHTML = '<i class="fa-solid fa-pen"></i> Editar dívida';
-  document.getElementById('debtSubmitBtn').innerHTML = '<i class="fa-solid fa-check"></i> Salvar';
+  document.getElementById('debtSubmitBtn').innerHTML  = '<i class="fa-solid fa-check"></i> Salvar';
   document.getElementById('debtModal').classList.add('active');
 }
 
@@ -214,12 +205,13 @@ export function setupDebtTypeListeners() {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.debt-type-toggle').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
-      const val = this.dataset.value;
-      document.getElementById('debtType').value = val;
-      const cartaoOpts = document.getElementById('cartaoOptions');
+      const val          = this.dataset.value;
+      const cartaoOpts   = document.getElementById('cartaoOptions');
       const installFields = document.getElementById('installmentFields');
-      const bankGroup = document.getElementById('creditorBankGroup');
-      const fixedGroup = document.getElementById('creditorFixedGroup');
+      const bankGroup    = document.getElementById('creditorBankGroup');
+      const fixedGroup   = document.getElementById('creditorFixedGroup');
+      document.getElementById('debtType').value = val;
+
       if (val === 'cartao') {
         cartaoOpts.style.display = 'block';
         document.getElementById('creditorTextGroup').style.display = 'none';
@@ -227,8 +219,7 @@ export function setupDebtTypeListeners() {
         document.getElementById('creditorCardGroup').style.display = 'block';
         bankGroup.style.display = 'none';
         document.getElementById('debtCreditor').removeAttribute('required');
-        const mode = document.getElementById('cartaoMode').value;
-        installFields.style.display = mode === 'parcelado' ? 'block' : 'none';
+        installFields.style.display = document.getElementById('cartaoMode').value === 'parcelado' ? 'block' : 'none';
       } else if (val === 'emprestimo' || val === 'financiamento') {
         cartaoOpts.style.display = 'none';
         document.getElementById('creditorTextGroup').style.display = 'none';
@@ -261,9 +252,10 @@ export function setupDebtTypeListeners() {
         installFields.style.display = 'none';
       }
       const amountLabel = document.getElementById('debtAmountLabel');
-      if (val === 'financiamento' || val === 'emprestimo' || (val === 'cartao' && document.getElementById('cartaoMode').value === 'parcelado')) amountLabel.textContent = 'Valor Total (R$)';
-      else if (val === 'fixa' || (val === 'cartao' && document.getElementById('cartaoMode').value === 'recorrente')) amountLabel.textContent = 'Valor Mensal (R$)';
-      else amountLabel.textContent = 'Valor (R$)';
+      const cartaoMode  = document.getElementById('cartaoMode').value;
+      if (val === 'financiamento' || val === 'emprestimo' || (val === 'cartao' && cartaoMode === 'parcelado')) amountLabel.textContent = 'Valor Total (R$)';
+      else if (val === 'fixa' || (val === 'cartao' && cartaoMode === 'recorrente'))                            amountLabel.textContent = 'Valor Mensal (R$)';
+      else                                                                                                     amountLabel.textContent = 'Valor (R$)';
     });
   });
 
@@ -275,17 +267,16 @@ export function setupDebtTypeListeners() {
       document.getElementById('cartaoMode').value = mode;
       document.getElementById('installmentFields').style.display = mode === 'parcelado' ? 'block' : 'none';
       const amountLabel = document.getElementById('debtAmountLabel');
-      if (mode === 'parcelado') amountLabel.textContent = 'Valor Total (R$)';
+      if (mode === 'parcelado')   amountLabel.textContent = 'Valor Total (R$)';
       else if (mode === 'recorrente') amountLabel.textContent = 'Valor Mensal (R$)';
-      else amountLabel.textContent = 'Valor (R$)';
+      else                            amountLabel.textContent = 'Valor (R$)';
     });
   });
 
-  // Listener do select de credor fixo (mostrar campo texto quando "Outro...")
   const fixedCreditorSel = document.getElementById('debtFixedCreditor');
   if (fixedCreditorSel) {
     fixedCreditorSel.addEventListener('change', function() {
-      const textGroup = document.getElementById('creditorTextGroup');
+      const textGroup     = document.getElementById('creditorTextGroup');
       const creditorInput = document.getElementById('debtCreditor');
       if (this.value === '__outro__') {
         textGroup.style.display = 'block';
@@ -298,42 +289,38 @@ export function setupDebtTypeListeners() {
     });
   }
 
-  const amountInput = document.getElementById('debtAmount');
+  const amountInput      = document.getElementById('debtAmount');
   const installmentsInput = document.getElementById('debtInstallments');
-  const paidInput = document.getElementById('debtPaidInstallments');
-  const instValueInput = document.getElementById('debtInstallmentValue');
+  const paidInput        = document.getElementById('debtPaidInstallments');
+  const instValueInput   = document.getElementById('debtInstallmentValue');
 
   function updateInstallmentCalc() {
-    const total = parseFloat(amountInput.value) || 0;
-    const inst = parseInt(installmentsInput.value) || 1;
-    const instValue = total / inst;
-    instValueInput.value = instValue.toFixed(2);
+    const total    = parseFloat(amountInput.value) || 0;
+    const inst     = parseInt(installmentsInput.value) || 1;
+    instValueInput.value = (total / inst).toFixed(2);
     updateRemainingCalc();
   }
-
   function updateRemainingCalc() {
-    const paid = parseInt(paidInput.value) || 0;
-    const instValue = parseFloat(instValueInput.value) || 0;
-    const total = parseFloat(amountInput.value) || 0;
-    const remaining = total - (instValue * paid);
-    document.getElementById('debtRemainingValue').value = remaining.toFixed(2);
+    const paid     = parseInt(paidInput.value) || 0;
+    const instVal  = parseFloat(instValueInput.value) || 0;
+    const total    = parseFloat(amountInput.value) || 0;
+    document.getElementById('debtRemainingValue').value = (total - (instVal * paid)).toFixed(2);
   }
 
-  if (amountInput) amountInput.addEventListener('input', updateInstallmentCalc);
+  if (amountInput)       amountInput.addEventListener('input', updateInstallmentCalc);
   if (installmentsInput) installmentsInput.addEventListener('input', updateInstallmentCalc);
-  if (instValueInput) instValueInput.addEventListener('input', updateRemainingCalc);
-  if (paidInput) paidInput.addEventListener('input', updateRemainingCalc);
+  if (instValueInput)    instValueInput.addEventListener('input', updateRemainingCalc);
+  if (paidInput)         paidInput.addEventListener('input', updateRemainingCalc);
 }
 
 // ===== DELETAR DÍVIDA =====
 export function deleteDebt(id) {
-  if (confirm('Deseja deletar esta dívida?')) {
-    state.debts = state.debts.filter(d => d.id !== id);
-    saveDataToStorage();
-    deleteFromFirebase('debts', id);
-    updateDebtsList();
-    showAlert('Dívida deletada com sucesso!', 'success');
-  }
+  if (!confirm('Deseja deletar esta dívida?')) return;
+  state.debts = state.debts.filter(d => d.id !== id);
+  saveDataToStorage();
+  deleteFromFirebase('debts', id);
+  updateDebtsList();
+  showAlert('Dívida deletada com sucesso!', 'success');
 }
 
 // ===== PAGAR DÍVIDA =====
@@ -341,74 +328,35 @@ export function payDebt(id) {
   const debt = state.debts.find(d => d.id === id);
   if (!debt) return;
 
-  const debtCartaoMode = debt.cartaoMode || 'unica';
-  const isInstallmentDebt = ((debt.debtType === 'financiamento' || debt.debtType === 'parcelada' || debt.debtType === 'emprestimo') && debt.installments > 1)
-    || (debt.debtType === 'cartao' && debtCartaoMode === 'parcelado' && debt.installments > 1);
-  const isFixaDebt = debt.debtType === 'fixa' || (debt.debtType === 'cartao' && debtCartaoMode === 'recorrente');
+  const payment = buildPaymentTransaction(debt);
+  if (!payment) { showAlert('Todas as parcelas já foram pagas!', 'info'); return; }
 
-  if (isInstallmentDebt) {
-    const paidSoFar = (debt.paidInstallments || 0);
-    const remaining = debt.installments - paidSoFar;
-    if (remaining <= 0) { showAlert('Todas as parcelas já foram pagas!', 'info'); return; }
-    const installmentValue = debt.installmentValue || (debt.amount / debt.installments);
-    const parcNum = paidSoFar + 1;
-    if (!confirm(`Pagar parcela ${parcNum}/${debt.installments} de ${formatCurrency(installmentValue)}?`)) return;
-
-    debt.paidInstallments = parcNum;
-    const transaction = {
-      id: generateId(), type: 'saida', amount: installmentValue,
-      category: debt.category || 'outros', responsible: debt.responsible,
-      date: toDateStr(new Date()),
-      description: `${debt.creditor} - Parcela ${parcNum}/${debt.installments}`,
-      fromDebt: debt.id, createdAt: new Date().toISOString()
-    };
-    state.transactions.push(transaction);
-    saveToFirebase('transactions', transaction);
-
-    if (parcNum >= debt.installments) {
-      debt.status = 'paid'; debt.paidAt = new Date().toISOString();
-      showAlert(`Todas as ${debt.installments} parcelas pagas! Financiamento quitado!`, 'success');
-    } else {
-      const nextDue = new Date(debt.dueDate + 'T12:00:00');
-      nextDue.setMonth(nextDue.getMonth() + 1);
-      debt.dueDate = toDateStr(nextDue);
-      showAlert(`Parcela ${parcNum}/${debt.installments} paga! Próximo vencimento: ${formatDate(debt.dueDate)}`, 'success');
-    }
-    updateInFirebase('debts', id, { paidInstallments: debt.paidInstallments, status: debt.status, dueDate: debt.dueDate, paidAt: debt.paidAt });
-
-  } else if (isFixaDebt) {
-    const label = debt.debtType === 'cartao' ? 'fatura' : 'mês';
-    if (!confirm(`Pagar ${esc(debt.creditor)} deste ${label}: ${formatCurrency(debt.amount)}?`)) return;
-    const transaction = {
-      id: generateId(), type: 'saida', amount: debt.amount,
-      category: debt.category || 'outros', responsible: debt.responsible,
-      date: toDateStr(new Date()),
-      description: `${debt.creditor} - ${debt.debtType === 'cartao' ? 'Fatura' : 'Mensal'}`,
-      fromDebt: debt.id, createdAt: new Date().toISOString()
-    };
-    state.transactions.push(transaction);
-    saveToFirebase('transactions', transaction);
-    const nextDue = new Date(debt.dueDate + 'T12:00:00');
-    nextDue.setMonth(nextDue.getMonth() + 1);
-    debt.dueDate = toDateStr(nextDue);
-    updateInFirebase('debts', id, { dueDate: debt.dueDate });
-    showAlert(`${debt.creditor} pago! Próximo vencimento: ${formatDate(debt.dueDate)}`, 'success');
-
+  let confirmMsg;
+  if (payment.type === 'installment') {
+    confirmMsg = `Pagar parcela ${payment.parcNum}/${debt.installments} de ${formatCurrency(payment.installmentValue)}?`;
+  } else if (payment.type === 'fixa') {
+    confirmMsg = `Pagar ${debt.creditor} deste ${payment.label}: ${formatCurrency(debt.amount)}?`;
   } else {
-    if (!confirm(`Marcar dívida de ${formatCurrency(debt.amount)} como paga?`)) return;
-    debt.status = 'paid'; debt.paidAt = new Date().toISOString();
-    const transaction = {
-      id: generateId(), type: 'saida', amount: debt.amount,
-      category: debt.category || 'outros', responsible: debt.responsible,
-      date: toDateStr(new Date()),
-      description: `Dívida paga: ${debt.creditor}`,
-      fromDebt: debt.id, createdAt: new Date().toISOString()
-    };
-    state.transactions.push(transaction);
-    saveToFirebase('transactions', transaction);
-    updateInFirebase('debts', id, { status: 'paid', paidAt: debt.paidAt });
-    showAlert('Dívida marcada como paga e registrada como despesa!', 'success');
+    confirmMsg = `Marcar dívida de ${formatCurrency(debt.amount)} como paga?`;
   }
+  if (!confirm(confirmMsg)) return;
+
+  Object.assign(debt, payment.debtUpdates);
+  state.transactions.push(payment.transaction);
+  saveToFirebase('transactions', payment.transaction);
+  updateInFirebase('debts', id, payment.debtUpdates);
+
+  let alertMsg;
+  if (payment.type === 'installment') {
+    alertMsg = payment.allPaid
+      ? `Todas as ${debt.installments} parcelas pagas! Financiamento quitado!`
+      : `Parcela ${payment.parcNum}/${debt.installments} paga! Próximo vencimento: ${formatDate(payment.nextDueDate)}`;
+  } else if (payment.type === 'fixa') {
+    alertMsg = `${debt.creditor} pago! Próximo vencimento: ${formatDate(payment.nextDueDate)}`;
+  } else {
+    alertMsg = 'Dívida marcada como paga e registrada como despesa!';
+  }
+  showAlert(alertMsg, 'success');
 
   saveDataToStorage();
   updateDebtsList();
@@ -419,101 +367,67 @@ export function payDebt(id) {
 // ===== ATUALIZAR LISTA =====
 export function updateDebtsList() {
   const container = document.getElementById('debtsList');
-  const activeDebts = state.debts.filter(d => d.status === 'active');
+  const stats     = computeDebtStats(state.debts, state.familyMembers || []);
 
-  const isInstType = d => (d.debtType === 'financiamento' || d.debtType === 'parcelada' || d.debtType === 'emprestimo') || (d.debtType === 'cartao' && d.cartaoMode === 'parcelado');
-  const monthlyDebts = activeDebts.filter(d => !isInstType(d));
-  const financingDebts = activeDebts.filter(d => (d.debtType === 'financiamento' || d.debtType === 'parcelada') || (d.debtType === 'cartao' && d.cartaoMode === 'parcelado'));
-  const loanDebts = activeDebts.filter(d => d.debtType === 'emprestimo');
+  document.getElementById('totalDebts').textContent  = formatCurrency(stats.totalMonthly);
+  document.getElementById('activeDebts').textContent = stats.activeCount;
 
-  const totalMonthly = monthlyDebts.reduce((sum, d) => sum + d.amount, 0);
-  const totalFinancing = financingDebts.reduce((sum, d) => sum + (d.installmentValue || d.amount), 0);
-  const totalFinancingRemaining = financingDebts.reduce((sum, d) => {
-    const instVal = d.installmentValue || (d.amount / (d.installments || 1));
-    return sum + (d.amount - (instVal * (d.paidInstallments || 0)));
-  }, 0);
-  const totalLoan = loanDebts.reduce((sum, d) => sum + (d.installmentValue || d.amount), 0);
-  const totalLoanRemaining = loanDebts.reduce((sum, d) => {
-    const instVal = d.installmentValue || (d.amount / (d.installments || 1));
-    return sum + (d.amount - (instVal * (d.paidInstallments || 0)));
-  }, 0);
-  const activeCount = activeDebts.length;
-  const totalPaid = state.debts.filter(d => d.status === 'paid').reduce((sum, d) => sum + d.amount, 0);
-
-  document.getElementById('totalDebts').textContent = formatCurrency(totalMonthly);
-  const financingEl = document.getElementById('totalFinancing');
-  if (financingEl) financingEl.textContent = formatCurrency(totalFinancing);
-  const loansEl = document.getElementById('totalLoans');
-  if (loansEl) loansEl.textContent = formatCurrency(totalLoan);
-  document.getElementById('activeDebts').textContent = activeCount;
-  const paidTabEl = document.getElementById('totalPaidDebtsTab');
-  if (paidTabEl) paidTabEl.textContent = formatCurrency(totalPaid);
+  const financingEl  = document.getElementById('totalFinancing');
+  if (financingEl)   financingEl.textContent = formatCurrency(stats.totalFinancing);
+  const loansEl      = document.getElementById('totalLoans');
+  if (loansEl)       loansEl.textContent = formatCurrency(stats.totalLoan);
+  const paidTabEl    = document.getElementById('totalPaidDebtsTab');
+  if (paidTabEl)     paidTabEl.textContent = formatCurrency(stats.totalPaid);
 
   const monthlyCountEl = document.getElementById('monthlyDebtCount');
-  if (monthlyCountEl) monthlyCountEl.textContent = `${monthlyDebts.length} dívida${monthlyDebts.length !== 1 ? 's' : ''}`;
+  if (monthlyCountEl) monthlyCountEl.textContent = `${stats.monthlyDebts.length} dívida${stats.monthlyDebts.length !== 1 ? 's' : ''}`;
   const financingCountEl = document.getElementById('financingDebtCount');
-  if (financingCountEl) financingCountEl.textContent = `${financingDebts.length} dívida${financingDebts.length !== 1 ? 's' : ''}`;
+  if (financingCountEl) financingCountEl.textContent = `${stats.financingDebts.length} dívida${stats.financingDebts.length !== 1 ? 's' : ''}`;
   const financingRemEl = document.getElementById('financingRemaining');
-  if (financingRemEl) financingRemEl.textContent = `Restante: ${formatCurrency(totalFinancingRemaining)}`;
-  const loanCountEl = document.getElementById('loanDebtCount');
-  if (loanCountEl) loanCountEl.textContent = `${loanDebts.length} dívida${loanDebts.length !== 1 ? 's' : ''}`;
-  const loanRemEl = document.getElementById('loanRemaining');
-  if (loanRemEl) loanRemEl.textContent = `Restante: ${formatCurrency(totalLoanRemaining)}`;
+  if (financingRemEl) financingRemEl.textContent = `Restante: ${formatCurrency(stats.totalFinancingRemaining)}`;
+  const loanCountEl    = document.getElementById('loanDebtCount');
+  if (loanCountEl)     loanCountEl.textContent = `${stats.loanDebts.length} dívida${stats.loanDebts.length !== 1 ? 's' : ''}`;
+  const loanRemEl      = document.getElementById('loanRemaining');
+  if (loanRemEl)       loanRemEl.textContent = `Restante: ${formatCurrency(stats.totalLoanRemaining)}`;
 
-  // Cartão por pessoa
-  const cardDebts = activeDebts.filter(d => d.debtType === 'cartao');
-  const cardAmbosByPerson = cardDebts.filter(d => d.responsible === 'Ambos');
-  const members = state.familyMembers || [];
-  const memberCount = members.length || 1;
-  members.forEach(m => {
-    const slug = m.name.replace(/\s+/g, '_');
-    const personal = cardDebts.filter(d => d.responsible === m.name);
-    const total = personal.reduce((s, d) => s + (d.installmentValue || d.amount), 0)
-      + cardAmbosByPerson.reduce((s, d) => s + (d.installmentValue || d.amount) / memberCount, 0);
-    const count = personal.length + cardAmbosByPerson.length;
+  (state.familyMembers || []).forEach(m => {
+    const slug  = m.name.replace(/\s+/g, '_');
+    const card  = stats.cardByMember[slug] || { total: 0, count: 0 };
     const totalEl = document.getElementById(`cardTotal_${slug}`);
-    if (totalEl) totalEl.textContent = formatCurrency(total);
+    if (totalEl) totalEl.textContent = formatCurrency(card.total);
     const countEl = document.getElementById(`cardCount_${slug}`);
-    if (countEl) countEl.textContent = `${count} dívida${count !== 1 ? 's' : ''}`;
+    if (countEl) countEl.textContent = `${card.count} dívida${card.count !== 1 ? 's' : ''}`;
   });
 
   if (state.debts.length === 0) { container.innerHTML = emptyState('Nenhuma dívida registrada ✅'); return; }
 
-  const sorted = state.debts.sort((a, b) => {
+  const sorted = state.debts.slice().sort((a, b) => {
     if (a.status !== b.status) return a.status === 'active' ? -1 : 1;
     return new Date(a.dueDate + 'T12:00:00') - new Date(b.dueDate + 'T12:00:00');
   });
 
   container.innerHTML = sorted.map(d => {
-    const dueDate = new Date(d.dueDate + 'T12:00:00');
-    const today = new Date();
-    const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-
-    let statusBadge = 'active', statusLabel = 'Ativa';
-    if (d.status === 'paid') { statusBadge = 'paid'; statusLabel = 'Paga'; }
-    else if (daysUntilDue < 0) { statusBadge = 'overdue'; statusLabel = 'Atrasada'; }
-    else if (daysUntilDue < 7) { statusBadge = 'due-soon'; statusLabel = `${daysUntilDue}d restantes`; }
-
-    const cartaoMode = d.cartaoMode || 'unica';
+    const { statusBadge, statusLabel } = getDebtDisplayStatus(d);
+    const cartaoMode     = d.cartaoMode || 'unica';
     const isFinanciamento = ((d.debtType === 'financiamento' || d.debtType === 'parcelada') && d.installments > 1) || (d.debtType === 'cartao' && cartaoMode === 'parcelado' && d.installments > 1);
-    const isEmprestimo = d.debtType === 'emprestimo' && d.installments > 1;
-    const isFixa = d.debtType === 'fixa' || (d.debtType === 'cartao' && cartaoMode === 'recorrente');
-    const isCartao = d.debtType === 'cartao';
+    const isEmprestimo   = d.debtType === 'emprestimo' && d.installments > 1;
+    const isFixa         = d.debtType === 'fixa' || (d.debtType === 'cartao' && cartaoMode === 'recorrente');
+    const isCartao       = d.debtType === 'cartao';
     const hasInstallments = isFinanciamento || isEmprestimo;
-    const paidInst = d.paidInstallments || 0;
-    const instValue = d.installmentValue || (d.amount / (d.installments || 1));
-    const remaining = d.amount - (instValue * paidInst);
-    const catInfo = d.category ? CATEGORY_MAP[d.category] : null;
+    const paidInst       = d.paidInstallments || 0;
+    const instValue      = d.installmentValue || (d.amount / (d.installments || 1));
+    const remaining      = d.amount - (instValue * paidInst);
+    const catInfo        = d.category ? CATEGORY_MAP[d.category] : null;
 
     let typeBadge = '', typeIcon = '';
     const bankImg = (isCartao || isEmprestimo || isFinanciamento) && BANK_IMG[d.creditor]
       ? `<img src="${BANK_IMG[d.creditor]}" alt="${esc(d.creditor)}" class="debt-bank-logo">` : '';
 
-    if (isCartao && isFinanciamento) { typeBadge = 'Cartão Parcelado'; typeIcon = bankImg || '<i class="fa-solid fa-credit-card"></i>'; }
-    else if (isCartao && isFixa) { typeBadge = 'Cartão Recorrente'; typeIcon = bankImg || '<i class="fa-solid fa-credit-card"></i>'; }
-    else if (isCartao) { typeBadge = 'Cartão'; typeIcon = bankImg || '<i class="fa-solid fa-credit-card"></i>'; }
-    else if (isEmprestimo) { typeBadge = 'Empréstimo'; typeIcon = bankImg || '<i class="fa-solid fa-hand-holding-dollar"></i>'; }
-    else if (isFinanciamento) { typeBadge = 'Financiamento'; typeIcon = bankImg || '<i class="fa-solid fa-building-columns"></i>'; }
+    if (isCartao && isFinanciamento)      { typeBadge = 'Cartão Parcelado';   typeIcon = bankImg || '<i class="fa-solid fa-credit-card"></i>'; }
+    else if (isCartao && isFixa)          { typeBadge = 'Cartão Recorrente';  typeIcon = bankImg || '<i class="fa-solid fa-credit-card"></i>'; }
+    else if (isCartao)                    { typeBadge = 'Cartão';             typeIcon = bankImg || '<i class="fa-solid fa-credit-card"></i>'; }
+    else if (isEmprestimo)                { typeBadge = 'Empréstimo';         typeIcon = bankImg || '<i class="fa-solid fa-hand-holding-dollar"></i>'; }
+    else if (isFinanciamento)             { typeBadge = 'Financiamento';      typeIcon = bankImg || '<i class="fa-solid fa-building-columns"></i>'; }
     else if (isFixa) {
       typeBadge = 'Fixa';
       const credImg = CREDITOR_IMG[d.creditor];
@@ -532,9 +446,9 @@ export function updateDebtsList() {
     }
 
     let payBtnLabel = 'Pagar';
-    if (hasInstallments) payBtnLabel = 'Pagar parcela';
+    if (hasInstallments)         payBtnLabel = 'Pagar parcela';
     else if (isCartao && isFixa) payBtnLabel = 'Pagar fatura';
-    else if (isFixa) payBtnLabel = 'Pagar mês';
+    else if (isFixa)             payBtnLabel = 'Pagar mês';
 
     return `
       <div class="debt-item ${d.status === 'paid' ? 'debt-paid' : ''} ${statusBadge === 'overdue' ? 'debt-overdue' : ''} ${hasInstallments ? 'debt-financing' : ''} ${isEmprestimo ? 'debt-emprestimo' : ''} ${isCartao ? 'debt-cartao' : ''} ${isFixa && !isCartao ? 'debt-fixed' : ''}" data-debt-id="${d.id}">
@@ -566,51 +480,41 @@ export function updateDebtsList() {
       </div>`;
   }).join('');
 
-  updateDebtAlerts();
+  _updateDebtAlerts();
   if (currentDebtFilter) applyDebtFilter();
 }
 
 // ===== ALERTAS DE VENCIMENTO =====
-function updateDebtAlerts() {
+function _updateDebtAlerts() {
   const container = document.getElementById('debtAlerts');
-  const bellBtn = document.getElementById('debtAlertsBell');
-  const badgeEl = document.getElementById('debtAlertsBadge');
+  const bellBtn   = document.getElementById('debtAlertsBell');
+  const badgeEl   = document.getElementById('debtAlertsBadge');
   if (!container || !bellBtn || !badgeEl) return;
 
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const activeDebts = state.debts.filter(d => d.status === 'active');
-  const alerts = [];
-
-  activeDebts.forEach(d => {
-    const dueDate = new Date(d.dueDate + 'T12:00:00'); dueDate.setHours(0, 0, 0, 0);
-    const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-    if (diffDays < 0) {
-      alerts.push({ type: 'overdue', icon: 'fa-circle-exclamation', label: `<strong>${esc(d.creditor)}</strong> venceu há ${Math.abs(diffDays)} dia(s) — ${formatCurrency(d.installmentValue || d.amount)}`, days: diffDays });
-    } else if (diffDays === 0) {
-      alerts.push({ type: 'today', icon: 'fa-bell', label: `<strong>${esc(d.creditor)}</strong> vence <strong>hoje</strong> — ${formatCurrency(d.installmentValue || d.amount)}`, days: diffDays });
-    } else if (diffDays <= 7) {
-      alerts.push({ type: 'soon', icon: 'fa-clock', label: `<strong>${esc(d.creditor)}</strong> vence em ${diffDays} dia(s) (${formatDate(d.dueDate)}) — ${formatCurrency(d.installmentValue || d.amount)}`, days: diffDays });
-    }
-  });
-
-  alerts.sort((a, b) => a.days - b.days);
+  const alerts = computeAlerts(state.debts);
   if (alerts.length === 0) { container.innerHTML = ''; bellBtn.style.display = 'none'; return; }
 
   bellBtn.style.display = 'flex';
-  badgeEl.textContent = alerts.length;
+  badgeEl.textContent   = alerts.length;
   bellBtn.classList.remove('has-alerts', 'has-overdue');
   bellBtn.classList.add(alerts.some(a => a.type === 'overdue') ? 'has-overdue' : 'has-alerts');
 
-  container.innerHTML = alerts.map(a => `
+  container.innerHTML = alerts.map(a => {
+    let label;
+    if (a.type === 'overdue') label = `<strong>${esc(a.creditor)}</strong> venceu há ${Math.abs(a.days)} dia(s) — ${formatCurrency(a.amount)}`;
+    else if (a.type === 'today') label = `<strong>${esc(a.creditor)}</strong> vence <strong>hoje</strong> — ${formatCurrency(a.amount)}`;
+    else                         label = `<strong>${esc(a.creditor)}</strong> vence em ${a.days} dia(s) (${formatDate(a.dueDate)}) — ${formatCurrency(a.amount)}`;
+    return `
     <div class="debt-alert debt-alert-${a.type}">
       <i class="fa-solid ${a.icon}"></i>
-      <span>${a.label}</span>
-    </div>`).join('');
+      <span>${label}</span>
+    </div>`;
+  }).join('');
 }
 
 // ===== BELL TOGGLE =====
 document.addEventListener('click', (e) => {
-  const bellBtn = document.getElementById('debtAlertsBell');
+  const bellBtn  = document.getElementById('debtAlertsBell');
   const dropdown = document.getElementById('debtAlertsDropdown');
   if (!bellBtn || !dropdown) return;
   if (bellBtn.contains(e.target)) dropdown.classList.toggle('open');
@@ -630,9 +534,9 @@ export function setupDebtFilterListeners() {
     currentDebtFilter = filter;
     document.querySelectorAll('.debt-overview-card[data-filter], .summary-mini[data-filter]').forEach(c => c.classList.remove('filter-active'));
     card.classList.add('filter-active');
-    const filterBar = document.getElementById('debtFilterBar');
+    const filterBar   = document.getElementById('debtFilterBar');
     const filterLabel = document.getElementById('debtFilterLabel');
-    const labels = { 'monthly': 'Mensais (Fixas + Únicas)', 'financing': 'Financiamentos', 'loan': 'Empréstimos', 'all': 'Todas Ativas', 'paid': 'Pagas' };
+    const labels = { monthly: 'Mensais (Fixas + Únicas)', financing: 'Financiamentos', loan: 'Empréstimos', all: 'Todas Ativas', paid: 'Pagas' };
     (state.familyMembers || []).forEach(m => { labels[`cartao-${m.name.replace(/\s+/g, '_')}`] = `Cartão ${m.name}`; });
     filterLabel.innerHTML = `<i class="fa-solid fa-filter"></i> ${labels[filter] || filter}`;
     filterBar.classList.add('show');
@@ -654,33 +558,13 @@ function applyDebtFilter() {
     if (!debtId) { el.style.display = ''; return; }
     const debt = state.debts.find(d => d.id === debtId);
     if (!debt) { el.style.display = ''; return; }
-
-    let show = false;
-    const cartaoMode = debt.cartaoMode || 'unica';
-    const isFinancingType = (debt.debtType === 'financiamento' || debt.debtType === 'parcelada') || (debt.debtType === 'cartao' && cartaoMode === 'parcelado');
-    const isLoanType = debt.debtType === 'emprestimo';
-    const isInstType = isFinancingType || isLoanType;
-
-    switch (currentDebtFilter) {
-      case 'monthly': show = debt.status === 'active' && !isInstType; break;
-      case 'financing': show = debt.status === 'active' && isFinancingType; break;
-      case 'loan': show = debt.status === 'active' && isLoanType; break;
-      case 'all': show = debt.status === 'active'; break;
-      case 'paid': show = debt.status === 'paid'; break;
-      default:
-        if (currentDebtFilter.startsWith('cartao-')) {
-          const memberSlug = currentDebtFilter.replace('cartao-', '');
-          const memberName = (state.familyMembers || []).find(m => m.name.replace(/\s+/g, '_') === memberSlug)?.name;
-          show = memberName ? (debt.status === 'active' && debt.debtType === 'cartao' && (debt.responsible === memberName || debt.responsible === 'Ambos')) : true;
-        } else { show = true; }
-    }
-    el.style.display = show ? '' : 'none';
+    el.style.display = matchesDebtFilter(debt, currentDebtFilter, state.familyMembers || []) ? '' : 'none';
   });
 }
 
 // Globals para inline handlers
-window.editDebt = editDebt;
-window.payDebt = payDebt;
+window.editDebt  = editDebt;
+window.payDebt   = payDebt;
 window.deleteDebt = deleteDebt;
 window.clearDebtFilter = clearDebtFilter;
 window._setupDebtFilterListeners = setupDebtFilterListeners;
