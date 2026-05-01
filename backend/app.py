@@ -11,7 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from datetime import datetime
 import firebase_admin
-from firebase_admin import credentials, messaging as fcm_messaging, auth as fb_auth, firestore as fb_firestore
+from firebase_admin import credentials, messaging as fcm_messaging, auth as fb_auth
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -196,6 +196,7 @@ def get_custom_token():
         return jsonify({'error': 'Firebase Admin não inicializado'}), 503
 
     try:
+        from firebase_admin import firestore as fb_firestore
         fs_client = fb_firestore.client(app=firebase_app)
         user_doc = fs_client.collection('users').document(user_id).get()
         if not user_doc.exists:
