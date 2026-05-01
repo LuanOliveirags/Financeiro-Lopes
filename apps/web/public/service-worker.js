@@ -33,7 +33,7 @@ try {
 }
 // ===== FIM FIREBASE MESSAGING =====
 
-const CACHE_NAME = 'wolfsource-v22';
+const CACHE_NAME = 'wolfsource-v23';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -72,12 +72,19 @@ const URLS_TO_CACHE = [
   './packages/core/state/store.js',
   './packages/core/state/session.js',
   './packages/services/firebase/firebase.config.js',
+  './packages/services/firebase/firebase.init.js',
+  './packages/services/firebase/firebase.crud.js',
   './packages/services/firebase/firebase.service.js',
   './packages/services/auth/auth.service.js',
+  './packages/services/shopping/shopping.service.js',
+  './packages/services/chores/chores.service.js',
+  './packages/services/salaries/salaries.service.js',
   // JS — Features
   './apps/web/src/features/dashboard/dashboard.js',
-  './apps/web/src/features/transactions/transactions.service.js',
+  './apps/web/src/features/transactions/transactions.js',
+  './packages/services/transactions/transactions.service.js',
   './apps/web/src/features/debts/debts.js',
+  './packages/services/debts/debts.service.js',
   './apps/web/src/features/salaries/salaries.js',
   './apps/web/src/features/chores/chores.js',
   './apps/web/src/features/shopping/shopping.js',

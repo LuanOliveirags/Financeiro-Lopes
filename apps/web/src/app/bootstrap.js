@@ -7,7 +7,7 @@ import { initFirebase, setRefreshCallback } from '../../../../packages/services/
 import { createDefaultAdmin, checkLoginStatus, initResetPasswordUI } from '../../../../packages/services/auth/auth.service.js';
 import { setupEventListeners, setupOnlineOfflineListeners, initMonthScroller } from '../../../../packages/ui/navigation/navigation.js';
 import { updateDashboard, setupDashboardToggle, setupKpiClickListeners, setupValuesToggle } from '../features/dashboard/dashboard.js';
-import { updateTransactionHistory } from '../features/transactions/transactions.service.js';
+import { updateTransactionHistory } from '../features/transactions/transactions.js';
 import { updateDebtsList } from '../features/debts/debts.js';
 import { updateSalaryDisplay } from '../features/salaries/salaries.js';
 import { initNotifications, storeDebtSummaryForSW } from '../../../../packages/services/notifications/notification.service.js';

@@ -6,7 +6,7 @@
 import { CATEGORY_MAP } from '../../../../../packages/services/firebase/firebase.config.js';
 import { state } from '../../../../../packages/core/state/store.js';
 import { formatCurrency } from '../../../../../packages/utils/helpers.js';
-import { updateRecentTransactions } from '../transactions/transactions.service.js';
+import { updateRecentTransactions } from '../transactions/transactions.js';
 
 // ===== DASHBOARD MODE STATE =====
 let dashboardMode = 'geral'; // 'geral' | 'vr'

@@ -9,7 +9,7 @@ import { state, getFamilyId } from '../../../../../packages/core/state/store.js'
 import { generateId, esc, formatCurrency, formatDate, showAlert, emptyState } from '../../../../../packages/utils/helpers.js';
 import { saveDataToStorage, saveToFirebase, deleteFromFirebase, updateInFirebase } from '../../../../../packages/services/firebase/firebase.service.js';
 import { updateDashboard } from '../dashboard/dashboard.js';
-import { updateTransactionHistory } from '../transactions/transactions.service.js';
+import { updateTransactionHistory } from '../transactions/transactions.js';
 import {
   buildDebtObject,
   buildPaymentTransaction,
