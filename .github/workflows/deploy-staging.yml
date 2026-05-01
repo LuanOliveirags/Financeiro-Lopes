@@ -1,0 +1,40 @@
+name: Deploy Staging (Firebase Hosting)
+
+# Dispara em qualquer push para a branch dev
+# e em PRs direcionados para main (preview por PR)
+on:
+  push:
+    branches: ["dev"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  pull-requests: write  # necessário para o comentário automático de preview no PR
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build www/
+        run: node infra/scripts/copy-web.js
+
+      # Deploya para Firebase Hosting Preview Channel
+      # Push em dev → canal fixo "staging" (URL estável para testes)
+      # PR para main  → canal dinâmico por PR (URL única por revisão)
+      - name: Deploy para Firebase Hosting (staging)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FINANCEIRO_LOPES }}
+          projectId: financeiro-lopes
+          channelId: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'staging' }}
+          expires: 7d
