@@ -18,7 +18,7 @@ import { showAlert, formatCurrency } from '../../utils/helpers.js';
 import { saveToFirebase as _saveToFirebase } from './firebase.crud.js';
 
 // ===== RE-EXPORTS (backward compat — não remover) =====
-export { db, storage, firebaseReady, initFirebase } from './firebase.init.js';
+export { db, storage, auth, firebaseReady, initFirebase } from './firebase.init.js';
 export { saveToFirebase, deleteFromFirebase, updateInFirebase } from './firebase.crud.js';
 
 // ===== ESTADO INTERNO =====

@@ -11,6 +11,7 @@ import { firebaseConfig } from './firebase.config.js';
 // verá o valor atualizado após initFirebase() ser chamado.
 export let db            = null;
 export let storage       = null;
+export let auth          = null;
 export let firebaseReady = false;
 
 export function initFirebase() {
@@ -18,6 +19,7 @@ export function initFirebase() {
     if (typeof firebase !== 'undefined' && firebaseConfig.apiKey) {
       firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
+      auth = firebase.auth();
       firebaseReady = true;
       try {
         storage = firebase.storage();
