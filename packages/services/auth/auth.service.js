@@ -3,10 +3,10 @@
 // ============================================================
 /* global firebase, emailjs */
 
-import { EMAILJS_CONFIG } from '../firebase/firebase.config.js';
+import { EMAILJS_CONFIG, BACKEND_URL } from '../firebase/firebase.config.js';
 import { state, isSuperAdmin, isAdmin, getFamilyId } from '../../core/state/store.js';
 import { esc, showAlert, generateId } from '../../utils/helpers.js';
-import { db, firebaseReady, storage as fbStorage, saveDataToStorage, loadDataFromStorage, cleanupFirebaseListeners, allowRefresh, notifyRefresh } from '../firebase/firebase.service.js';
+import { db, auth, firebaseReady, storage as fbStorage, saveDataToStorage, loadDataFromStorage, cleanupFirebaseListeners, allowRefresh, notifyRefresh } from '../firebase/firebase.service.js';
 
 // ===== FLAG PARA EVITAR MÚLTIPLAS EXECUÇÕES =====
 let _checkingLogin = false;
@@ -18,6 +18,26 @@ export async function hashPassword(password) {
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ===== FIREBASE AUTH: CUSTOM TOKEN =====
+export async function signInWithFirebase(userId, familyId) {
+  if (!auth) return;
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/auth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, familyId })
+    });
+    if (!res.ok) {
+      console.warn('[Auth] Falha ao obter custom token:', res.status);
+      return;
+    }
+    const { token } = await res.json();
+    await auth.signInWithCustomToken(token);
+  } catch (e) {
+    console.warn('[Auth] signInWithFirebase falhou (não bloqueia login):', e);
+  }
 }
 
 // ===== CRIAR ADMIN PADRÃO =====
@@ -555,6 +575,7 @@ export async function checkLoginStatus() {
               state.currentUser = freshData;
               state.user = freshData.login;
               localStorage.setItem('user', JSON.stringify(freshData));
+              await signInWithFirebase(freshData.id, freshData.familyId);
             } else {
               console.warn('❌ Usuário não encontrado no Firebase. Deslogando.');
               localStorage.removeItem('user');
@@ -599,6 +620,7 @@ export function logout() {
   if (confirm('Tem certeza que deseja sair?')) {
     _checkingLogin = false;
     cleanupFirebaseListeners();
+    if (auth) auth.signOut().catch(() => {});
     state.isLoggedIn = false;
     state.user = null;
     state.currentUser = null;
@@ -975,3 +997,49 @@ async function handleSaveNewPassword() {
     btn.innerHTML = '<span>Salvar nova senha</span><i class="fa-solid fa-check"></i>';
   }
 }
+
+// ===== MIGRAÇÃO: families → members[] + ownerId =====
+// Executar uma única vez pelo superadmin via console: window.migrateFamiliesCollection()
+export async function migrateFamiliesCollection() {
+  if (!firebaseReady) { console.error('Firebase não disponível.'); return; }
+  if (!isSuperAdmin()) { console.error('Apenas o superadmin pode executar esta migração.'); return; }
+
+  const familiesSnap = await db.collection('families').get();
+  const usersSnap    = await db.collection('users').get();
+
+  const usersByFamily = {};
+  usersSnap.forEach(doc => {
+    const u = doc.data();
+    if (!u.familyId) return;
+    if (!usersByFamily[u.familyId]) usersByFamily[u.familyId] = [];
+    usersByFamily[u.familyId].push(u.id);
+  });
+
+  const batch = db.batch();
+  let count = 0;
+
+  familiesSnap.forEach(doc => {
+    const data = doc.data();
+    const needsUpdate = !data.members || !data.ownerId;
+    if (!needsUpdate) return;
+
+    const members = usersByFamily[data.id] || [];
+    const ownerId = members[0] || null;
+
+    batch.update(doc.ref, {
+      members: data.members || members,
+      ownerId: data.ownerId || ownerId
+    });
+    count++;
+  });
+
+  if (count === 0) {
+    console.log('[Migrate] Todas as famílias já estão atualizadas.');
+    return;
+  }
+
+  await batch.commit();
+  console.log(`[Migrate] ${count} família(s) atualizada(s) com members[] e ownerId.`);
+}
+
+window.migrateFamiliesCollection = migrateFamiliesCollection;

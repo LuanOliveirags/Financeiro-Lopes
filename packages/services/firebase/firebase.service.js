@@ -1,105 +1,61 @@
 // ============================================================
-// DATA.JS — Firebase, armazenamento local e sincronização
+// FIREBASE.SERVICE.JS — Orquestração: sync, storage, listeners
+//
+// Responsabilidade: sincronização Firebase ↔ localStorage,
+// listeners realtime, refresh callback e ações de UI (export/import).
+//
+// Módulos filhos (use-os diretamente em código novo):
+//   firebase.init.js  → db, storage, firebaseReady, initFirebase
+//   firebase.crud.js  → saveToFirebase, deleteFromFirebase, updateInFirebase
+//
+// Re-exporta tudo dos módulos filhos para manter compatibilidade
+// com os 15+ arquivos que já importam daqui.
 // ============================================================
-/* global firebase */
 
-import { firebaseConfig } from './firebase.config.js';
+import { db, firebaseReady } from './firebase.init.js';
 import { state, getFamilyId, getFamilyStorageKey } from '../../core/state/store.js';
 import { showAlert, formatCurrency } from '../../utils/helpers.js';
+import { saveToFirebase as _saveToFirebase } from './firebase.crud.js';
 
-// ===== FIREBASE GLOBALS =====
-export let db = null;
-export let storage = null;
-export let firebaseReady = false;
+// ===== RE-EXPORTS (backward compat — não remover) =====
+export { db, storage, auth, firebaseReady, initFirebase } from './firebase.init.js';
+export { saveToFirebase, deleteFromFirebase, updateInFirebase } from './firebase.crud.js';
 
-let _fbSyncTimer = null;
-let _fbListeners = [];
-let _loadingData = false;
+// ===== ESTADO INTERNO =====
+let _fbSyncTimer    = null;
+let _fbListeners    = [];
+let _loadingData    = false;
 let _listenersActive = false;
-let _allowRefresh = false;
-let _lastFetchTime = 0;
-
-// ===== INICIALIZAÇÃO =====
-export function initFirebase() {
-  try {
-    if (typeof firebase !== 'undefined' && firebaseConfig.apiKey) {
-      firebase.initializeApp(firebaseConfig);
-      db = firebase.firestore();
-      firebaseReady = true;
-      try {
-        storage = firebase.storage();
-      } catch (e) {
-        console.warn('Firebase Storage indisponível:', e);
-      }
-    } else {
-      console.warn('Firebase não configurado. Usando localStorage apenas.');
-    }
-  } catch (error) {
-    console.error('Erro ao iniciar Firebase:', error);
-  }
-}
-
-// ===== CRUD FIREBASE =====
-export async function saveToFirebase(collection, item) {
-  if (!firebaseReady) return;
-  try {
-    const familyId = getFamilyId();
-    if (!familyId) { console.warn(`Sem familyId — item ${item.id} não será salvo no Firebase.`); return; }
-    await db.collection(collection).doc(item.id).set({ ...item, familyId });
-  } catch (error) {
-    console.error(`Erro ao salvar no Firebase (${collection}):`, error);
-  }
-}
-
-export async function deleteFromFirebase(collection, id) {
-  if (!firebaseReady) return;
-  try {
-    await db.collection(collection).doc(id).delete();
-  } catch (error) {
-    console.error(`Erro ao deletar do Firebase (${collection}):`, error);
-  }
-}
-
-export async function updateInFirebase(collection, id, data) {
-  if (!firebaseReady) return;
-  try {
-    await db.collection(collection).doc(id).update(data);
-  } catch (error) {
-    console.error(`Erro ao atualizar no Firebase (${collection}):`, error);
-  }
-}
+let _allowRefresh   = false;
+let _lastFetchTime  = 0;
 
 // ===== ARMAZENAMENTO LOCAL =====
 export function saveDataToStorage() {
   const key = getFamilyStorageKey();
   if (!key) { console.warn('Sem familyId — dados não serão salvos no localStorage.'); return; }
-  const data = {
+  localStorage.setItem(key, JSON.stringify({
     transactions: state.transactions,
-    debts: state.debts,
-    salaries: state.salaries,
-    lastSaved: new Date().toISOString()
-  };
-  localStorage.setItem(key, JSON.stringify(data));
+    debts:        state.debts,
+    salaries:     state.salaries,
+    lastSaved:    new Date().toISOString()
+  }));
 }
 
 export function loadDataFromStorage() {
   state.transactions = [];
-  state.debts = [];
-  state.salaries = [];
+  state.debts        = [];
+  state.salaries     = [];
 
   const key = getFamilyStorageKey();
-  if (!key) {
-    _notifyRefresh();
-    return Promise.resolve();
-  }
+  if (!key) { _notifyRefresh(); return Promise.resolve(); }
 
-  const data = localStorage.getItem(key);
-  if (data) {
+  const raw = localStorage.getItem(key);
+  if (raw) {
     try {
-      const parsed = JSON.parse(data);
+      const parsed = JSON.parse(raw);
       state.transactions = parsed.transactions || [];
-      state.debts = parsed.debts || [];
-      state.salaries = parsed.salaries || [];
+      state.debts        = parsed.debts        || [];
+      state.salaries     = parsed.salaries     || [];
     } catch (e) {
       console.error('Erro ao carregar dados locais:', e);
     }
@@ -107,19 +63,12 @@ export function loadDataFromStorage() {
 
   _notifyRefresh();
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     if (firebaseReady && !_loadingData && !_listenersActive) {
       _loadingData = true;
-      loadDataFromFirebase().then(() => {
-        _loadingData = false;
-        _listenersActive = true;
-        listenFirebaseChanges();
-        resolve();
-      }).catch(err => {
-        _loadingData = false;
-        console.error('Erro ao carregar do Firebase:', err);
-        resolve();
-      });
+      loadDataFromFirebase()
+        .then(() => { _loadingData = false; _listenersActive = true; listenFirebaseChanges(); resolve(); })
+        .catch(err => { _loadingData = false; console.error('Erro ao carregar do Firebase:', err); resolve(); });
     } else {
       resolve();
     }
@@ -133,13 +82,13 @@ export async function loadDataFromFirebase() {
   if (!familyId) { console.warn('Sem familyId — dados do Firebase não serão carregados.'); return; }
   try {
     const transSnap = await db.collection('transactions').where('familyId', '==', familyId).get();
-    state.transactions = transSnap.docs.map(doc => doc.data()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    state.transactions = transSnap.docs.map(d => d.data()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
     const debtsSnap = await db.collection('debts').where('familyId', '==', familyId).get();
-    state.debts = debtsSnap.docs.map(doc => doc.data()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    state.debts = debtsSnap.docs.map(d => d.data()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
     const salSnap = await db.collection('salaries').where('familyId', '==', familyId).get();
-    state.salaries = salSnap.docs.map(doc => doc.data()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    state.salaries = salSnap.docs.map(d => d.data()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
     saveDataToStorage();
     _lastFetchTime = Date.now();
@@ -154,34 +103,21 @@ export async function loadDataFromFirebase() {
 
 // ===== LISTENERS REALTIME =====
 export function listenFirebaseChanges() {
-  if (!firebaseReady) {
-    console.warn('⚠️ Firebase não está pronto para listeners');
-    return;
-  }
-  
-  if (_listenersActive) {
-    return;
-  }
-  
+  if (!firebaseReady)      { console.warn('⚠️ Firebase não está pronto para listeners'); return; }
+  if (_listenersActive)    { return; }
+
   _fbListeners.forEach(unsub => unsub());
   _fbListeners = [];
 
   const familyId = getFamilyId();
-  if (!familyId) {
-    console.warn('⚠️ Sem familyId — listeners não serão ativados');
-    return;
-  }
+  if (!familyId) { console.warn('⚠️ Sem familyId — listeners não serão ativados'); return; }
 
   const debouncedLoad = () => {
-    if (_loadingData) {
-      return;
-    }
+    if (_loadingData) return;
     _loadingData = true;
     clearTimeout(_fbSyncTimer);
     _fbSyncTimer = setTimeout(() => {
-      loadDataFromFirebase().finally(() => {
-        _loadingData = false;
-      });
+      loadDataFromFirebase().finally(() => { _loadingData = false; });
     }, 500);
   };
 
@@ -191,19 +127,16 @@ export function listenFirebaseChanges() {
       .onSnapshot(debouncedLoad, err => console.error(`❌ Erro no listener de ${col}:`, err));
     _fbListeners.push(unsub);
   });
-  
 }
 
 export function cleanupFirebaseListeners() {
   _fbListeners.forEach(unsub => unsub());
-  _fbListeners = [];
+  _fbListeners    = [];
   _listenersActive = false;
-  _loadingData = false;
+  _loadingData    = false;
   clearTimeout(_fbSyncTimer);
 }
 
-// Busca dados frescos do Firebase se passaram mais de maxAgeMs desde a última busca.
-// Padrão: 30s — evita spam mas garante dados atuais ao voltar ao app.
 export function refreshIfStale(maxAgeMs = 30_000) {
   if (!firebaseReady || !state.isLoggedIn || !_allowRefresh) return;
   if (_loadingData) return;
@@ -211,10 +144,8 @@ export function refreshIfStale(maxAgeMs = 30_000) {
   loadDataFromFirebase();
 }
 
-// Dispara refresh ao voltar ao foreground (app minimizado, aba trocada no browser)
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) refreshIfStale();
-});
+// Dispara refresh ao voltar ao foreground
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshIfStale(); });
 window.addEventListener('focus', () => refreshIfStale());
 
 // ===== SYNC COMPLETO =====
@@ -223,25 +154,23 @@ export async function syncAllToFirebase() {
   const familyId = getFamilyId();
   if (!familyId) { console.warn('Sem familyId — sincronização cancelada.'); return; }
   try {
-    for (const t of state.transactions) await db.collection('transactions').doc(t.id).set({ ...t, familyId });
-    for (const d of state.debts) await db.collection('debts').doc(d.id).set({ ...d, familyId });
-    for (const s of state.salaries) await db.collection('salaries').doc(s.id).set({ ...s, familyId });
+    for (const t of state.transactions) await _saveToFirebase('transactions', t);
+    for (const d of state.debts)        await _saveToFirebase('debts', d);
+    for (const s of state.salaries)     await _saveToFirebase('salaries', s);
   } catch (error) {
     console.error('Erro na sincronização completa:', error);
   }
 }
 
-// ===== EXPORTAR =====
+// ===== EXPORTAR / IMPORTAR =====
 export function exportData() {
-  const data = {
+  const json = JSON.stringify({
     transactions: state.transactions,
-    debts: state.debts,
-    salaries: state.salaries,
-    exportedAt: new Date().toISOString()
-  };
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
+    debts:        state.debts,
+    salaries:     state.salaries,
+    exportedAt:   new Date().toISOString()
+  }, null, 2);
+  const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
   const a = document.createElement('a');
   a.href = url;
   a.download = `wolfsource-backup-${new Date().toISOString().split('T')[0]}.json`;
@@ -250,7 +179,6 @@ export function exportData() {
   showAlert('Dados exportados com sucesso!', 'success');
 }
 
-// ===== IMPORTAR =====
 export function importData(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -262,14 +190,14 @@ export function importData(e) {
         const familyId = getFamilyId();
         if (!familyId) { showAlert('Erro: família não identificada. Faça login novamente.', 'danger'); return; }
         state.transactions = (data.transactions || []).map(t => ({ ...t, familyId }));
-        state.debts = (data.debts || []).map(d => ({ ...d, familyId }));
-        state.salaries = (data.salaries || []).map(s => ({ ...s, familyId }));
+        state.debts        = (data.debts        || []).map(d => ({ ...d, familyId }));
+        state.salaries     = (data.salaries     || []).map(s => ({ ...s, familyId }));
         saveDataToStorage();
         syncAllToFirebase();
         _notifyRefresh();
         showAlert('Dados importados com sucesso!', 'success');
       }
-    } catch (err) {
+    } catch {
       showAlert('Erro ao importar arquivo!', 'danger');
     }
   };
@@ -277,57 +205,36 @@ export function importData(e) {
   e.target.value = '';
 }
 
-// ===== SINCRONIZAR =====
+// ===== AÇÕES DE UI =====
 export function syncData() {
-  if (state.syncStatus === 'offline') {
-    showAlert('Sem conexão! Sincronização será feita quando voltar online.', 'warning');
-    return;
-  }
-  if (!firebaseReady) {
-    showAlert('Firebase não configurado.', 'warning');
-    return;
-  }
+  if (state.syncStatus === 'offline') { showAlert('Sem conexão! Sincronização será feita quando voltar online.', 'warning'); return; }
+  if (!firebaseReady)                 { showAlert('Firebase não configurado.', 'warning'); return; }
   showAlert('Sincronizando dados...', 'info');
-  syncAllToFirebase().then(() => showAlert('Dados sincronizados com Firebase!', 'success')).catch(() => showAlert('Erro ao sincronizar.', 'danger'));
+  syncAllToFirebase()
+    .then(() => showAlert('Dados sincronizados com Firebase!', 'success'))
+    .catch(() => showAlert('Erro ao sincronizar.', 'danger'));
 }
 
-// ===== LIMPAR CACHE =====
 export function clearCache() {
-  if (confirm('Deseja limpar o cache da aplicação?')) {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
-    }
-    localStorage.clear();
-    sessionStorage.clear();
-    showAlert('Cache limpo! Atualizando página...', 'success');
-    setTimeout(() => location.reload(), 1500);
+  if (!confirm('Deseja limpar o cache da aplicação?')) return;
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
   }
+  localStorage.clear();
+  sessionStorage.clear();
+  showAlert('Cache limpo! Atualizando página...', 'success');
+  setTimeout(() => location.reload(), 1500);
 }
 
-// ===== CALLBACK UI REFRESH =====
+// ===== REFRESH CALLBACK =====
 let _refreshCallback = null;
 
-export function setRefreshCallback(fn) {
-  _refreshCallback = fn;
-}
-
-export function allowRefresh(allow = true) {
-  _allowRefresh = allow;
-}
-
-export function notifyRefresh() {
-  _notifyRefresh();
-}
+export function setRefreshCallback(fn) { _refreshCallback = fn; }
+export function allowRefresh(allow = true) { _allowRefresh = allow; }
+export function notifyRefresh() { _notifyRefresh(); }
 
 function _notifyRefresh() {
-  // Só notifica refresh se está permitido e o usuário está realmente logado
   if (_refreshCallback && state.isLoggedIn && _allowRefresh) {
-    try {
-      _refreshCallback();
-    } catch (error) {
-      console.error('❌ Erro no callback de refresh:', error);
-    }
-  } else if (!state.isLoggedIn) {
-  } else if (!_allowRefresh) {
+    try { _refreshCallback(); } catch (error) { console.error('❌ Erro no callback de refresh:', error); }
   }
 }

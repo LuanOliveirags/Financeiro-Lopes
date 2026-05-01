@@ -1,42 +1,42 @@
 // ============================================================
-// SALARIES.JS — CRUD e UI de salários / entradas
+// SALARIES.JS — Controller de UI de salários / entradas
+// Responsabilidade: DOM, eventos e orquestração.
+// Lógica de dados → packages/services/salaries/salaries.service.js
 // ============================================================
 
 import { state, getFamilyId } from '../../../../../packages/core/state/store.js';
 import { generateId, esc, formatCurrency, formatDate, showAlert, emptyState } from '../../../../../packages/utils/helpers.js';
 import { saveDataToStorage, saveToFirebase, deleteFromFirebase } from '../../../../../packages/services/firebase/firebase.service.js';
 import { updateDashboard } from '../dashboard/dashboard.js';
+import {
+  buildSalaryObject,
+  filterByMonth,
+  getSalaryMonths,
+  computeSalaryStats
+} from '../../../../../packages/services/salaries/salaries.service.js';
 
-// ===== TEMP DEDUCTIONS/ADDITIONS =====
+// ===== ESTADO DO FORM (temporário, não persiste) =====
 let tempDeductions = [];
-let tempAdditions = [];
+let tempAdditions  = [];
 
 // ===== ADICIONAR SALÁRIO =====
 export function addSalary(e) {
   e.preventDefault();
-  const grossAmount = parseFloat(document.getElementById('salaryAmount').value);
-  const totalAdditionsVal = tempAdditions.reduce((sum, a) => sum + a.value, 0);
-  const totalDeductionsVal = tempDeductions.reduce((sum, d) => sum + d.value, 0);
-  const netAmount = grossAmount + totalAdditionsVal - totalDeductionsVal;
 
+  const grossAmount = parseFloat(document.getElementById('salaryAmount').value);
   const familyId = getFamilyId();
   if (!familyId) { showAlert('Erro: família não identificada.', 'danger'); return; }
 
-  const salary = {
-    id: generateId(),
-    person: document.getElementById('salaryPerson').value,
-    amount: netAmount,
+  const salary = buildSalaryObject({
+    person:      document.getElementById('salaryPerson').value,
     grossAmount,
-    salaryType: document.getElementById('salaryType')?.value || 'salario',
-    additions: tempAdditions.length > 0 ? [...tempAdditions] : [],
-    totalAdditions: totalAdditionsVal,
-    deductions: tempDeductions.length > 0 ? [...tempDeductions] : [],
-    totalDeductions: totalDeductionsVal,
-    date: document.getElementById('salaryDate').value,
+    salaryType:  document.getElementById('salaryType')?.value || 'salario',
+    date:        document.getElementById('salaryDate').value,
     description: document.getElementById('salaryDescription').value,
-    familyId,
-    createdAt: new Date().toISOString()
-  };
+    additions:   tempAdditions,
+    deductions:  tempDeductions,
+    familyId
+  });
 
   if (!salary.person || !grossAmount || !salary.date) { alert('Preencha todos os campos!'); return; }
 
@@ -47,10 +47,9 @@ export function addSalary(e) {
 
   e.target.reset();
   tempDeductions = [];
-  tempAdditions = [];
+  tempAdditions  = [];
   updateDeductionsUI();
   updateAdditionsUI();
-  // Reset salary type toggle
   document.getElementById('salaryType').value = 'salario';
   document.querySelectorAll('.salary-type-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('btnSalario')?.classList.add('active');
@@ -61,21 +60,20 @@ export function addSalary(e) {
 
 // ===== DELETAR SALÁRIO =====
 export function deleteSalary(id) {
-  if (confirm('Deseja deletar este salário?')) {
-    state.salaries = state.salaries.filter(s => s.id !== id);
-    saveDataToStorage();
-    deleteFromFirebase('salaries', id);
-    updateSalaryDisplay();
-    updateDashboard();
-    showAlert('Salário deletado!', 'success');
-  }
+  if (!confirm('Deseja deletar este salário?')) return;
+  state.salaries = state.salaries.filter(s => s.id !== id);
+  saveDataToStorage();
+  deleteFromFirebase('salaries', id);
+  updateSalaryDisplay();
+  updateDashboard();
+  showAlert('Salário deletado!', 'success');
 }
 
 // ===== ACRÉSCIMOS =====
 export function addAddition() {
-  const nameInput = document.getElementById('additionName');
+  const nameInput  = document.getElementById('additionName');
   const valueInput = document.getElementById('additionValue');
-  const name = nameInput.value.trim();
+  const name  = nameInput.value.trim();
   const value = parseFloat(valueInput.value);
   if (!name || !value || value <= 0) { showAlert('Preencha nome e valor.', 'warning'); return; }
   tempAdditions.push({ id: generateId(), name, value });
@@ -105,9 +103,9 @@ function updateAdditionsUI() {
 
 // ===== DESCONTOS =====
 export function addDeduction() {
-  const nameInput = document.getElementById('deductionName');
+  const nameInput  = document.getElementById('deductionName');
   const valueInput = document.getElementById('deductionValue');
-  const name = nameInput.value.trim();
+  const name  = nameInput.value.trim();
   const value = parseFloat(valueInput.value);
   if (!name || !value || value <= 0) { showAlert('Preencha nome e valor.', 'warning'); return; }
   tempDeductions.push({ id: generateId(), name, value });
@@ -136,17 +134,15 @@ function updateDeductionsUI() {
 }
 
 function updateNetSalaryPreview() {
-  const gross = parseFloat(document.getElementById('salaryAmount').value) || 0;
+  const gross    = parseFloat(document.getElementById('salaryAmount').value) || 0;
   const totalAdd = tempAdditions.reduce((sum, a) => sum + a.value, 0);
   const totalDed = tempDeductions.reduce((sum, d) => sum + d.value, 0);
-  const net = gross + totalAdd - totalDed;
   const netEl = document.getElementById('netSalaryPreview');
-  if (netEl) netEl.textContent = formatCurrency(net);
+  if (netEl) netEl.textContent = formatCurrency(gross + totalAdd - totalDed);
 }
 
-// ===== SETUP DEDUCTION LISTENERS =====
+// ===== SETUP DE LISTENERS =====
 export function setupDeductionListeners() {
-  // Salary type toggle (Salário / VR)
   document.querySelectorAll('.salary-type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.salary-type-btn').forEach(b => b.classList.remove('active'));
@@ -177,114 +173,92 @@ export function setupDeductionListeners() {
   }
   document.getElementById('addDeductionBtn')?.addEventListener('click', addDeduction);
 
-  const salaryAmountInput = document.getElementById('salaryAmount');
-  if (salaryAmountInput) salaryAmountInput.addEventListener('input', updateNetSalaryPreview);
+  document.getElementById('salaryAmount')?.addEventListener('input', updateNetSalaryPreview);
 }
 
-// ===== ATUALIZAR DISPLAY DE SALÁRIOS =====
+// ===== DISPLAY PRINCIPAL =====
 export function updateSalaryDisplay() {
-  const members = state.familyMembers || [];
-  const monthVal = document.getElementById('monthFilter').value;
+  const members  = state.familyMembers || [];
+  const monthVal = document.getElementById('monthFilter')?.value;
+
   let curMonth, curYear;
   if (monthVal) {
-    const parts = monthVal.split('-');
-    curYear = parseInt(parts[0]);
-    curMonth = parseInt(parts[1]) - 1;
+    const [y, m] = monthVal.split('-');
+    curYear  = parseInt(y);
+    curMonth = parseInt(m) - 1;
   } else {
     const now = new Date();
     curMonth = now.getMonth();
-    curYear = now.getFullYear();
+    curYear  = now.getFullYear();
   }
 
-  let combinedMonth = 0, combinedAnnual = 0;
-  let combinedVRMonth = 0, combinedVRAnnual = 0;
+  const { byMember, combinedMonth, combinedAnnual, combinedVRMonth, combinedVRAnnual } =
+    computeSalaryStats(state.salaries, members, curMonth, curYear);
+
   members.forEach(m => {
     const slug = m.name.replace(/\s+/g, '_');
-    const personSalaries = state.salaries.filter(s => s.person === m.name && s.salaryType !== 'vr');
-    const personVR = state.salaries.filter(s => s.person === m.name && s.salaryType === 'vr');
-
-    const annual = personSalaries.reduce((sum, s) => sum + s.amount, 0);
-    const monthly = personSalaries
-      .filter(s => { const d = new Date(s.date + 'T12:00:00'); return d.getMonth() === curMonth && d.getFullYear() === curYear; })
-      .reduce((sum, s) => sum + s.amount, 0);
-
-    const vrAnnual = personVR.reduce((sum, s) => sum + s.amount, 0);
-    const vrMonthly = personVR
-      .filter(s => { const d = new Date(s.date + 'T12:00:00'); return d.getMonth() === curMonth && d.getFullYear() === curYear; })
-      .reduce((sum, s) => sum + s.amount, 0);
-
-    combinedMonth += monthly;
-    combinedAnnual += annual;
-    combinedVRMonth += vrMonthly;
-    combinedVRAnnual += vrAnnual;
-
-    const salEl = document.getElementById(`salary_${slug}`);
-    if (salEl) salEl.textContent = formatCurrency(monthly);
-    const vrEl = document.getElementById(`vr_${slug}`);
-    if (vrEl) vrEl.textContent = formatCurrency(vrMonthly);
-    const annEl = document.getElementById(`annual_${slug}`);
-    if (annEl) annEl.textContent = `Anual: ${formatCurrency(annual)}`;
+    const stats = byMember[slug] || { monthly: 0, annual: 0, vrMonthly: 0, vrAnnual: 0 };
+    const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+    el(`salary_${slug}`, formatCurrency(stats.monthly));
+    el(`vr_${slug}`,     formatCurrency(stats.vrMonthly));
+    el(`annual_${slug}`, `Anual: ${formatCurrency(stats.annual)}`);
   });
-  const combSalEl = document.getElementById('combinedSalary');
-  if (combSalEl) combSalEl.textContent = formatCurrency(combinedMonth);
-  const combAnnEl = document.getElementById('combinedAnnual');
-  if (combAnnEl) combAnnEl.textContent = `Anual: ${formatCurrency(combinedAnnual)}`;
-  const combVREl = document.getElementById('combinedVR');
-  if (combVREl) combVREl.textContent = formatCurrency(combinedVRMonth);
-  const combVRAnnEl = document.getElementById('combinedVRAnnual');
-  if (combVRAnnEl) combVRAnnEl.textContent = `Anual: ${formatCurrency(combinedVRAnnual)}`;
+
+  const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+  el('combinedSalary',    formatCurrency(combinedMonth));
+  el('combinedAnnual',    `Anual: ${formatCurrency(combinedAnnual)}`);
+  el('combinedVR',        formatCurrency(combinedVRMonth));
+  el('combinedVRAnnual',  `Anual: ${formatCurrency(combinedVRAnnual)}`);
 
   populateSalaryMonthFilter();
   updateSalaryHistory();
 }
 
-// ===== FILTRO MÊS SALÁRIO =====
+// ===== FILTRO DE MÊS =====
 export function populateSalaryMonthFilter() {
   const select = document.getElementById('salaryMonthFilter');
   if (!select) return;
-  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  const monthsSet = new Set();
-  state.salaries.forEach(s => {
-    const d = new Date(s.date + 'T12:00:00');
-    monthsSet.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
-  });
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const now = new Date();
   const curKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  const monthsSet = getSalaryMonths(state.salaries);
   monthsSet.add(curKey);
-  const sortedMonths = Array.from(monthsSet).sort().reverse();
+  const sorted = Array.from(monthsSet).sort().reverse();
+
   const prevValue = select.value;
-  select.innerHTML = sortedMonths.map(key => {
+  select.innerHTML = sorted.map(key => {
     const [y, m] = key.split('-');
     return `<option value="${key}">${months[parseInt(m) - 1]} ${y}</option>`;
   }).join('');
-  select.value = (prevValue && sortedMonths.includes(prevValue)) ? prevValue : curKey;
+  select.value = (prevValue && sorted.includes(prevValue)) ? prevValue : curKey;
 }
 
-// ===== HISTÓRICO DE SALÁRIOS =====
+// ===== HISTÓRICO =====
 export function updateSalaryHistory() {
   const container = document.getElementById('salaryHistoryList');
   if (!container) return;
+
   const filterVal = document.getElementById('salaryMonthFilter')?.value;
-  let filtered = state.salaries;
-  if (filterVal) filtered = state.salaries.filter(s => s.date.startsWith(filterVal));
+  const filtered  = filterByMonth(state.salaries, filterVal);
   if (filtered.length === 0) { container.innerHTML = emptyState('Nenhuma entrada neste mês'); return; }
 
   const sorted = filtered.slice().sort((a, b) => b.date.localeCompare(a.date));
-  const defaultIcons = ['👔', '💼', '🧑‍💻', '👨‍🔧', '👩‍⚕️', '🧑‍🎓'];
+  const defaultIcons = ['👔','💼','🧑‍💻','👨‍🔧','👩‍⚕️','🧑‍🎓'];
   const personIcon = {};
   (state.familyMembers || []).forEach((m, i) => { personIcon[m.name] = defaultIcons[i % defaultIcons.length]; });
 
   container.innerHTML = sorted.map(s => {
-    const hasAdditions = s.additions && s.additions.length > 0;
+    const hasAdditions  = s.additions  && s.additions.length  > 0;
     const hasDeductions = s.deductions && s.deductions.length > 0;
-    const hasExtras = hasAdditions || hasDeductions;
-    const grossLabel = hasExtras ? `Bruto: ${formatCurrency(s.grossAmount || s.amount)}` : '';
-    const additionsHtml = hasAdditions ? `<div class="salary-deductions-detail">${s.additions.map(a => `<span class="addition-tag">↑ ${esc(a.name)}: ${formatCurrency(a.value)}</span>`).join('')}</div>` : '';
+    const hasExtras     = hasAdditions || hasDeductions;
+    const grossLabel    = hasExtras ? `Bruto: ${formatCurrency(s.grossAmount || s.amount)}` : '';
+    const additionsHtml  = hasAdditions  ? `<div class="salary-deductions-detail">${s.additions.map(a  => `<span class="addition-tag">↑ ${esc(a.name)}: ${formatCurrency(a.value)}</span>`).join('')}</div>` : '';
     const deductionsHtml = hasDeductions ? `<div class="salary-deductions-detail">${s.deductions.map(d => `<span class="deduction-tag">↓ ${esc(d.name)}: ${formatCurrency(d.value)}</span>`).join('')}</div>` : '';
 
-    const isVR = s.salaryType === 'vr';
-    const typeIcon = isVR ? '🍽️' : (personIcon[s.person] || '💰');
-    const typeBadge = isVR ? '<span class="vr-badge">VR/VA</span>' : '';
+    const isVR       = s.salaryType === 'vr';
+    const typeIcon   = isVR ? '🍽️' : (personIcon[s.person] || '💰');
+    const typeBadge  = isVR ? '<span class="vr-badge">VR/VA</span>' : '';
     const defaultDesc = isVR ? `VR/VA de ${esc(s.person)}` : `Salário de ${esc(s.person)}`;
 
     return `
@@ -306,7 +280,7 @@ export function updateSalaryHistory() {
   }).join('');
 }
 
-// Globals para inline handlers
-window.deleteSalary = deleteSalary;
+// Globals para inline handlers no HTML gerado dinamicamente
+window.deleteSalary    = deleteSalary;
 window.removeDeduction = removeDeduction;
-window.removeAddition = removeAddition;
+window.removeAddition  = removeAddition;

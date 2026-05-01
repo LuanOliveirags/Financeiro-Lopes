@@ -11,7 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from datetime import datetime
 import firebase_admin
-from firebase_admin import credentials, messaging as fcm_messaging
+from firebase_admin import credentials, messaging as fcm_messaging, auth as fb_auth, firestore as fb_firestore
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -178,6 +178,52 @@ def delete_family_route(family_id):
     db.session.delete(family)
     db.session.commit()
     return jsonify({'message': 'Família deletada com sucesso'})
+
+
+# ===== AUTH: CUSTOM TOKEN =====
+@app.route('/api/auth/token', methods=['POST'])
+def get_custom_token():
+    """Valida credenciais SHA-256 no Firestore e retorna Firebase custom token."""
+    data = request.get_json(silent=True) or {}
+    user_id   = data.get('userId')
+    family_id = data.get('familyId')
+
+    if not user_id or not family_id:
+        return jsonify({'error': 'userId e familyId são obrigatórios'}), 400
+
+    firebase_app = _get_firebase_app()
+    if not firebase_app:
+        return jsonify({'error': 'Firebase Admin não inicializado'}), 503
+
+    try:
+        fs_client = fb_firestore.client(app=firebase_app)
+        user_doc = fs_client.collection('users').document(user_id).get()
+        if not user_doc.exists:
+            return jsonify({'error': 'Usuário não encontrado'}), 404
+
+        user_data = user_doc.to_dict()
+        if user_data.get('familyId') != family_id:
+            return jsonify({'error': 'familyId não corresponde ao usuário'}), 403
+
+        # Garante que o usuário existe no Firebase Auth
+        try:
+            fb_auth.get_user(user_id, app=firebase_app)
+        except fb_auth.UserNotFoundError:
+            fb_auth.create_user(uid=user_id, app=firebase_app)
+
+        # Claims persistentes (sobrevivem refresh de token)
+        fb_auth.set_custom_user_claims(user_id, {'familyId': family_id}, app=firebase_app)
+
+        custom_token = fb_auth.create_custom_token(user_id, app=firebase_app)
+        # create_custom_token retorna bytes no SDK v5+ — decodificar para string
+        if isinstance(custom_token, bytes):
+            custom_token = custom_token.decode('utf-8')
+
+        return jsonify({'token': custom_token}), 200
+
+    except Exception as e:
+        print(f'[AUTH TOKEN] Erro: {e}')
+        return jsonify({'error': 'Erro interno ao gerar token'}), 500
 
 
 # ===== ROTAS UTILITÁRIAS =====

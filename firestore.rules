@@ -1,0 +1,77 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    function myFamilyId() {
+      return request.auth.token.familyId;
+    }
+
+    function sameFamily(doc) {
+      return isAuthed() && doc.data.familyId == myFamilyId();
+    }
+
+    function incomingFamilyOk() {
+      return isAuthed() && request.resource.data.familyId == myFamilyId();
+    }
+
+    // ── users ─────────────────────────────────────────────────
+    // Login SHA-256 faz query por login sem auth — read:true mantém fluxo atual.
+    // Somente o próprio usuário (autenticado) pode escrever no próprio doc.
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isAuthed() && request.auth.uid == userId && incomingFamilyOk();
+      allow update: if isAuthed() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    // ── families ──────────────────────────────────────────────
+    // Leitura pública para popular selects de família no cadastro.
+    match /families/{familyId} {
+      allow read: if true;
+      allow create: if isAuthed();
+      allow update: if isAuthed() && myFamilyId() == familyId;
+      allow delete: if false;
+    }
+
+    // ── transactions ─────────────────────────────────────────
+    match /transactions/{docId} {
+      allow read:   if sameFamily(resource);
+      allow create: if incomingFamilyOk();
+      allow update: if sameFamily(resource) && incomingFamilyOk();
+      allow delete: if sameFamily(resource);
+    }
+
+    // ── debts ─────────────────────────────────────────────────
+    match /debts/{docId} {
+      allow read:   if sameFamily(resource);
+      allow create: if incomingFamilyOk();
+      allow update: if sameFamily(resource) && incomingFamilyOk();
+      allow delete: if sameFamily(resource);
+    }
+
+    // ── salaries ─────────────────────────────────────────────
+    match /salaries/{docId} {
+      allow read:   if sameFamily(resource);
+      allow create: if incomingFamilyOk();
+      allow update: if sameFamily(resource) && incomingFamilyOk();
+      allow delete: if sameFamily(resource);
+    }
+
+    // ── passwordResets ────────────────────────────────────────
+    // Fluxo de recuperação de senha não tem auth — mantém aberto.
+    match /passwordResets/{docId} {
+      allow read, write: if true;
+    }
+
+    // ── Tudo mais: negar ─────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

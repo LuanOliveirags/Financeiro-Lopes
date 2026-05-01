@@ -5,7 +5,7 @@
 import { state, isSuperAdmin, getFamilyId } from '../../core/state/store.js';
 import { showAlert, toDateStr } from '../../utils/helpers.js';
 import { firebaseReady, saveDataToStorage, loadDataFromStorage, exportData, importData, syncData, clearCache, syncAllToFirebase, allowRefresh, refreshIfStale } from '../../services/firebase/firebase.service.js';
-import { uploadAvatar, loginUser, registerUser, changeUserPassword, savePhoneNumber, saveRecado, loadUsersList, saveUserEdit, loadFamiliesListUI, createFamily, populateFamilySelects, loadFamily, applyUserToUI, logout } from '../../services/auth/auth.service.js';
+import { uploadAvatar, loginUser, registerUser, changeUserPassword, savePhoneNumber, saveRecado, loadUsersList, saveUserEdit, loadFamiliesListUI, createFamily, populateFamilySelects, loadFamily, applyUserToUI, logout, signInWithFirebase } from '../../services/auth/auth.service.js';
 import { addTransaction, updateTransactionHistory } from '../../../apps/web/src/features/transactions/transactions.service.js';
 import { addDebt, resetDebtModal, setupDebtTypeListeners, setupDebtFilterListeners, updateDebtsList } from '../../../apps/web/src/features/debts/debts.js';
 import { addSalary, setupDeductionListeners, updateSalaryDisplay, updateSalaryHistory } from '../../../apps/web/src/features/salaries/salaries.js';
@@ -348,7 +348,9 @@ export function setupEventListeners() {
         applyUserToUI();
         this.reset();
         
-        // Carrega dados em background — erros NÃO bloqueiam o dashboard
+        // Firebase Auth + carrega dados em background — erros NÃO bloqueiam o dashboard
+        await signInWithFirebase(user.id, user.familyId).catch(() => {});
+
         try {
           await loadFamily();
         } catch (famErr) {
