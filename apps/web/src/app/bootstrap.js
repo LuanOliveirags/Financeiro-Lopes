@@ -13,7 +13,7 @@ import { updateSalaryDisplay } from '../features/salaries/salaries.js';
 import { initNotifications, storeDebtSummaryForSW } from '../../../../packages/services/notifications/notification.service.js';
 import { initChat } from '../features/chat/chat.js';
 import { initFCM } from '../../../../packages/services/firebase/fcm.service.js';
-import '../features/shopping/shopping.js';
+import { refreshShoppingIfOpen } from '../features/shopping/shopping.js';
 
 // Carrega todos os fragmentos HTML antes de qualquer acesso ao DOM
 await loadPages();
@@ -24,6 +24,7 @@ setRefreshCallback(async () => {
     updateTransactionHistory();
     updateDebtsList();
     updateSalaryDisplay();
+    refreshShoppingIfOpen();
     initChat();
     initFCM().catch(() => {});
     await storeDebtSummaryForSW();

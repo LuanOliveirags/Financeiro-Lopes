@@ -34,17 +34,19 @@ export function saveDataToStorage() {
   const key = getFamilyStorageKey();
   if (!key) { console.warn('Sem familyId — dados não serão salvos no localStorage.'); return; }
   localStorage.setItem(key, JSON.stringify({
-    transactions: state.transactions,
-    debts:        state.debts,
-    salaries:     state.salaries,
-    lastSaved:    new Date().toISOString()
+    transactions:  state.transactions,
+    debts:         state.debts,
+    salaries:      state.salaries,
+    shoppingLists: state.shoppingLists,
+    lastSaved:     new Date().toISOString()
   }));
 }
 
 export function loadDataFromStorage() {
-  state.transactions = [];
-  state.debts        = [];
-  state.salaries     = [];
+  state.transactions  = [];
+  state.debts         = [];
+  state.salaries      = [];
+  state.shoppingLists = [];
 
   const key = getFamilyStorageKey();
   if (!key) { _notifyRefresh(); return Promise.resolve(); }
@@ -53,9 +55,18 @@ export function loadDataFromStorage() {
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      state.transactions = parsed.transactions || [];
-      state.debts        = parsed.debts        || [];
-      state.salaries     = parsed.salaries     || [];
+      state.transactions  = parsed.transactions  || [];
+      state.debts         = parsed.debts         || [];
+      state.salaries      = parsed.salaries      || [];
+      // Migração: lê do storage antigo (shopping_lists_{fid}) se ainda não consolidado
+      if (parsed.shoppingLists) {
+        state.shoppingLists = parsed.shoppingLists;
+      } else {
+        const fid = getFamilyId();
+        const oldRaw = fid ? localStorage.getItem(`shopping_lists_${fid}`) : null;
+        try { state.shoppingLists = oldRaw ? JSON.parse(oldRaw) : []; }
+        catch { state.shoppingLists = []; }
+      }
     } catch (e) {
       console.error('Erro ao carregar dados locais:', e);
     }
@@ -90,6 +101,9 @@ export async function loadDataFromFirebase() {
     const salSnap = await db.collection('salaries').where('familyId', '==', familyId).get();
     state.salaries = salSnap.docs.map(d => d.data()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
+    const shopSnap = await db.collection('shoppingLists').where('familyId', '==', familyId).get();
+    state.shoppingLists = shopSnap.docs.map(d => d.data()).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+
     saveDataToStorage();
     _lastFetchTime = Date.now();
     _notifyRefresh();
@@ -121,7 +135,7 @@ export function listenFirebaseChanges() {
     }, 500);
   };
 
-  ['transactions', 'debts', 'salaries'].forEach(col => {
+  ['transactions', 'debts', 'salaries', 'shoppingLists'].forEach(col => {
     const unsub = db.collection(col)
       .where('familyId', '==', familyId)
       .onSnapshot(debouncedLoad, err => console.error(`❌ Erro no listener de ${col}:`, err));
@@ -154,9 +168,10 @@ export async function syncAllToFirebase() {
   const familyId = getFamilyId();
   if (!familyId) { console.warn('Sem familyId — sincronização cancelada.'); return; }
   try {
-    for (const t of state.transactions) await _saveToFirebase('transactions', t);
-    for (const d of state.debts)        await _saveToFirebase('debts', d);
-    for (const s of state.salaries)     await _saveToFirebase('salaries', s);
+    for (const t of state.transactions)  await _saveToFirebase('transactions', t);
+    for (const d of state.debts)         await _saveToFirebase('debts', d);
+    for (const s of state.salaries)      await _saveToFirebase('salaries', s);
+    for (const sl of state.shoppingLists) await _saveToFirebase('shoppingLists', sl);
   } catch (error) {
     console.error('Erro na sincronização completa:', error);
   }

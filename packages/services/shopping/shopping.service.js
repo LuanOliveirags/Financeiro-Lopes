@@ -3,7 +3,7 @@
 // Sem dependências de DOM. Importável por qualquer camada (web, testes, mobile).
 // ============================================================
 
-import { getFamilyId } from '../../core/state/store.js';
+import { state, getFamilyId } from '../../core/state/store.js';
 import { generateId, toDateStr } from '../../utils/helpers.js';
 
 // ===== CATÁLOGOS =====
@@ -71,21 +71,14 @@ export const QUICK_ITEMS = [
   { name: 'Ração',            category: 'pets',       unit: 'kg'  }
 ];
 
-// ===== PERSISTÊNCIA LOCAL =====
-
-export function getStorageKey() {
-  const fid = getFamilyId();
-  return fid ? `shopping_lists_${fid}` : 'shopping_lists_local';
-}
+// ===== PERSISTÊNCIA =====
 
 export function loadLists() {
-  const raw = localStorage.getItem(getStorageKey());
-  if (!raw) return [];
-  try { return JSON.parse(raw); } catch { return []; }
+  return state.shoppingLists;
 }
 
 export function saveLists(lists) {
-  localStorage.setItem(getStorageKey(), JSON.stringify(lists));
+  state.shoppingLists = lists;
 }
 
 // ===== OPERAÇÕES DE LISTA =====

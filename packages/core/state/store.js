@@ -12,6 +12,7 @@ export const state = {
   transactions: [],
   debts: [],
   salaries: [],
+  shoppingLists: [],
   syncStatus: 'online',
   charts: {},
   selectedDay: null

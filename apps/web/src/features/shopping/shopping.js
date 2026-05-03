@@ -6,7 +6,7 @@
 
 import { state, getFamilyId } from '../../../../../packages/core/state/store.js';
 import { esc, formatCurrency, showAlert } from '../../../../../packages/utils/helpers.js';
-import { saveDataToStorage, saveToFirebase } from '../../../../../packages/services/firebase/firebase.service.js';
+import { saveDataToStorage, saveToFirebase, deleteFromFirebase } from '../../../../../packages/services/firebase/firebase.service.js';
 import { updateDashboard } from '../dashboard/dashboard.js';
 import { updateTransactionHistory } from '../transactions/transactions.js';
 import {
@@ -31,9 +31,11 @@ let activeListId = null;
 let shoppingView = 'lists'; // 'lists' | 'detail'
 let editingItemId = null;
 let quickAddCollapsed = localStorage.getItem('shop_quick_collapsed') === 'true';
+let _panelOpen = false;
 
 // ===== ABERTURA / FECHAMENTO =====
 export function openShoppingPanel() {
+  _panelOpen = true;
   shoppingLists = loadLists();
   shoppingView = 'lists';
   activeListId = null;
@@ -41,9 +43,24 @@ export function openShoppingPanel() {
 }
 
 export function closeShoppingPanel() {
+  _panelOpen = false;
   shoppingView = 'lists';
   activeListId = null;
   editingItemId = null;
+}
+
+// Chamado pelo refresh callback do Firebase para sincronizar em tempo real
+export function refreshShoppingIfOpen() {
+  if (!_panelOpen) return;
+  shoppingLists = loadLists();
+  renderShoppingView();
+}
+
+// ===== PERSISTÊNCIA =====
+function persistLists(changedList = null) {
+  saveLists(shoppingLists);
+  saveDataToStorage();
+  if (changedList) saveToFirebase('shoppingLists', changedList);
 }
 
 // ===== RENDER PRINCIPAL =====
@@ -213,7 +230,7 @@ function confirmNewList() {
 
   const newList = createList(name, storeKey);
   shoppingLists.unshift(newList);
-  saveLists(shoppingLists);
+  persistLists(newList);
 
   document.getElementById('shoppingNewListModal').classList.remove('active');
   activeListId = newList.id;
@@ -228,7 +245,7 @@ function handleReuseList(listId) {
 
   const newList = reuseList(source);
   shoppingLists.unshift(newList);
-  saveLists(shoppingLists);
+  persistLists(newList);
   activeListId = newList.id;
   shoppingView = 'detail';
   renderShoppingView();
@@ -500,7 +517,7 @@ function handleAddItem(name, category, unit) {
   const list = getActiveList();
   if (!list) return;
   addItem(list, name, category, unit);
-  saveLists(shoppingLists);
+  persistLists(list);
   renderListDetail();
 }
 
@@ -508,7 +525,7 @@ function handleToggleItem(itemId) {
   const list = getActiveList();
   if (!list) return;
   toggleItem(list, itemId);
-  saveLists(shoppingLists);
+  persistLists(list);
   renderListDetail();
 }
 
@@ -516,7 +533,7 @@ function handleDeleteItem(itemId) {
   const list = getActiveList();
   if (!list) return;
   removeItem(list, itemId);
-  saveLists(shoppingLists);
+  persistLists(list);
   renderListDetail();
 }
 
@@ -526,6 +543,8 @@ function handleDeleteList() {
   if (!confirm(`Excluir a lista "${list.name}"?`)) return;
   shoppingLists = shoppingLists.filter(l => l.id !== list.id);
   saveLists(shoppingLists);
+  saveDataToStorage();
+  deleteFromFirebase('shoppingLists', list.id);
   showAlert('Lista excluída.', 'info');
   shoppingView = 'lists';
   renderShoppingView();
@@ -624,7 +643,7 @@ function confirmCheckout() {
   }
 
   finalizeList(list, totalValue || 0);
-  saveLists(shoppingLists);
+  persistLists(list);
 
   document.getElementById('shoppingCheckoutModal').classList.remove('active');
   showAlert(
@@ -666,7 +685,7 @@ function saveEditItem() {
     category: document.getElementById('editShopItemCategory').value || 'outros'
   });
 
-  saveLists(shoppingLists);
+  persistLists(list);
   editingItemId = null;
   document.getElementById('shoppingEditItemModal').classList.remove('active');
   renderListDetail();

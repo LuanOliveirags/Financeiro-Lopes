@@ -63,6 +63,14 @@ service cloud.firestore {
       allow delete: if sameFamily(resource);
     }
 
+    // ── shoppingLists ─────────────────────────────────────────
+    match /shoppingLists/{docId} {
+      allow read:   if sameFamily(resource);
+      allow create: if incomingFamilyOk();
+      allow update: if sameFamily(resource) && incomingFamilyOk();
+      allow delete: if sameFamily(resource);
+    }
+
     // ── passwordResets ────────────────────────────────────────
     // Fluxo de recuperação de senha não tem auth — mantém aberto.
     match /passwordResets/{docId} {
