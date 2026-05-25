@@ -254,8 +254,9 @@ export function renderPersonIncomeCards() {
   members.forEach((m, i) => {
     const slug = m.name.replace(/\s+/g, '_');
     const [g1, g2] = gradients[i % gradients.length];
+    const fullWidthStyle = members.length === 1 ? ';grid-column:1/-1' : '';
     html += `
-      <div class="person-income-card" style="background:linear-gradient(135deg, ${g1}, ${g2})">
+      <div class="person-income-card" style="background:linear-gradient(135deg, ${g1}, ${g2})${fullWidthStyle}">
         <div class="pic-header">
           <div class="pic-avatar">${m.name.toLowerCase().startsWith('bianca') ? '<img src="assets/images/bianca.jpeg" alt="Bianca" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : m.name.toLowerCase().startsWith('luan') ? '<img src="assets/images/luan.jpg" alt="Luan" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : m.name.toLowerCase().startsWith('monica') ? '<img src="assets/images/Monica.png" alt="Monica" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : '<i class="fa-solid ' + icons[i % icons.length] + '"></i>'}</div>
           <span class="pic-name">${m.name}</span>
@@ -273,7 +274,7 @@ export function renderPersonIncomeCards() {
         <p class="salary-annual" id="annual_${slug}">Anual: R$ 0,00</p>
       </div>`;
   });
-  html += `
+  if (members.length > 1) html += `
     <div class="person-income-card combined-card" style="grid-column: 1 / -1;">
       <div class="pic-header">
         <div class="pic-avatar combined-avatar"><i class="fa-solid fa-users"></i></div>
