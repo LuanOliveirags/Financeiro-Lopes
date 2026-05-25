@@ -326,7 +326,7 @@ export function setupEventListeners() {
     // Desabilita refresh durante login para evitar loops
     allowRefresh(false);
     
-    const login = document.getElementById('username').value.trim();
+    const login = document.getElementById('username').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
     const errorDiv = document.getElementById('loginError');
     const submitBtn = this.querySelector('button[type="submit"]');
