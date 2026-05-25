@@ -256,7 +256,10 @@ export function switchTab(tabName) {
   else if (tabName === 'debts') { updateDebtsList(); }
   else if (tabName === 'salaries') { updateSalaryDisplay(); }
   else if (tabName === 'shopping') { openShoppingPanel(); }
-  else if (tabName === 'chores') { openChoresTab(); }
+  else if (tabName === 'chores') {
+    if (getFamilyId() !== 'family-wolfsource') { switchTab('dashboard'); return; }
+    openChoresTab();
+  }
 }
 
 // ===== QUICK ACTIONS =====

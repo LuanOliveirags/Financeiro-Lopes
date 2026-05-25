@@ -477,6 +477,10 @@ export function applyUserToUI() {
   const settingsNavBtn = document.getElementById('settingsNavBtn');
   if (choresBtn) choresBtn.style.display = isWolfSource ? '' : 'none';
   if (settingsNavBtn) settingsNavBtn.style.display = 'none';
+
+  // Tarefas é exclusivo da família WolfSource — oculta no menu FAB para as demais
+  const choresFabItem = document.querySelector('.quick-action-item[data-action="chores"]');
+  if (choresFabItem) choresFabItem.style.display = isWolfSource ? '' : 'none';
 }
 
 export function applyAvatar(photoURL) {
