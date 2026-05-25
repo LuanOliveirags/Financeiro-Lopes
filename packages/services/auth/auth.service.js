@@ -304,8 +304,9 @@ export function renderCardDebtCards() {
   let html = '';
   members.forEach(m => {
     const slug = m.name.replace(/\s+/g, '_');
+    const cardFullWidth = members.length === 1 ? 'grid-column:1/-1;' : '';
     html += `
-      <div class="debt-overview-card debt-ov-cartao" data-filter="cartao-${slug}" role="button" tabindex="0">
+      <div class="debt-overview-card debt-ov-cartao" data-filter="cartao-${slug}" role="button" tabindex="0" style="${cardFullWidth}">
         <div class="debt-ov-header">
           <div class="debt-ov-icon"><i class="fa-solid fa-credit-card"></i></div>
           <div>

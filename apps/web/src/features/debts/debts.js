@@ -399,7 +399,15 @@ export function updateDebtsList() {
     if (countEl) countEl.textContent = `${card.count} dívida${card.count !== 1 ? 's' : ''}`;
   });
 
-  if (state.debts.length === 0) { container.innerHTML = emptyState('Nenhuma dívida registrada ✅'); return; }
+  if (state.debts.length === 0) {
+    container.innerHTML = `
+      <div class="debt-empty-state">
+        <div class="debt-empty-icon"><i class="fa-solid fa-piggy-bank"></i></div>
+        <p class="debt-empty-title">Nenhuma dívida registrada</p>
+        <p class="debt-empty-sub">Tudo em dia! 🎉</p>
+      </div>`;
+    return;
+  }
 
   const sorted = state.debts.slice().sort((a, b) => {
     if (a.status !== b.status) return a.status === 'active' ? -1 : 1;
