@@ -224,7 +224,9 @@ def get_custom_token():
             fb_auth.create_user(uid=user_id, app=firebase_app)
 
         # Claims persistentes (sobrevivem refresh de token)
-        fb_auth.set_custom_user_claims(user_id, {'familyId': family_id}, app=firebase_app)
+        # role é necessário para as Firestore Rules autorizarem superadmin a editar outros usuários
+        user_role = user_data.get('role', 'user')
+        fb_auth.set_custom_user_claims(user_id, {'familyId': family_id, 'role': user_role}, app=firebase_app)
 
         custom_token = fb_auth.create_custom_token(user_id, app=firebase_app)
         # create_custom_token retorna bytes no SDK v5+ — decodificar para string

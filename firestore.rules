@@ -12,6 +12,11 @@ service cloud.firestore {
       return request.auth.token.familyId;
     }
 
+    // role é incluído nas claims via backend (set_custom_user_claims)
+    function isSuperAdmin() {
+      return isAuthed() && request.auth.token.role == 'superadmin';
+    }
+
     function sameFamily(doc) {
       return isAuthed() && doc.data.familyId == myFamilyId();
     }
@@ -21,22 +26,24 @@ service cloud.firestore {
     }
 
     // ── users ─────────────────────────────────────────────────
-    // Login SHA-256 faz query por login sem auth — read:true mantém fluxo atual.
-    // Somente o próprio usuário (autenticado) pode escrever no próprio doc.
+    // Leitura pública para popular selects e fluxo de login SHA-256.
+    // Superadmin pode criar/editar/excluir qualquer usuário.
+    // Usuário comum pode apenas atualizar o próprio doc.
     match /users/{userId} {
       allow read: if true;
-      allow create: if isAuthed() && request.auth.uid == userId && incomingFamilyOk();
-      allow update: if isAuthed() && request.auth.uid == userId;
-      allow delete: if false;
+      allow create: if isSuperAdmin() || (isAuthed() && request.auth.uid == userId && incomingFamilyOk());
+      allow update: if isSuperAdmin() || (isAuthed() && request.auth.uid == userId);
+      allow delete: if isSuperAdmin();
     }
 
     // ── families ──────────────────────────────────────────────
     // Leitura pública para popular selects de família no cadastro.
+    // Superadmin pode criar, atualizar e excluir qualquer família.
     match /families/{familyId} {
       allow read: if true;
-      allow create: if isAuthed();
-      allow update: if isAuthed() && myFamilyId() == familyId;
-      allow delete: if false;
+      allow create: if isSuperAdmin() || isAuthed();
+      allow update: if isSuperAdmin() || (isAuthed() && myFamilyId() == familyId);
+      allow delete: if isSuperAdmin();
     }
 
     // ── transactions ─────────────────────────────────────────
