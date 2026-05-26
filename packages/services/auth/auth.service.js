@@ -254,10 +254,11 @@ export function renderPersonIncomeCards() {
   members.forEach((m, i) => {
     const slug = m.name.replace(/\s+/g, '_');
     const [g1, g2] = gradients[i % gradients.length];
+    const fullWidthStyle = members.length === 1 ? ';grid-column:1/-1' : '';
     html += `
-      <div class="person-income-card" style="background:linear-gradient(135deg, ${g1}, ${g2})">
+      <div class="person-income-card" style="background:linear-gradient(135deg, ${g1}, ${g2})${fullWidthStyle}">
         <div class="pic-header">
-          <div class="pic-avatar">${m.name.toLowerCase().startsWith('bianca') ? '<img src="assets/images/bianca.jpeg" alt="Bianca" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : m.name.toLowerCase().startsWith('luan') ? '<img src="assets/images/luan.jpg" alt="Luan" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : '<i class="fa-solid ' + icons[i % icons.length] + '"></i>'}</div>
+          <div class="pic-avatar">${m.name.toLowerCase().startsWith('bianca') ? '<img src="assets/images/bianca.jpeg" alt="Bianca" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : m.name.toLowerCase().startsWith('luan') ? '<img src="assets/images/luan.jpg" alt="Luan" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : m.name.toLowerCase().startsWith('monica') ? '<img src="assets/images/Monica.png" alt="Monica" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : '<i class="fa-solid ' + icons[i % icons.length] + '"></i>'}</div>
           <span class="pic-name">${m.name}</span>
         </div>
         <div class="pic-salaries">
@@ -273,7 +274,7 @@ export function renderPersonIncomeCards() {
         <p class="salary-annual" id="annual_${slug}">Anual: R$ 0,00</p>
       </div>`;
   });
-  html += `
+  if (members.length > 1) html += `
     <div class="person-income-card combined-card" style="grid-column: 1 / -1;">
       <div class="pic-header">
         <div class="pic-avatar combined-avatar"><i class="fa-solid fa-users"></i></div>
@@ -303,8 +304,9 @@ export function renderCardDebtCards() {
   let html = '';
   members.forEach(m => {
     const slug = m.name.replace(/\s+/g, '_');
+    const cardFullWidth = members.length === 1 ? 'grid-column:1/-1;' : '';
     html += `
-      <div class="debt-overview-card debt-ov-cartao" data-filter="cartao-${slug}" role="button" tabindex="0">
+      <div class="debt-overview-card debt-ov-cartao" data-filter="cartao-${slug}" role="button" tabindex="0" style="${cardFullWidth}">
         <div class="debt-ov-header">
           <div class="debt-ov-icon"><i class="fa-solid fa-credit-card"></i></div>
           <div>
@@ -465,7 +467,7 @@ export function applyUserToUI() {
   const familyLabel = document.getElementById('settingsFamilyName');
   if (familyLabel) familyLabel.textContent = state.currentFamily ? state.currentFamily.name : 'Sem família';
 
-  const avatarURL = user.photoURL || (user.fullName && user.fullName.toLowerCase().includes('bianca') ? 'assets/images/bianca.jpeg' : null);
+  const avatarURL = user.photoURL || (user.fullName && user.fullName.toLowerCase().includes('bianca') ? 'assets/images/bianca.jpeg' : user.fullName && user.fullName.toLowerCase().includes('monica') ? 'assets/images/Monica.png' : null);
   applyAvatar(avatarURL);
 
   const adminSection = document.getElementById('adminSection');
@@ -477,6 +479,10 @@ export function applyUserToUI() {
   const settingsNavBtn = document.getElementById('settingsNavBtn');
   if (choresBtn) choresBtn.style.display = isWolfSource ? '' : 'none';
   if (settingsNavBtn) settingsNavBtn.style.display = 'none';
+
+  // Tarefas é exclusivo da família WolfSource — oculta no menu FAB para as demais
+  const choresFabItem = document.querySelector('.quick-action-item[data-action="chores"]');
+  if (choresFabItem) choresFabItem.style.display = isWolfSource ? '' : 'none';
 }
 
 export function applyAvatar(photoURL) {

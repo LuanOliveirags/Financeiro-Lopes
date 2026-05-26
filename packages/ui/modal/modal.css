@@ -11,6 +11,8 @@
   justify-content: center;
   align-items: flex-end;
   padding: 20px;
+  /* Safe area: push modal above home indicator on notch devices */
+  padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
 }
 .modal.active { display: flex; animation: fadeIn 200ms ease; }
 .modal-content {
@@ -20,9 +22,25 @@
   width: 100%;
   max-width: 500px;
   max-height: 90vh;
+  /* dvh shrinks when the virtual keyboard opens (iOS 15.4+, Chrome 108+) */
+  max-height: 90dvh;
   overflow-y: auto;
+  /* Smooth momentum scroll in iOS WebKit */
+  -webkit-overflow-scrolling: touch;
+  /* Contain scroll: prevents body from scrolling behind the modal */
+  overscroll-behavior: contain;
   animation: slideUp 350ms var(--ease-med);
   box-shadow: var(--shadow-xl);
+}
+
+/* Submit button always visible at the bottom of the modal.
+   position: sticky keeps it anchored to the visible scroll area,
+   so it never disappears below the fold even when the keyboard
+   pushes the viewport height down on mobile (iOS/Android). */
+.modal-content .btn-primary {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
 }
 .modal-header {
   display: flex;

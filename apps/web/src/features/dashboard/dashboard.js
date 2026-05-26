@@ -94,6 +94,25 @@ export function setupValuesToggle() {
   });
 }
 
+// ===== SUMMARY PANEL TOGGLE =====
+export function setupSummaryToggle() {
+  const btn = document.getElementById('dashSummaryToggleBtn');
+  const label = document.getElementById('dashSummaryToggleLabel');
+  const panel = document.getElementById('dashSummaryPanel');
+  if (!btn || !panel) return;
+
+  const setCollapsed = (collapsed) => {
+    panel.classList.toggle('collapsed', collapsed);
+    btn.classList.toggle('is-collapsed', collapsed);
+    if (label) label.textContent = collapsed ? 'Mostrar' : 'Ocultar';
+    btn.title = collapsed ? 'Mostrar resumo' : 'Ocultar resumo';
+    localStorage.setItem('summaryCollapsed', collapsed);
+  };
+
+  setCollapsed(localStorage.getItem('summaryCollapsed') === 'true');
+  btn.addEventListener('click', () => setCollapsed(!panel.classList.contains('collapsed')));
+}
+
 // ===== ATUALIZAR DASHBOARD =====
 export function updateDashboard() {
   const monthVal = document.getElementById('monthFilter').value;

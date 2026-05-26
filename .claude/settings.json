@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(css|html\\)$\")",
+      "PowerShell(node infra/scripts/copy-web.js)"
+    ]
+  }
+}

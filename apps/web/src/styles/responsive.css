@@ -455,11 +455,13 @@ html {
   .modal {
     align-items: center;
     padding: 40px;
+    padding-bottom: 40px; /* reset safe-area on desktop */
   }
   .modal-content {
     max-width: 560px;
     border-radius: var(--r-2xl);
     max-height: 85vh;
+    max-height: 85dvh;
     box-shadow: var(--shadow-xl), 0 0 0 1px rgba(0,0,0,0.05);
   }
 
@@ -905,8 +907,15 @@ html {
   }
 
   /* Modal adjustments */
-  .modal { padding: 10px; }
-  .modal-content { padding: 18px; }
+  .modal {
+    padding: 10px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+  }
+  .modal-content {
+    padding: 18px;
+    max-height: 92vh;
+    max-height: 92dvh;
+  }
   .modal-header h3 { font-size: 1rem; }
 
   /* Chart cards */
@@ -1043,8 +1052,16 @@ html {
   .month-btn { padding: 6px 14px; font-size: 0.8125rem; }
 
   /* Modal */
-  .modal { padding: 6px; }
-  .modal-content { padding: 16px; border-radius: 18px 18px 10px 10px; }
+  .modal {
+    padding: 6px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom, 6px));
+  }
+  .modal-content {
+    padding: 16px;
+    border-radius: 18px 18px 10px 10px;
+    max-height: 94vh;
+    max-height: 94dvh;
+  }
   .modal-header { margin-bottom: 14px; }
   .modal-header h3 { font-size: 0.9375rem; gap: 8px; }
 

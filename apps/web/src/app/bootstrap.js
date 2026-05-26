@@ -6,14 +6,14 @@ import { loadPages } from './router.js';
 import { initFirebase, setRefreshCallback } from '../../../../packages/services/firebase/firebase.service.js';
 import { createDefaultAdmin, checkLoginStatus, initResetPasswordUI } from '../../../../packages/services/auth/auth.service.js';
 import { setupEventListeners, setupOnlineOfflineListeners, initMonthScroller } from '../../../../packages/ui/navigation/navigation.js';
-import { updateDashboard, setupDashboardToggle, setupKpiClickListeners, setupValuesToggle } from '../features/dashboard/dashboard.js';
+import { updateDashboard, setupDashboardToggle, setupKpiClickListeners, setupValuesToggle, setupSummaryToggle } from '../features/dashboard/dashboard.js';
 import { updateTransactionHistory } from '../features/transactions/transactions.js';
 import { updateDebtsList } from '../features/debts/debts.js';
 import { updateSalaryDisplay } from '../features/salaries/salaries.js';
 import { initNotifications, storeDebtSummaryForSW } from '../../../../packages/services/notifications/notification.service.js';
 import { initChat } from '../features/chat/chat.js';
 import { initFCM } from '../../../../packages/services/firebase/fcm.service.js';
-import '../features/shopping/shopping.js';
+import { refreshShoppingIfOpen } from '../features/shopping/shopping.js';
 
 // Carrega todos os fragmentos HTML antes de qualquer acesso ao DOM
 await loadPages();
@@ -24,6 +24,7 @@ setRefreshCallback(async () => {
     updateTransactionHistory();
     updateDebtsList();
     updateSalaryDisplay();
+    refreshShoppingIfOpen();
     initChat();
     initFCM().catch(() => {});
     await storeDebtSummaryForSW();
@@ -44,6 +45,7 @@ setupEventListeners();
 setupDashboardToggle();
 setupKpiClickListeners();
 setupValuesToggle();
+setupSummaryToggle();
 setupOnlineOfflineListeners();
 initResetPasswordUI();
 initMonthScroller();

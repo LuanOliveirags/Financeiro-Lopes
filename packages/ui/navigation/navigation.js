@@ -256,7 +256,10 @@ export function switchTab(tabName) {
   else if (tabName === 'debts') { updateDebtsList(); }
   else if (tabName === 'salaries') { updateSalaryDisplay(); }
   else if (tabName === 'shopping') { openShoppingPanel(); }
-  else if (tabName === 'chores') { openChoresTab(); }
+  else if (tabName === 'chores') {
+    if (getFamilyId() !== 'family-wolfsource') { switchTab('dashboard'); return; }
+    openChoresTab();
+  }
 }
 
 // ===== QUICK ACTIONS =====
@@ -326,7 +329,7 @@ export function setupEventListeners() {
     // Desabilita refresh durante login para evitar loops
     allowRefresh(false);
     
-    const login = document.getElementById('username').value.trim();
+    const login = document.getElementById('username').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
     const errorDiv = document.getElementById('loginError');
     const submitBtn = this.querySelector('button[type="submit"]');
