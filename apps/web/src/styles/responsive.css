@@ -304,7 +304,7 @@ html {
   }
 
   .debt-overview-panel {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
     padding: 0 24px 20px;
   }
@@ -455,10 +455,10 @@ html {
     padding: 0 24px 20px;
   }
 
-  /* ── Transaction day groups: grid ── */
+  /* ── Transaction / salary history: 2-col grid ── */
   .transactions-list {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
 
@@ -655,6 +655,14 @@ html {
   /* ── Wider month scroller ── */
   .months-scroll-wrap { padding: 0 24px 16px; }
   .month-btn { padding: 8px 22px; font-size: 0.9rem; }
+
+  /* ── List section desktop ── */
+  .list-section { padding: 0 24px 24px; }
+  .list-section-header { padding-bottom: 16px; }
+  .list-section-header h3 { font-size: 1.125rem; font-weight: 700; }
+
+  /* ── Debt alerts wrap ── */
+  .debt-alerts-wrap { padding: 0 24px 8px; }
 
   /* ── Transaction items spacing ── */
   .transaction-item { padding: 16px 20px; gap: 16px; }
