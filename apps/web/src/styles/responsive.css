@@ -40,7 +40,7 @@ html {
 
   /* ── CSS Variable for sidebar width ── */
   :root {
-    --sidebar-w: 84px;
+    --sidebar-w: 180px;
   }
 
   /* ── Bottom Nav → Left Sidebar (collapsed icon-only) ── */
@@ -54,8 +54,8 @@ html {
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    padding: 12px 6px;
-    gap: 2px;
+    padding: 12px 8px;
+    gap: 4px;
     border-top: none;
     border-right: 1px solid var(--border);
     border-radius: 0;
@@ -71,7 +71,7 @@ html {
     align-items: center;
     justify-content: center;
     gap: 0;
-    padding: 10px 0 20px;
+    padding: 14px 0 22px;
     border-bottom: 1px solid var(--border);
     margin-bottom: 4px;
     flex-shrink: 0;
@@ -79,8 +79,8 @@ html {
     width: 100%;
   }
   .sidebar-brand-logo {
-    width: 65px;
-    height: 65px;
+    width: 72px;
+    height: 72px;
     object-fit: contain;
     border-radius: var(--r-sm);
   }
@@ -91,17 +91,18 @@ html {
     display: none;
   }
 
-  /* Nav items → icon-only centered */
+  /* Nav items → row with icon + label */
   .bottom-nav-item {
-    flex-direction: column;
-    justify-content: center;
+    flex-direction: row;
+    justify-content: flex-start;
     align-items: center;
-    padding: 10px 0;
+    padding: 10px 12px;
     border-radius: var(--r-md);
-    gap: 0;
+    gap: 10px;
     min-width: unset;
-    width: 62px;
-    height: 52px;
+    width: calc(100% - 8px);
+    margin: 0 4px;
+    height: auto;
     transition: all var(--ease);
   }
   .bottom-nav-item:nth-of-type(1),
@@ -123,16 +124,24 @@ html {
     color: #fff;
     box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
   }
+  .bottom-nav-item.active .nav-label {
+    color: var(--primary);
+    font-weight: var(--fw-semi);
+  }
 
   .nav-label {
-    display: none;
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: var(--fw-medium);
+    letter-spacing: -0.01em;
   }
 
   .nav-icon-wrap {
-    width: 42px;
-    height: 42px;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
     border-radius: var(--r-md);
-    font-size: 1.0625rem;
+    font-size: 0.9375rem;
     transition: all var(--ease);
   }
 
@@ -233,7 +242,21 @@ html {
     margin-right: auto;
   }
 
-  .balance-card { margin: 0 auto 20px; max-width: 1060px; }
+  .balance-card {
+    margin: 0 auto 20px;
+    max-width: 1060px;
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    grid-template-rows: auto auto 1fr;
+    column-gap: 36px;
+    padding: 28px 40px 20px;
+    align-items: start;
+  }
+  .balance-card .balance-label   { grid-column: 1; grid-row: 1; }
+  .balance-card .balance-amount  { grid-column: 1; grid-row: 2; margin-bottom: 0; }
+  .balance-card .sparkline-wrap  { grid-column: 2; grid-row: 1 / 3; height: 110px; }
+  .balance-card .sparkline-canvas { height: 110px !important; }
+  .balance-card .sparkline-x-labels { grid-column: 2; grid-row: 3; padding-top: 4px; }
 
   .ie-grid,
   .kpi-mini-row,
@@ -295,7 +318,7 @@ html {
   }
 
   .charts-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
   }
 
@@ -440,7 +463,7 @@ html {
   }
 
   /* ── Balance card → larger typography ── */
-  .balance-amount { font-size: 2.75rem; }
+  .balance-amount { font-size: 3rem; }
   .balance-label { font-size: 0.9rem; }
 
   /* ── Page header spacing ── */
@@ -611,7 +634,7 @@ html {
 
   /* ── Safe area reset for desktop ── */
   .bottom-nav {
-    padding-bottom: 24px;
+    padding-bottom: 16px;
     height: auto;
   }
 
@@ -677,7 +700,7 @@ html {
 @media (min-width: 1440px) {
 
   :root {
-    --sidebar-w: 84px;
+    --sidebar-w: 180px;
   }
 
   .main-content > * {
@@ -801,14 +824,14 @@ html {
 
   /* Sidebar nav items */
   .bottom-nav-item {
-    padding: 14px 20px;
+    padding: 11px 14px;
   }
   .nav-label {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
   }
 
   /* Bigger balance */
-  .balance-amount { font-size: 3rem; }
+  .balance-amount { font-size: 3.25rem; }
 
   /* Modal wider */
   .modal-content {
