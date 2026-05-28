@@ -467,7 +467,11 @@ export function applyUserToUI() {
   const familyLabel = document.getElementById('settingsFamilyName');
   if (familyLabel) familyLabel.textContent = state.currentFamily ? state.currentFamily.name : 'Sem família';
 
-  const avatarURL = user.photoURL || (user.fullName && user.fullName.toLowerCase().includes('bianca') ? 'assets/images/bianca.jpeg' : user.fullName && user.fullName.toLowerCase().includes('monica') ? 'assets/images/Monica.png' : null);
+  const _n = (user.fullName || '').toLowerCase();
+  const avatarURL = user.photoURL ||
+    (_n.includes('bianca') ? 'assets/images/bianca.jpeg' :
+     _n.includes('luan')   ? 'assets/images/luan.jpg'   :
+     _n.includes('monica') ? 'assets/images/Monica.png'  : null);
   applyAvatar(avatarURL);
 
   const adminSection = document.getElementById('adminSection');
@@ -486,22 +490,25 @@ export function applyUserToUI() {
 }
 
 export function applyAvatar(photoURL) {
-  const headerImg      = document.getElementById('headerAvatar');
-  const settingsImg    = document.getElementById('settingsAvatar');
-  const chatMyImg      = document.getElementById('chatMyAvatar');
-  const chatMyFallback = document.getElementById('chatMyAvatarFallback');
-  const myProfImg      = document.getElementById('myProfileAvatar');
-  const myProfFallback = document.getElementById('myProfileAvatarFallback');
+  const headerImg         = document.getElementById('headerAvatar');
+  const settingsImg       = document.getElementById('settingsAvatar');
+  const settingsFallback  = document.querySelector('#avatarUploadBtn .spc-avatar-fallback');
+  const chatMyImg         = document.getElementById('chatMyAvatar');
+  const chatMyFallback    = document.getElementById('chatMyAvatarFallback');
+  const myProfImg         = document.getElementById('myProfileAvatar');
+  const myProfFallback    = document.getElementById('myProfileAvatarFallback');
   if (photoURL) {
-    if (headerImg)   { headerImg.src   = photoURL; headerImg.style.display   = 'block'; }
-    if (settingsImg) { settingsImg.src = photoURL; settingsImg.style.display = 'block'; }
-    if (chatMyImg)   { chatMyImg.src   = photoURL; chatMyImg.style.display   = 'block'; if (chatMyFallback) chatMyFallback.style.display = 'none'; }
-    if (myProfImg)   { myProfImg.src   = photoURL; myProfImg.style.display   = 'block'; if (myProfFallback) myProfFallback.style.display = 'none'; }
+    if (headerImg)        { headerImg.src   = photoURL; headerImg.style.display   = 'block'; }
+    if (settingsImg)      { settingsImg.src = photoURL; settingsImg.style.display = 'block'; }
+    if (settingsFallback)   settingsFallback.style.display  = 'none';
+    if (chatMyImg)        { chatMyImg.src   = photoURL; chatMyImg.style.display   = 'block'; if (chatMyFallback) chatMyFallback.style.display = 'none'; }
+    if (myProfImg)        { myProfImg.src   = photoURL; myProfImg.style.display   = 'block'; if (myProfFallback) myProfFallback.style.display = 'none'; }
   } else {
-    if (headerImg)   headerImg.style.display   = 'none';
-    if (settingsImg) settingsImg.style.display = 'none';
-    if (chatMyImg)   { chatMyImg.style.display = 'none'; if (chatMyFallback) chatMyFallback.style.display = 'flex'; }
-    if (myProfImg)   { myProfImg.style.display = 'none'; if (myProfFallback) myProfFallback.style.display = 'flex'; }
+    if (headerImg)          headerImg.style.display   = 'none';
+    if (settingsImg)        settingsImg.style.display = 'none';
+    if (settingsFallback)   settingsFallback.style.display  = '';
+    if (chatMyImg)        { chatMyImg.style.display = 'none'; if (chatMyFallback) chatMyFallback.style.display = 'flex'; }
+    if (myProfImg)        { myProfImg.style.display = 'none'; if (myProfFallback) myProfFallback.style.display = 'flex'; }
   }
 }
 
