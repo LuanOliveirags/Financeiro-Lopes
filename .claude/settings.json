@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(grep -E \"\\\\.\\(css|html\\)$\")",
-      "PowerShell(node infra/scripts/copy-web.js)"
+      "PowerShell(node infra/scripts/copy-web.js)",
+      "Bash(gh pr create --title 'feat: melhorias visuais, responsividade, autenticação e permissões' --body ' *)",
+      "PowerShell(git remote get-url origin)"
     ]
   }
 }
