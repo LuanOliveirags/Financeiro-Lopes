@@ -13,7 +13,8 @@
       "PowerShell(firebase projects:list 2>&1)",
       "PowerShell(git push origin dev 2>&1)",
       "PowerShell(firebase login 2>&1)",
-      "PowerShell(firebase login --no-localhost 2>&1)"
+      "PowerShell(firebase login --no-localhost 2>&1)",
+      "Bash(git merge *)"
     ]
   }
 }
