@@ -4,7 +4,16 @@
       "Bash(grep -E \"\\\\.\\(css|html\\)$\")",
       "PowerShell(node infra/scripts/copy-web.js)",
       "Bash(gh pr create --title 'feat: melhorias visuais, responsividade, autenticação e permissões' --body ' *)",
-      "PowerShell(git remote get-url origin)"
+      "PowerShell(git remote get-url origin)",
+      "PowerShell(firebase --version 2>$null)",
+      "PowerShell(if \\(-not $?\\) { \"Firebase CLI n�o instalado\" })",
+      "PowerShell(firebase deploy --only firestore:rules --project financeiro-lopes 2>&1)",
+      "PowerShell(firebase login:list 2>&1)",
+      "PowerShell(firebase login --reauth 2>&1)",
+      "PowerShell(firebase projects:list 2>&1)",
+      "PowerShell(git push origin dev 2>&1)",
+      "PowerShell(firebase login 2>&1)",
+      "PowerShell(firebase login --no-localhost 2>&1)"
     ]
   }
 }
