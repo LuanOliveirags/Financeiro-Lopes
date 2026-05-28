@@ -350,14 +350,16 @@
 .ie-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .ie-card:active { transform: scale(0.97); }
 
-/* Colored left accent — income (cyan) / expense (red) */
+/* Colored left accent + subtle gradient — income (cyan) / expense (red) */
 .ie-card:has(.income-circle) {
   border-color: rgba(76, 201, 240, 0.22);
   border-left: 3px solid rgba(76, 201, 240, 0.7);
+  background: linear-gradient(135deg, var(--bg-card) 55%, rgba(76,201,240,0.06) 100%);
 }
 .ie-card:has(.expense-circle) {
   border-color: rgba(231, 76, 60, 0.22);
   border-left: 3px solid rgba(231, 76, 60, 0.7);
+  background: linear-gradient(135deg, var(--bg-card) 55%, rgba(231,76,60,0.06) 100%);
 }
 
 .ie-circle {

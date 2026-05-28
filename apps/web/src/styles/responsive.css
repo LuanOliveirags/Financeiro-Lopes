@@ -247,7 +247,7 @@ html {
     max-width: 1060px;
     display: grid;
     grid-template-columns: 1fr 1.25fr;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto auto;
     column-gap: 36px;
     padding: 28px 40px 20px;
     align-items: start;
@@ -468,10 +468,43 @@ html {
 
   /* ── Page header spacing ── */
   .page-header {
-    padding: 24px 24px 14px;
+    padding: 28px 24px 16px;
   }
   .page-title {
-    font-size: 1.75rem;
+    font-size: 2rem;
+  }
+
+  /* ── Dashboard toggle — compact and centered on desktop ── */
+  .dash-mode-toggle {
+    max-width: 500px;
+    margin: 0 auto 16px;
+  }
+
+  /* ── KPI last card spans 2 columns to fill the 4-col grid ── */
+  .kpi-mini-row .kpi-mini-card:last-child {
+    grid-column: span 2;
+  }
+
+  /* ── Month scroller — remove fade mask, all months visible ── */
+  .months-scroll-wrap {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .months-scroller {
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  /* ── Chart cards desktop ── */
+  .chart-card {
+    padding: 22px 24px;
+  }
+  .chart-card-header {
+    margin-bottom: 18px;
+  }
+  .chart-card-header h3 {
+    font-size: 0.9375rem;
+    font-weight: 600;
   }
 
   /* ── Modal → centered, not bottom-aligned ── */
