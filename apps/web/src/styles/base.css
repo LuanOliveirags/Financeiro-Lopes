@@ -272,6 +272,20 @@ button { border: none; cursor: pointer; background: none; }
   margin: 16px 20px 0;
 }
 
+/* Toast fixed — aparece acima de modais */
+.alert-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  left: auto;
+  max-width: 420px;
+  width: calc(100% - 40px);
+  z-index: var(--z-toast);
+  margin-bottom: 0;
+  animation: slideDown 300ms ease;
+  box-shadow: var(--shadow-md, 0 4px 16px rgba(0,0,0,.15));
+}
+
 /* ─── TAB CONTENT ─── */
 .tab-content {
   display: none;

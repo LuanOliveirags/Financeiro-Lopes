@@ -35,10 +35,12 @@ export const EMAILJS_CONFIG = {
   publicKey:  'YOUR_PUBLIC_KEY'
 };
 
-// URL do backend Flask onde está o endpoint /api/fcm/send
-// Ex.: https://financeiro-lopes.up.railway.app
-// ⚠️ Não deixar vazio em produção
-export const BACKEND_URL = 'https://aware-delight-production-2e59.up.railway.app';
+// URL do backend Flask — usa localhost em dev, Railway em produção
+const _isLocal = typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+export const BACKEND_URL = _isLocal
+  ? 'http://localhost:5000'
+  : 'https://aware-delight-production-2e59.up.railway.app';
 
 // URL pública do APK para download direto.
 // Gere no Firebase Storage ou qualquer hospedagem e cole aqui.

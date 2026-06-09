@@ -24,11 +24,19 @@ export async function hashPassword(password) {
 export async function signInWithFirebase(userId, familyId) {
   if (!auth) return;
   try {
-    const res = await fetch(`${BACKEND_URL}/api/auth/token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, familyId })
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    let res;
+    try {
+      res = await fetch(`${BACKEND_URL}/api/auth/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, familyId }),
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     if (!res.ok) {
       console.warn('[Auth] Falha ao obter custom token:', res.status);
       return;
@@ -37,6 +45,30 @@ export async function signInWithFirebase(userId, familyId) {
     await auth.signInWithCustomToken(token);
   } catch (e) {
     console.warn('[Auth] signInWithFirebase falhou (não bloqueia login):', e);
+  }
+}
+
+// Aguarda o Firebase restaurar a sessão persistida do storage (uma vez só).
+let _authReadyPromise = null;
+function _waitForAuthReady() {
+  if (!_authReadyPromise) {
+    _authReadyPromise = new Promise(resolve => {
+      const unsub = auth.onAuthStateChanged(() => { unsub(); resolve(); });
+    });
+  }
+  return _authReadyPromise;
+}
+
+// Garante que auth.currentUser está ativo antes de escritas no Firestore.
+async function _ensureFirebaseAuth() {
+  if (!firebaseReady || !auth) return;
+  await _waitForAuthReady();
+  if (!auth.currentUser && state.currentUser) {
+    showAlert('Conectando ao servidor... aguarde.', 'info');
+    await signInWithFirebase(state.currentUser.id, state.currentUser.familyId);
+    if (!auth.currentUser) {
+      throw new Error('Sessão Firebase expirada. Recarregue a página e faça login novamente.');
+    }
   }
 }
 
@@ -107,6 +139,7 @@ export async function loginUser(login, password) {
 export async function registerUser(fullName, email, login, password, familyId) {
   if (!firebaseReady) throw new Error('Firebase não disponível.');
   if (!familyId) throw new Error('É necessário selecionar uma família.');
+  await _ensureFirebaseAuth();
   const existing = await db.collection('users').where('login', '==', login).get();
   if (!existing.empty) throw new Error('Esse login já está em uso.');
   const emailCheck = await db.collection('users').where('email', '==', email).get();
@@ -114,7 +147,7 @@ export async function registerUser(fullName, email, login, password, familyId) {
 
   const hash = await hashPassword(password);
   const id = `user-${Date.now()}`;
-  const user = { id, fullName, email, login, passwordHash: hash, role: 'user', familyId, createdAt: new Date().toISOString() };
+  const user = { id, fullName, email, login, passwordHash: hash, role: 'user', familyId, createdAt: new Date().toISOString(), phone: '', recado: '', photoURL: null };
   await db.collection('users').doc(id).set(user);
   return user;
 }
@@ -325,7 +358,7 @@ export function renderCardDebtCards() {
 export async function createFamily(name) {
   if (!firebaseReady) throw new Error('Firebase não disponível.');
   const id = `family-${Date.now()}`;
-  const family = { id, name, createdAt: new Date().toISOString() };
+  const family = { id, name, createdAt: new Date().toISOString(), members: [], ownerId: null };
   await db.collection('families').doc(id).set(family);
   return family;
 }
@@ -775,6 +808,8 @@ export async function saveUserEdit(e) {
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
 
   try {
+    await _ensureFirebaseAuth();
+
     if (!isSuperAdmin()) {
       const targetDoc = await db.collection('users').doc(userId).get();
       if (targetDoc.exists) {
@@ -785,9 +820,9 @@ export async function saveUserEdit(e) {
       }
     }
     const loginCheck = await db.collection('users').where('login', '==', login).get();
-    if (loginCheck.docs.find(d => d.data().id !== userId)) { showAlert('Login já em uso.', 'danger'); return; }
+    if (loginCheck.docs.find(d => d.id !== userId)) { showAlert('Login já em uso.', 'danger'); return; }
     const emailCheck = await db.collection('users').where('email', '==', email).get();
-    if (emailCheck.docs.find(d => d.data().id !== userId)) { showAlert('E-mail já cadastrado.', 'danger'); return; }
+    if (emailCheck.docs.find(d => d.id !== userId)) { showAlert('E-mail já cadastrado.', 'danger'); return; }
 
     // Telefone: normaliza e verifica unicidade
     const rawPhone = (document.getElementById('editUserPhone')?.value || '').trim();
@@ -827,6 +862,9 @@ export async function saveUserEdit(e) {
       await loadFamily();
       applyUserToUI();
       loadDataFromStorage();
+    } else {
+      await loadFamilyMembers();
+      notifyRefresh();
     }
     loadUsersList();
   } catch (err) {

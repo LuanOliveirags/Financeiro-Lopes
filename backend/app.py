@@ -29,7 +29,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key-change-in-production
 db = SQLAlchemy(app)
 
 # Configurar CORS
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app, origins='*', supports_credentials=False)
 
 @app.after_request
 def add_cors_headers(response):
@@ -40,7 +40,11 @@ def add_cors_headers(response):
 
 @app.route('/api/<path:path>', methods=['OPTIONS'])
 def handle_options(path):
-    return '', 200
+    resp = app.make_default_options_response()
+    resp.headers['Access-Control-Allow-Origin']  = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    return resp
 
 # ===== FIREBASE ADMIN (FCM V1) =====
 _firebase_app = None

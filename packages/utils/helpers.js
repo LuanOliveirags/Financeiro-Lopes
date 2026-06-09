@@ -44,7 +44,7 @@ export function getCategoryLabel(category) {
 
 export function showAlert(message, type = 'info') {
   const alertDiv = document.createElement('div');
-  alertDiv.className = `alert ${type}`;
+  alertDiv.className = `alert alert-toast ${type}`;
   const icons = {
     success: 'fa-circle-check',
     danger: 'fa-circle-xmark',
@@ -55,10 +55,10 @@ export function showAlert(message, type = 'info') {
     <i class="fa-solid ${icons[type] || icons.info}"></i>
     <span>${message}</span>
   `;
+  document.body.appendChild(alertDiv);
+
   const main = document.querySelector('.main-content');
   if (main) {
-    main.insertBefore(alertDiv, main.firstChild);
-    // Ambient screen flash feedback
     if (type === 'success') { main.classList.add('feedback-success'); }
     else if (type === 'danger') { main.classList.add('feedback-error'); }
     setTimeout(() => main.classList.remove('feedback-success', 'feedback-error'), 900);
