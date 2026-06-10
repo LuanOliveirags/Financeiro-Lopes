@@ -13,6 +13,8 @@ dist/
 firebase-admin-key.json
 google-services.json
 GoogleService-Info.plist
+.google-credentials.json
+.google-token.json
 
 # ─── Android / Keystore ─────────────────────────────────────
 *.jks

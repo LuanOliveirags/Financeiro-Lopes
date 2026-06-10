@@ -10,6 +10,7 @@
     "open:android": "cd apps/mobile && npx cap open android",
     "build": "node infra/scripts/copy-web.js && cd apps/mobile && npx cap sync android && npx cap open android",
     "icons:android": "node infra/scripts/generate-android-icons.js",
+    "setup:drive": "node infra/scripts/setup-drive-auth.js",
     "release": "node infra/scripts/release.js",
     "deploy": "node infra/scripts/copy-web.js && npx gh-pages -d www",
     "dev": "node infra/scripts/copy-web.js && npx serve www"
@@ -24,6 +25,7 @@
     "@capacitor/cli": "^6.0.0",
     "firebase-admin": "^13.8.0",
     "gh-pages": "^6.3.0",
+    "googleapis": "^144.0.0",
     "sharp": "^0.34.5"
   }
 }
