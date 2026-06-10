@@ -7,7 +7,7 @@ try {
 
   firebase.initializeApp({
     apiKey:            'AIzaSyAMx-ZoL4cco2NmPzEfIe5yYC1WLHPc0vk',
-    projectId:         'wolfsource',
+    projectId:         'financeiro-lopes',
     messagingSenderId: '621443570583',
     appId:             '1:621443570583:web:1a5ad0106d2606561482d2',
   });
@@ -33,7 +33,7 @@ try {
 }
 // ===== FIM FIREBASE MESSAGING =====
 
-const CACHE_NAME = 'wolfsource-v23';
+const CACHE_NAME = 'wolfsource-v24';
 const URLS_TO_CACHE = [
   './',
   './index.html',

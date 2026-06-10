@@ -11,6 +11,41 @@ npm run dev        # monta www/ e serve em http://localhost:3000
 > O login usa `crypto.subtle` para hash de senha — essa API só funciona em HTTPS ou `localhost`.
 > Acessar via IP desabilita a API e o login quebra.
 
+## Backend (Flask + Firebase Admin)
+
+O app depende do backend para gerar custom tokens do Firebase Auth. Em desenvolvimento, rode localmente:
+
+```bash
+cd backend
+pip install -r requirements.txt
+python app.py      # inicia em http://localhost:5000
+```
+
+O frontend detecta automaticamente o ambiente:
+- `localhost` → usa `http://localhost:5000`
+- Produção → usa Railway (`https://aware-delight-production-2e59.up.railway.app`)
+
+### Configurar `.env` local
+
+Crie `backend/.env` com o JSON da service account do Firebase:
+
+```env
+SECRET_KEY=wolfsource-dev-key
+FLASK_ENV=development
+PORT=5000
+FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"financeiro-lopes",...}
+```
+
+Gere o JSON em: Firebase Console → Configurações → Contas de serviço → Gerar nova chave privada.
+
+> O arquivo `backend/.env` está no `.gitignore` — nunca commitar com credenciais reais.
+
+### Deploy no Railway
+
+1. No painel Railway → Settings → **Root Directory** → definir como `backend`
+2. Adicionar variável de ambiente `FIREBASE_SERVICE_ACCOUNT_JSON` com o JSON da service account
+3. Push em `main` → Railway redeploy automático (usa o `backend/Procfile`)
+
 ## Visualizar o fonte diretamente
 
 Não abra `apps/web/public/index.html` pelo servidor do VS Code (porta 5503).
@@ -30,6 +65,7 @@ Use sempre `npm run dev`.
 | Navegação / header | `packages/ui/navigation/` |
 | Firebase config | `packages/services/firebase/firebase.config.js` |
 | Estado global | `packages/core/state/store.js` |
+| Backend API | `backend/app.py` |
 
 ## Deploy
 
@@ -38,6 +74,14 @@ npm run deploy     # monta www/ e publica no GitHub Pages (branch gh-pages via A
 ```
 
 O GitHub Actions roda automaticamente a cada push no `main` — o deploy acontece sem precisar rodar o comando manualmente.
+
+## Regras do Firestore
+
+As rules **não** fazem parte do CI — deploy manual:
+
+```bash
+firebase deploy --only firestore:rules
+```
 
 ## Build Android (APK)
 
@@ -63,3 +107,4 @@ Nunca usar `frontend/assets/images/` — esse era o path antigo e não existe ma
 
 - O `www/` é gerado automaticamente — não editar arquivos dentro dele diretamente
 - O branch `gh-pages` é gerenciado pelo GitHub Actions — não fazer commits manuais nele
+- Após qualquer alteração nos fontes, rodar `node infra/scripts/copy-web.js` ou `npm run dev` para refletir em `www/`

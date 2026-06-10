@@ -198,12 +198,19 @@ Login SHA-256 (browser)
 ### Firestore Security Rules
 
 ```
-transactions / debts / salaries
+transactions / debts / salaries / shoppingLists
   → read/write somente se request.auth.token.familyId == doc.familyId
 
-users / families
-  → read: público (necessário para login e cadastro)
-  → write: autenticado
+users
+  → read: público (necessário para login e select de família)
+  → create/update/delete: superadmin (qualquer usuário) ou admin (mesma família)
+
+families
+  → read: público
+  → write: superadmin ou membro da família
+
+conversations / messages
+  → read/write: somente participantes da conversa (participantIds[])
 
 passwordResets
   → read/write: público (fluxo sem auth)
@@ -245,10 +252,12 @@ GET  /health
 
 ```bash
 cd backend
-python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}' python app.py
+python app.py      # inicia em http://localhost:5000
 ```
+
+Crie `backend/.env` com a service account do Firebase (veja `backend/.env.example`).
+O frontend detecta automaticamente e usa `localhost:5000` quando rodando em `localhost`.
 
 ## Infra e Deploy
 
@@ -256,7 +265,7 @@ FIREBASE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}' python app.py
 |---|---|---|
 | Produção | https://luanoliveirags.github.io/Financeiro-Lopes/ | Push em `main` via `deploy.yml` |
 | Staging | https://financeiro-lopes--staging-9u9590k6.web.app | Push em `dev` via `deploy-staging.yml` |
-| Backend | https://aware-delight-production-2e59.up.railway.app | Deploy manual via Railway CLI |
+| Backend | https://aware-delight-production-2e59.up.railway.app | Push em `main` — Railway usa `backend/Procfile` (Root Directory: `backend`) |
 
 ### Workflow de Desenvolvimento
 
