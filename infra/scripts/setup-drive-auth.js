@@ -21,7 +21,7 @@ const __dirname  = path.dirname(fileURLToPath(import.meta.url));
 const root       = path.resolve(__dirname, '../..');
 const CREDS_PATH = path.join(root, '.google-credentials.json');
 const TOKEN_PATH = path.join(root, '.google-token.json');
-const SCOPES     = ['https://www.googleapis.com/auth/drive.file'];
+const SCOPES     = ['https://www.googleapis.com/auth/drive'];
 
 async function main() {
   if (!existsSync(CREDS_PATH)) {
@@ -31,7 +31,7 @@ async function main() {
   }
 
   const creds = JSON.parse(await readFile(CREDS_PATH, 'utf8'));
-  const { client_id, client_secret, redirect_uris } = creds.installed ?? creds.web;
+  const { client_id, client_secret } = creds.installed ?? creds.web;
 
   // Usa redirect local para capturar o código automaticamente
   const redirectUri = 'http://localhost:3737/oauth2callback';
