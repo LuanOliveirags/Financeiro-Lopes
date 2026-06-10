@@ -407,17 +407,18 @@ export async function loadFamiliesListUI() {
     const memberCount = {};
     usersSnap.forEach(doc => { const fid = doc.data().familyId; if (fid) memberCount[fid] = (memberCount[fid] || 0) + 1; });
 
-    let html = '<div class="users-list">';
+    let html = '<div class="admin-list">';
     families.forEach(f => {
       const count = memberCount[f.id] || 0;
       html += `
-        <div class="user-card">
-          <div class="user-card-info">
-            <div class="user-card-name"><i class="fa-solid fa-people-roof" style="margin-right:6px;"></i>${esc(f.name)}</div>
-            <div class="user-card-detail">${count} membro${count !== 1 ? 's' : ''}</div>
+        <div class="admin-card">
+          <div class="admin-card-icon"><i class="fa-solid fa-people-roof"></i></div>
+          <div class="admin-card-info">
+            <div class="admin-card-name">${esc(f.name)}</div>
+            <span class="member-badge"><i class="fa-solid fa-user"></i> ${count} membro${count !== 1 ? 's' : ''}</span>
           </div>
-          <div class="user-card-actions">
-            <button class="user-action-btn delete-family-btn danger" data-id="${esc(f.id)}" data-name="${esc(f.name)}" title="Excluir">
+          <div class="admin-card-actions">
+            <button class="admin-action-btn delete-family-btn danger" data-id="${esc(f.id)}" data-name="${esc(f.name)}" title="Excluir família">
               <i class="fa-solid fa-trash"></i>
             </button>
           </div>
@@ -708,23 +709,29 @@ export async function loadUsersList() {
       const famSnap = await db.collection('families').get();
       famSnap.forEach(d => { familiesMap[d.data().id] = d.data().name; });
     }
-    let html = '<div class="users-list">';
+    let html = '<div class="admin-list">';
     snapshot.forEach(doc => {
       const u = doc.data();
       const isCurrentUser = u.id === state.currentUser.id;
-      const roleLabel = u.role === 'superadmin' ? 'Super Admin' : u.role === 'admin' ? 'Admin' : 'Usuário';
-      const roleClass = (u.role === 'admin' || u.role === 'superadmin') ? 'connected' : '';
+      const roleSlug  = u.role === 'superadmin' ? 'superadmin' : u.role === 'admin' ? 'admin' : 'user';
+      const roleLabel = roleSlug === 'superadmin' ? 'Super Admin' : roleSlug === 'admin' ? 'Admin' : 'Usuário';
+      const roleIcon  = roleSlug === 'superadmin' ? 'fa-crown' : roleSlug === 'admin' ? 'fa-shield-halved' : 'fa-user';
       const familyName = isSuperAdmin() && u.familyId && familiesMap[u.familyId] ? ` · ${esc(familiesMap[u.familyId])}` : '';
+      const initials = (u.fullName || '?').split(' ').slice(0, 2).map(n => n[0] || '').join('').toUpperCase();
       html += `
-        <div class="user-card" data-user-id="${esc(u.id)}">
-          <div class="user-card-info">
-            <div class="user-card-name">${esc(u.fullName)}</div>
-            <div class="user-card-detail">${esc(u.login)} · ${esc(u.email)}${familyName}</div>
-            <span class="status-pill ${roleClass}">${esc(roleLabel)}</span>
+        <div class="admin-card" data-user-id="${esc(u.id)}" data-role="${roleSlug}">
+          <div class="admin-card-avatar">${initials}</div>
+          <div class="admin-card-info">
+            <div class="admin-card-name">
+              ${esc(u.fullName)}
+              ${isCurrentUser ? '<span class="you-badge">Você</span>' : ''}
+            </div>
+            <div class="admin-card-detail">${esc(u.login)} · ${esc(u.email)}${familyName}</div>
+            <span class="role-badge ${roleSlug}"><i class="fa-solid ${roleIcon}"></i> ${roleLabel}</span>
           </div>
-          <div class="user-card-actions">
-            <button class="user-action-btn edit-user-btn" data-id="${esc(u.id)}" title="Editar"><i class="fa-solid fa-pen"></i></button>
-            ${isCurrentUser ? '' : `<button class="user-action-btn delete-user-btn danger" data-id="${esc(u.id)}" data-name="${esc(u.fullName)}" title="Excluir"><i class="fa-solid fa-trash"></i></button>`}
+          <div class="admin-card-actions">
+            <button class="admin-action-btn edit-user-btn" data-id="${esc(u.id)}" title="Editar usuário"><i class="fa-solid fa-pen"></i></button>
+            ${isCurrentUser ? '' : `<button class="admin-action-btn delete-user-btn danger" data-id="${esc(u.id)}" data-name="${esc(u.fullName)}" title="Excluir usuário"><i class="fa-solid fa-trash"></i></button>`}
           </div>
         </div>`;
     });

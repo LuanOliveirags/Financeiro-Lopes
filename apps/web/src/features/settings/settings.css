@@ -154,75 +154,247 @@
   margin-bottom: 8px;
 }
 
-/* ─── USER MANAGEMENT (Admin) ─── */
-.users-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+/* ─── ADMIN MODALS — Gerenciar Usuários / Famílias ─── */
+
+/* Loading / empty states */
 .users-list-loading {
-  color: var(--text-muted);
-  padding: 24px;
-  font-size: 0.9375rem;
-}
-.user-card {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 10px;
+  color: var(--text-muted);
+  padding: 28px 16px;
+  font-size: 0.875rem;
+  justify-content: center;
+}
+.admin-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.admin-empty i { font-size: 1.75rem; opacity: 0.3; }
+.admin-empty p { font-size: 0.875rem; margin: 0; }
+
+/* Create-family inline row */
+.admin-create-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 16px;
   background: var(--bg-card-alt);
   border-radius: var(--r-lg);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
+  margin-bottom: 14px;
+  transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
 }
-.user-card-info {
+.admin-create-row:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+  background: var(--bg-card);
+}
+.admin-create-row input {
+  flex: 1;
+  border: none !important;
+  background: transparent !important;
+  padding: 10px 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  font-size: 0.9375rem;
+  min-width: 0;
+}
+.admin-create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  background: var(--grad-primary);
+  color: #fff;
+  border-radius: calc(var(--r-lg) - 4px);
+  font-size: 0.8125rem;
+  font-weight: var(--fw-semi);
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.3);
+  transition: opacity var(--ease), transform var(--ease);
+}
+.admin-create-btn:hover  { opacity: 0.9; transform: scale(1.03); }
+.admin-create-btn:active { transform: scale(0.97); }
+
+/* Card list */
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Card base */
+.admin-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow var(--ease), border-color var(--ease), transform var(--ease);
+}
+.admin-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+  background: var(--primary);
+}
+.admin-card:hover {
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  border-color: rgba(var(--primary-rgb), 0.22);
+  transform: translateX(2px);
+}
+.admin-card[data-role="superadmin"]::before { background: #7C3AED; }
+.admin-card[data-role="user"]::before { background: var(--text-muted); opacity: 0.35; }
+
+/* Family icon (rounded square) */
+.admin-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.0625rem;
+  flex-shrink: 0;
+}
+
+/* User avatar with initials */
+.admin-card-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+.admin-card[data-role="superadmin"] .admin-card-avatar {
+  background: rgba(124,58,237,0.12);
+  color: #7C3AED;
+}
+.admin-card[data-role="user"] .admin-card-avatar {
+  background: var(--bg-card-alt);
+  color: var(--text-secondary);
+}
+
+/* Card info block */
+.admin-card-info {
   flex: 1;
   min-width: 0;
 }
-.user-card-name {
+.admin-card-name {
   font-size: 0.9375rem;
   font-weight: var(--fw-bold);
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.user-card-detail {
+.you-badge {
+  font-size: 0.625rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  background: rgba(var(--primary-rgb), 0.12);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.admin-card-detail {
   font-size: 0.8125rem;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin: 2px 0 6px;
+  margin-bottom: 6px;
 }
-.user-card-actions {
+
+/* Role badges */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--r-full);
+  font-size: 0.6875rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.role-badge.superadmin { background: rgba(124,58,237,0.12); color: #7C3AED; }
+.role-badge.admin      { background: rgba(var(--primary-rgb),0.12); color: var(--primary); }
+.role-badge.user       { background: var(--bg-card-alt); color: var(--text-secondary); border: 1px solid var(--border); }
+
+/* Member count pill */
+.member-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--r-full);
+  font-size: 0.6875rem;
+  font-weight: var(--fw-medium);
+  background: var(--bg-card-alt);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+/* Card action buttons */
+.admin-card-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
-.user-action-btn {
-  width: 34px;
-  height: 34px;
+.admin-action-btn {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: var(--bg-card);
+  background: var(--bg-card-alt);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   border: 1px solid var(--border);
-  transition: all var(--ease);
   cursor: pointer;
+  transition: all var(--ease);
 }
-.user-action-btn:hover {
+.admin-action-btn:hover {
   color: var(--primary);
-  border-color: var(--primary);
+  border-color: rgba(var(--primary-rgb), 0.4);
   background: rgba(var(--primary-rgb), 0.08);
+  transform: scale(1.1);
 }
-.user-action-btn.danger:hover {
+.admin-action-btn.danger:hover {
   color: var(--danger);
   border-color: var(--danger);
   background: var(--danger-bg);
+  transform: scale(1.1);
 }
 
 /* ─── Settings Phone Field ─── */

@@ -30,7 +30,11 @@
       "Bash(curl -sv -X OPTIONS http://localhost:5000/api/auth/token -H \"Origin: http://localhost:3000\" -H \"Access-Control-Request-Method: POST\")",
       "Bash(npx firebase *)",
       "Bash(dir /s /b \"c:\\\\Users\\\\F15-LuanGs\\\\OneDrive\\\\Anexos\\\\Desktop\\\\Project developer\\\\WolfSource\\\\Financeiro-Lopes\")",
-      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\F15-LuanGs\\\\OneDrive\\\\Anexos\\\\Desktop\\\\Project developer\\\\WolfSource\\\\Financeiro-Lopes\" | Select-Object Name, @{Name=\"Type\";Expression={if\\($_.PSIsContainer\\){\"Directory\"}else{\"File\"}}})"
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\F15-LuanGs\\\\OneDrive\\\\Anexos\\\\Desktop\\\\Project developer\\\\WolfSource\\\\Financeiro-Lopes\" | Select-Object Name, @{Name=\"Type\";Expression={if\\($_.PSIsContainer\\){\"Directory\"}else{\"File\"}}})",
+      "Bash(curl -L -o \"C:\\\\Users\\\\F15-LuanGs\\\\AppData\\\\Local\\\\Temp\\\\wolfsource.apk\" \"https://files.catbox.moe/bpkvh2.apk\" --max-time 60)",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import google.auth; print\\('google-auth ok'\\)\")",
+      "Bash(python -c \"from googleapiclient.discovery import build; print\\('googleapiclient ok'\\)\")"
     ]
   }
 }
