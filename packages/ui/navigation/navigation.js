@@ -112,18 +112,12 @@ function _openApkModal(apkUrl) {
 
 // ===== THEME =====
 function initializeTheme() {
-  const savedTheme = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const theme = savedTheme || (prefersDark ? 'dark' : 'light');
-  applyTheme(theme);
-  localStorage.setItem('theme', theme);
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    if (!localStorage.getItem('theme')) applyTheme(e.matches ? 'dark' : 'light');
-  });
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  applyTheme(savedTheme);
 }
 
 function toggleTheme() {
-  const current = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const current = localStorage.getItem('theme') || 'light';
   applyTheme(current === 'dark' ? 'light' : 'dark');
 }
 
