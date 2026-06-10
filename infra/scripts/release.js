@@ -36,7 +36,9 @@ function hr(char = '─') { return char.repeat(52); }
 function run({ label, cmd, args, cwd }) {
   process.stdout.write(`\n${hr()}\n▶  ${label}\n${hr()}\n`);
   const t0 = Date.now();
-  const result = spawnSync(cmd, args, { stdio: 'inherit', shell: true, cwd });
+  // Wrap cmd in quotes to handle paths with spaces on Windows
+  const safeCmd = cmd.includes(' ') ? `"${cmd}"` : cmd;
+  const result = spawnSync(safeCmd, args, { stdio: 'inherit', shell: true, cwd });
   const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
   if (result.status !== 0) {
     console.error(`\n❌  Falhou (${elapsed}s) — abortando pipeline`);

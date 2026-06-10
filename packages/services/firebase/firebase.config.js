@@ -45,7 +45,7 @@ export const BACKEND_URL = _isLocal
 // URL pública do APK para download direto.
 // Gere no Firebase Storage ou qualquer hospedagem e cole aqui.
 // Ex.: 'https://storage.googleapis.com/financeiro-lopes.appspot.com/app-release.apk'
-export const APK_URL = 'https://drive.google.com/uc?export=download&id=1slw1Ji8GS7FMb9piSkQ2k_6S7o6M9wz2';
+export const APK_URL = 'https://files.catbox.moe/lwfcde.apk';
 
 export const CATEGORY_MAP = {
   alimentacao:    { icon: '🍽️', label: 'Alimentação',    css: 'cat-alimentacao'    },
