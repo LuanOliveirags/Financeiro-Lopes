@@ -37,7 +37,12 @@
       "Bash(python -c \"from googleapiclient.discovery import build; print\\('googleapiclient ok'\\)\")",
       "Bash(git remote *)",
       "Bash(grep -n \"themeToggle\" www/apps/web/public/index.html)",
-      "Bash(grep -n \"themeToggle\" www/index.html)"
+      "Bash(grep -n \"themeToggle\" www/index.html)",
+      "Bash(JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\" node infra/scripts/release.js)",
+      "Bash(node -e ' *)",
+      "PowerShell($env:JAVA_HOME = 'C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; cd \"c:\\\\Users\\\\F15-LuanGs\\\\OneDrive\\\\Anexos\\\\Desktop\\\\Project developer\\\\WolfSource\\\\WolfSource\\\\apps\\\\mobile\\\\android\"; & \".\\\\gradlew.bat\" assembleDebug --daemon 2>&1)",
+      "PowerShell(Get-ChildItem \"$env:LOCALAPPDATA\\\\Android\" -ErrorAction SilentlyContinue | Select-Object FullName)",
+      "Bash(node infra/scripts/upload-apk.js)"
     ]
   }
 }
