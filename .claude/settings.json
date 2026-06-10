@@ -34,7 +34,8 @@
       "Bash(curl -L -o \"C:\\\\Users\\\\F15-LuanGs\\\\AppData\\\\Local\\\\Temp\\\\wolfsource.apk\" \"https://files.catbox.moe/bpkvh2.apk\" --max-time 60)",
       "Bash(python -c ' *)",
       "Bash(python -c \"import google.auth; print\\('google-auth ok'\\)\")",
-      "Bash(python -c \"from googleapiclient.discovery import build; print\\('googleapiclient ok'\\)\")"
+      "Bash(python -c \"from googleapiclient.discovery import build; print\\('googleapiclient ok'\\)\")",
+      "Bash(git remote *)"
     ]
   }
 }

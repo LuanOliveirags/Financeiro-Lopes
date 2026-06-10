@@ -2,7 +2,7 @@
 
 Aplicação web e Android para gestão financeira familiar. Desenvolvida como PWA com arquitetura modular vanilla JS, suporte offline, sincronização em tempo real com Firestore e empacotamento Android via Capacitor — web e APK compartilham o mesmo código e backend.
 
-**Produção:** https://luanoliveirags.github.io/Financeiro-Lopes/
+**Produção:** https://luanoliveirags.github.io/WolfSource/
 
 ## Características Principais
 
@@ -29,8 +29,8 @@ Aplicação web e Android para gestão financeira familiar. Desenvolvida como PW
 ### Rodar no Browser (dev)
 
 ```bash
-git clone https://github.com/LuanOliveirags/Financeiro-Lopes.git
-cd Financeiro-Lopes
+git clone https://github.com/LuanOliveirags/WolfSource.git
+cd WolfSource
 npm install
 npm run dev
 ```
@@ -88,7 +88,7 @@ npm run open:android
 ## Arquitetura
 
 ```
-Financeiro-Lopes/
+WolfSource/
 ├── apps/
 │   ├── web/
 │   │   ├── public/                    # Assets estáticos (index.html, SW, manifest)
@@ -263,7 +263,7 @@ O frontend detecta automaticamente e usa `localhost:5000` quando rodando em `loc
 
 | Ambiente | URL | Trigger |
 |---|---|---|
-| Produção | https://luanoliveirags.github.io/Financeiro-Lopes/ | Push em `main` via `deploy.yml` |
+| Produção | https://luanoliveirags.github.io/WolfSource/ | Push em `main` via `deploy.yml` |
 | Staging | https://financeiro-lopes--staging-9u9590k6.web.app | Push em `dev` via `deploy-staging.yml` |
 | Backend | https://aware-delight-production-2e59.up.railway.app | Push em `main` — Railway usa `backend/Procfile` (Root Directory: `backend`) |
 
