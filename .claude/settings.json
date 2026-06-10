@@ -35,7 +35,9 @@
       "Bash(python -c ' *)",
       "Bash(python -c \"import google.auth; print\\('google-auth ok'\\)\")",
       "Bash(python -c \"from googleapiclient.discovery import build; print\\('googleapiclient ok'\\)\")",
-      "Bash(git remote *)"
+      "Bash(git remote *)",
+      "Bash(grep -n \"themeToggle\" www/apps/web/public/index.html)",
+      "Bash(grep -n \"themeToggle\" www/index.html)"
     ]
   }
 }
