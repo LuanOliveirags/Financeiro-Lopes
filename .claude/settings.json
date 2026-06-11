@@ -42,7 +42,17 @@
       "Bash(node -e ' *)",
       "PowerShell($env:JAVA_HOME = 'C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr'; cd \"c:\\\\Users\\\\F15-LuanGs\\\\OneDrive\\\\Anexos\\\\Desktop\\\\Project developer\\\\WolfSource\\\\WolfSource\\\\apps\\\\mobile\\\\android\"; & \".\\\\gradlew.bat\" assembleDebug --daemon 2>&1)",
       "PowerShell(Get-ChildItem \"$env:LOCALAPPDATA\\\\Android\" -ErrorAction SilentlyContinue | Select-Object FullName)",
-      "Bash(node infra/scripts/upload-apk.js)"
+      "Bash(node infra/scripts/upload-apk.js)",
+      "Bash(npx serve *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5500)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5600)",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\" https://aware-delight-production-2e59.up.railway.app/health)",
+      "PowerShell(python --version 2>&1)",
+      "PowerShell(pip --version 2>&1)",
+      "Bash(python -c \"import json; d=json.load\\(open\\('C:/Users/F15-LuanGs/Downloads/financeiro-lopes-firebase-adminsdk-fbsvc-27de870802.json'\\)\\); print\\(d.get\\('project_id'\\), d.get\\('client_email',''\\)[0:30]\\)\")",
+      "Bash(curl -s http://localhost:5000/health)",
+      "Bash(python token_server.py)",
+      "Bash(PYTHONUTF8=1 python token_server.py)"
     ]
   }
 }

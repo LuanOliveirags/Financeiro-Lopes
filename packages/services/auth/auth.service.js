@@ -64,10 +64,9 @@ async function _ensureFirebaseAuth() {
   if (!firebaseReady || !auth) return;
   await _waitForAuthReady();
   if (!auth.currentUser && state.currentUser) {
-    showAlert('Conectando ao servidor... aguarde.', 'info');
     await signInWithFirebase(state.currentUser.id, state.currentUser.familyId);
     if (!auth.currentUser) {
-      throw new Error('Sessão Firebase expirada. Recarregue a página e faça login novamente.');
+      throw new Error('Servidor de autenticação indisponível. Tente novamente em alguns minutos.');
     }
   }
 }
