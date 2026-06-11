@@ -357,6 +357,7 @@ export function renderCardDebtCards() {
 
 export async function createFamily(name) {
   if (!firebaseReady) throw new Error('Firebase não disponível.');
+  await _ensureFirebaseAuth();
   const id = `family-${Date.now()}`;
   const family = { id, name, createdAt: new Date().toISOString(), members: [], ownerId: null };
   await db.collection('families').doc(id).set(family);
@@ -376,6 +377,7 @@ export async function loadFamiliesList() {
 
 export async function deleteFamily(familyId) {
   if (!firebaseReady) throw new Error('Firebase não disponível.');
+  await _ensureFirebaseAuth();
   const usersSnap = await db.collection('users').where('familyId', '==', familyId).get();
   if (!usersSnap.empty) throw new Error('Não é possível excluir uma família que ainda possui usuários.');
   await db.collection('families').doc(familyId).delete();
@@ -398,6 +400,7 @@ export async function loadFamiliesListUI() {
   if (!container) return;
   container.innerHTML = '<div class="users-list-loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando famílias...</div>';
   try {
+    await _ensureFirebaseAuth();
     const families = await loadFamiliesList();
     if (families.length === 0) {
       container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Nenhuma família cadastrada.</p>';
