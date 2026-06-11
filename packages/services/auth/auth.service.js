@@ -400,15 +400,20 @@ export async function loadFamiliesListUI() {
   if (!container) return;
   container.innerHTML = '<div class="users-list-loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando famílias...</div>';
   try {
-    await _ensureFirebaseAuth();
+    // Tenta garantir auth, mas não bloqueia a leitura se falhar
+    await _ensureFirebaseAuth().catch(() => {});
     const families = await loadFamiliesList();
     if (families.length === 0) {
       container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Nenhuma família cadastrada.</p>';
       return;
     }
-    const usersSnap = await db.collection('users').get();
     const memberCount = {};
-    usersSnap.forEach(doc => { const fid = doc.data().familyId; if (fid) memberCount[fid] = (memberCount[fid] || 0) + 1; });
+    try {
+      const usersSnap = await db.collection('users').get();
+      usersSnap.forEach(doc => { const fid = doc.data().familyId; if (fid) memberCount[fid] = (memberCount[fid] || 0) + 1; });
+    } catch (e) {
+      console.warn('Sem permissão para contar membros (claims superadmin ausentes):', e.code);
+    }
 
     let html = '<div class="admin-list">';
     families.forEach(f => {
@@ -442,7 +447,10 @@ export async function loadFamiliesListUI() {
       });
     });
   } catch (err) {
-    container.innerHTML = '<p style="text-align:center;color:var(--danger);padding:20px;">Erro ao carregar famílias.</p>';
+    const msg = err.code === 'permission-denied'
+      ? 'Sessão expirada. Recarregue a página e faça login novamente.'
+      : (err.message || 'Erro ao carregar famílias.');
+    container.innerHTML = `<p style="text-align:center;color:var(--danger);padding:20px;">${msg}</p>`;
   }
 }
 
@@ -693,6 +701,7 @@ export async function loadUsersList() {
   const container = document.getElementById('usersListContainer');
   container.innerHTML = '<div class="users-list-loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando usuários...</div>';
   try {
+    await _ensureFirebaseAuth().catch(() => {});
     const familyId = getFamilyId();
     let snapshot;
     if (isSuperAdmin()) {
